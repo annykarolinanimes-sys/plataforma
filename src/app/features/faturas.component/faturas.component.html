@@ -242,30 +242,8 @@
   }
 
   <!-- ─── MODO: EDITAR FATURA ─────────────────────────────────────────────── -->
-  @if (currentState() === 'edit') {
-    <div class="form-page">
-      <div class="form-header">
-        <div class="header-left">
-          <i class="las la-edit"></i>
-          <h2>Editar Fatura</h2>
-        </div>
-        <button class="btn-secondary" (click)="cancel()">
-          <i class="las la-times"></i> Cancelar
-        </button>
-      </div>
-
-      <!-- Mesmo conteúdo do modo 'create' -->
-      <div class="form-body">
-        <!-- Mesmos campos do create -->
-      </div>
-      <div class="form-footer">
-        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
-        <button class="btn-primary" (click)="salvarFatura()" [disabled]="isSaving()">
-          @if (isSaving()) { <i class="las la-spinner la-spin"></i> A guardar... } @else { <i class="las la-save"></i> Guardar Fatura }
-        </button>
-      </div>
-    </div>
-  }
+  
+    
 
   <!-- ─── MODO: VER DETALHES ──────────────────────────────────────────────── -->
   @if (currentState() === 'details' && selectedFatura()) {

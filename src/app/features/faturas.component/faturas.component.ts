@@ -16,8 +16,8 @@ export class FaturasComponent implements OnInit {
   private uiState = inject(UiStateService);
 
   // Estado da UI
-  currentState = this.uiState.currentState;
-  editingId = this.uiState.currentId;
+  currentState = this.uiState.currentFaturaState;
+  editingId = this.uiState.currentFaturaId;
 
   // Dados
   faturas = signal<Invoice[]>([]);
@@ -78,20 +78,20 @@ export class FaturasComponent implements OnInit {
   // ─── Ações de navegação ─────────────────────────────────────────────────
 
   goToCreate(): void {
-    this.resetForm();
-    this.uiState.goToCreate();
+     this.resetForm();
+     this.uiState.goToFaturaCreate();
   }
 
   goToEdit(fatura: Invoice, event?: Event): void {
     if (event) event.stopPropagation();
     this.carregarDadosParaEdicao(fatura);
-    this.uiState.goToEdit(fatura.id);
+    this.uiState.goToFaturaEdit(fatura.id);
   }
 
   goToDetails(fatura: Invoice, event?: Event): void {
     if (event) event.stopPropagation();
     this.selectedFatura.set(fatura);
-    this.uiState.goToDetails(fatura.id);
+    this.uiState.goToFaturaDetails(fatura.id);
   }
 
   // Clicar na linha da tabela
@@ -100,10 +100,10 @@ export class FaturasComponent implements OnInit {
   }
 
   goToList(): void {
-    this.uiState.goToList();
-    this.resetForm();
-    this.selectedFatura.set(null);
-    this.carregarFaturas();
+  this.uiState.goToFaturaList();
+  this.resetForm();
+  this.selectedFatura.set(null);
+  this.carregarFaturas();
   }
 
   cancel(): void {
@@ -213,7 +213,7 @@ export class FaturasComponent implements OnInit {
       itens: itensValidos
     };
 
-    if (this.uiState.isEdit() && this.editingId()) {
+    if (this.uiState.isFaturaEdit() && this.editingId()) {
       this.invoiceService.atualizar(this.editingId()!, requestData).subscribe({
         next: () => this.onSaveSuccess('Fatura atualizada com sucesso!'),
         error: (err) => this.onSaveError(err)
