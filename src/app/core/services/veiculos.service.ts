@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface Veiculo {
@@ -24,36 +25,67 @@ export interface Veiculo {
   atualizadoEm: string;
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ListarVeiculosParams {
+  search?: string;
+  combustivel?: string;
+  ativo?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VeiculosService {
-  private http = inject(HttpClient);
-  private api = `${environment.apiUrl}/user/veiculos`;
+  private readonly http = inject(HttpClient);
+  private readonly api  = `${environment.apiUrl}/user/veiculos`;
 
-  listar(search?: string, ativo?: boolean): Observable<Veiculo[]> {
-    let params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (ativo !== undefined) params.set('ativo', ativo.toString());
-    const url = params.toString() ? `${this.api}?${params}` : this.api;
-    return this.http.get<Veiculo[]>(url);
+  listar(params: ListarVeiculosParams = {}): Observable<PagedResult<Veiculo>> {
+    let httpParams = new HttpParams();
+    if (params.search)              httpParams = httpParams.set('search',      params.search);
+    if (params.combustivel)         httpParams = httpParams.set('combustivel', params.combustivel);
+    if (params.ativo !== undefined) httpParams = httpParams.set('ativo',       String(params.ativo));
+    if (params.page)                httpParams = httpParams.set('page',        String(params.page));
+    if (params.pageSize)            httpParams = httpParams.set('pageSize',    String(params.pageSize));
+
+    return this.http
+      .get<PagedResult<Veiculo>>(this.api, { params: httpParams })
+      .pipe(catchError(this.handleError));
   }
 
   obter(id: number): Observable<Veiculo> {
-    return this.http.get<Veiculo>(`${this.api}/${id}`);
+    return this.http.get<Veiculo>(`${this.api}/${id}`).pipe(catchError(this.handleError));
   }
 
   criar(data: Veiculo): Observable<Veiculo> {
-    return this.http.post<Veiculo>(this.api, data);
+    return this.http.post<Veiculo>(this.api, data).pipe(catchError(this.handleError));
   }
 
   atualizar(id: number, data: Veiculo): Observable<Veiculo> {
-    return this.http.put<Veiculo>(`${this.api}/${id}`, data);
+    return this.http.put<Veiculo>(`${this.api}/${id}`, data).pipe(catchError(this.handleError));
   }
 
   deletar(id: number): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.api}/${id}`);
+    return this.http.delete<{ message: string }>(`${this.api}/${id}`).pipe(catchError(this.handleError));
   }
 
   ativar(id: number): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.api}/${id}/ativar`, {});
+    return this.http.post<{ message: string }>(`${this.api}/${id}/ativar`, {}).pipe(catchError(this.handleError));
+  }
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let message = 'Ocorreu um erro inesperado.';
+    if (error.status === 0)        message = 'Sem ligação ao servidor.';
+    else if (error.status === 409) message = error.error?.message ?? 'Matrícula já existe.';
+    else if (error.status === 404) message = error.error?.message ?? 'Veículo não encontrado.';
+    else if (error.status >= 500)  message = 'Erro interno do servidor.';
+    else                           message = error.error?.message ?? message;
+    return throwError(() => ({ status: error.status, message }));
   }
 }

@@ -1,8 +1,8 @@
-// src/app/features/faturas.component/faturas.component.ts
-import { Component, OnInit, inject, signal, computed, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { InvoiceService, Invoice, InvoiceItem, CreateInvoiceRequest } from '../../core/services/invoice.service';
+import { InvoiceService, Invoice, InvoiceItem } from '../../core/services/invoice.service';
+import { UiStateService } from '../../core/services/ui-state.service';
 
 @Component({
   selector: 'app-faturas',
@@ -13,29 +13,22 @@ import { InvoiceService, Invoice, InvoiceItem, CreateInvoiceRequest } from '../.
 })
 export class FaturasComponent implements OnInit {
   private invoiceService = inject(InvoiceService);
-  private cdr = inject(ChangeDetectorRef);
+  private uiState = inject(UiStateService);
 
-  // Estado
-  isLoading = this.invoiceService.isLoading;
+  // Estado da UI
+  currentState = this.uiState.currentState;
+  editingId = this.uiState.currentId;
+
+  // Dados
   faturas = signal<Invoice[]>([]);
+  isLoading = signal(false);
+  isSaving = signal(false);
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
-  isSaving = signal(false);
 
   // Filtros
   filtroSearch = '';
   filtroEstado = '';
-
-  // Modais
-  showDetailModal = signal(false);
-  showFormModal = signal(false);
-  showDeleteConfirm = signal(false);
-  isEditing = signal(false);
-  editingId = signal<number | null>(null);
-
-  // Dados selecionados
-  selectedFatura = signal<Invoice | null>(null);
-  faturaParaDelete = signal<Invoice | null>(null);
 
   // Formulário
   formCliente = {
@@ -53,6 +46,13 @@ export class FaturasComponent implements OnInit {
   };
   formItens: InvoiceItem[] = [];
 
+  // Fatura em detalhe
+  selectedFatura = signal<Invoice | null>(null);
+
+  // Modal apenas para ELIMINAR
+  showDeleteConfirm = signal(false);
+  faturaParaDelete = signal<Invoice | null>(null);
+
   valorTotalForm = computed(() => {
     return this.formItens.reduce((sum, item) => sum + (item.subtotal || 0), 0);
   });
@@ -62,33 +62,57 @@ export class FaturasComponent implements OnInit {
   }
 
   carregarFaturas(): void {
-    console.log('Carregando faturas...');
+    this.isLoading.set(true);
     this.invoiceService.listar(this.filtroEstado || undefined, this.filtroSearch || undefined).subscribe({
       next: (data) => {
-        console.log('Faturas recebidas:', data);
         this.faturas.set(data);
-        this.cdr.detectChanges();
+        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Erro ao carregar faturas:', err);
         this.errorMsg.set(err.error?.message || 'Erro ao carregar faturas');
+        this.isLoading.set(false);
       }
     });
   }
 
-  selecionarFatura(fatura: Invoice): void {
+  // ─── Ações de navegação ─────────────────────────────────────────────────
+
+  goToCreate(): void {
+    this.resetForm();
+    this.uiState.goToCreate();
+  }
+
+  goToEdit(fatura: Invoice, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.carregarDadosParaEdicao(fatura);
+    this.uiState.goToEdit(fatura.id);
+  }
+
+  goToDetails(fatura: Invoice, event?: Event): void {
+    if (event) event.stopPropagation();
     this.selectedFatura.set(fatura);
-    this.showDetailModal.set(true);
+    this.uiState.goToDetails(fatura.id);
   }
 
-  fecharModalDetalhe(): void {
-    this.showDetailModal.set(false);
+  // Clicar na linha da tabela
+  onRowClick(fatura: Invoice): void {
+    this.goToDetails(fatura);
+  }
+
+  goToList(): void {
+    this.uiState.goToList();
+    this.resetForm();
     this.selectedFatura.set(null);
+    this.carregarFaturas();
   }
 
-  abrirModalNovaFatura(): void {
-    this.isEditing.set(false);
-    this.editingId.set(null);
+  cancel(): void {
+    this.goToList();
+  }
+
+  // ─── Formulário ─────────────────────────────────────────────────────────
+
+  private resetForm(): void {
     this.formCliente = {
       clienteNome: '',
       clienteContacto: '',
@@ -103,12 +127,10 @@ export class FaturasComponent implements OnInit {
       materialUtilizado: ''
     };
     this.formItens = [this.novoItemVazio()];
-    this.showFormModal.set(true);
+    this.errorMsg.set(null);
   }
 
-  abrirModalEditarFatura(fatura: Invoice): void {
-    this.isEditing.set(true);
-    this.editingId.set(fatura.id);
+  private carregarDadosParaEdicao(fatura: Invoice): void {
     this.formCliente = {
       clienteNome: fatura.clienteNome,
       clienteContacto: fatura.clienteContacto,
@@ -131,12 +153,6 @@ export class FaturasComponent implements OnInit {
       precoUnitario: item.precoUnitario,
       subtotal: item.subtotal
     }));
-    this.showFormModal.set(true);
-  }
-
-  fecharModalForm(): void {
-    this.showFormModal.set(false);
-    this.formItens = [];
   }
 
   adicionarItem(): void {
@@ -179,7 +195,10 @@ export class FaturasComponent implements OnInit {
       return;
     }
 
-    const request: CreateInvoiceRequest = {
+    this.isSaving.set(true);
+    this.errorMsg.set(null);
+
+    const requestData = {
       clienteNome: this.formCliente.clienteNome,
       clienteContacto: this.formCliente.clienteContacto,
       clienteEmail: this.formCliente.clienteEmail || undefined,
@@ -194,39 +213,34 @@ export class FaturasComponent implements OnInit {
       itens: itensValidos
     };
 
-    this.isSaving.set(true);
-    this.errorMsg.set(null);
-
-    if (this.isEditing() && this.editingId()) {
-      this.invoiceService.atualizar(this.editingId()!, request).subscribe({
-        next: () => {
-          this.isSaving.set(false);
-          this.fecharModalForm();
-          this.carregarFaturas();
-          this.showToast('Fatura atualizada com sucesso!');
-        },
-        error: (err) => {
-          this.errorMsg.set(err.error?.message || 'Erro ao atualizar fatura');
-          this.isSaving.set(false);
-        }
+    if (this.uiState.isEdit() && this.editingId()) {
+      this.invoiceService.atualizar(this.editingId()!, requestData).subscribe({
+        next: () => this.onSaveSuccess('Fatura atualizada com sucesso!'),
+        error: (err) => this.onSaveError(err)
       });
     } else {
-      this.invoiceService.criar(request).subscribe({
-        next: () => {
-          this.isSaving.set(false);
-          this.fecharModalForm();
-          this.carregarFaturas();
-          this.showToast('Fatura criada com sucesso!');
-        },
-        error: (err) => {
-          this.errorMsg.set(err.error?.message || 'Erro ao criar fatura');
-          this.isSaving.set(false);
-        }
+      this.invoiceService.criar(requestData).subscribe({
+        next: () => this.onSaveSuccess('Fatura criada com sucesso!'),
+        error: (err) => this.onSaveError(err)
       });
     }
   }
 
-  imprimirPdf(fatura: Invoice): void {
+  private onSaveSuccess(msg: string): void {
+    this.isSaving.set(false);
+    this.showToast(msg);
+    this.goToList();
+  }
+
+  private onSaveError(err: any): void {
+    this.errorMsg.set(err.error?.message || 'Erro ao guardar fatura');
+    this.isSaving.set(false);
+  }
+
+  // ─── Ações ──────────────────────────────────────────────────────────────
+
+  imprimirPdf(fatura: Invoice, event?: Event): void {
+    if (event) event.stopPropagation();
     this.invoiceService.gerarPdf(fatura.id).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -242,7 +256,10 @@ export class FaturasComponent implements OnInit {
     });
   }
 
-  confirmarDelete(fatura: Invoice): void {
+  // ─── Modal apenas para ELIMINAR ─────────────────────────────────────────
+
+  confirmarDelete(fatura: Invoice, event?: Event): void {
+    if (event) event.stopPropagation();
     this.faturaParaDelete.set(fatura);
     this.showDeleteConfirm.set(true);
   }
@@ -261,9 +278,6 @@ export class FaturasComponent implements OnInit {
         this.showToast(res.message);
         this.fecharConfirmacao();
         this.carregarFaturas();
-        if (this.selectedFatura()?.id === fatura.id) {
-          this.fecharModalDetalhe();
-        }
       },
       error: (err) => {
         this.errorMsg.set(err.error?.message || 'Erro ao eliminar fatura');
@@ -271,6 +285,8 @@ export class FaturasComponent implements OnInit {
       }
     });
   }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────
 
   getEstadoClass(estado: string): string {
     const classes: Record<string, string> = {
