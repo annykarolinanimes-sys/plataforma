@@ -14,12 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 var translator = new Npgsql.NameTranslation.NpgsqlSnakeCaseNameTranslator();
 var dsBuilder  = new NpgsqlDataSourceBuilder(connectionString);
-dsBuilder.MapEnum<UserRole>   (nameTranslator: translator);
-dsBuilder.MapEnum<UserStatus> (nameTranslator: translator);
-dsBuilder.MapEnum<EnvioEstado>(nameTranslator: translator);
-dsBuilder.MapEnum<DocTipo>    (nameTranslator: translator);
-dsBuilder.MapEnum<AlertaTipo> (nameTranslator: translator);
-dsBuilder.MapEnum<MovimentacaoTipo> (nameTranslator: translator);
+dsBuilder.MapEnum<UserRole>("user_role");
+dsBuilder.MapEnum<UserStatus>("user_status");
+dsBuilder.MapEnum<AlertaTipo>("alerta_tipo");
+dsBuilder.MapEnum<MovimentacaoTipo>("movimentacao_tipo");
+dsBuilder.MapEnum<EnvioEstado>("envio_estado");
+dsBuilder.MapEnum<DocTipo>("doc_tipo");
 var dataSource = dsBuilder.Build();
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(dataSource));

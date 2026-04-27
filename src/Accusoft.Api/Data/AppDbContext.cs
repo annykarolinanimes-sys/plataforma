@@ -26,16 +26,14 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.HasPostgresEnum<UserRole>("user_role");
-        modelBuilder.HasPostgresEnum<UserStatus>("user_status");
-        modelBuilder.HasPostgresEnum<AlertaTipo>("alerta_tipo");
-        modelBuilder.HasPostgresEnum<MovimentacaoTipo>("movimentacao_tipo");
+        modelBuilder.HasPostgresEnum<UserRole>();
+        modelBuilder.HasPostgresEnum<UserStatus>();
+        modelBuilder.HasPostgresEnum<AlertaTipo>();
+        modelBuilder.HasPostgresEnum<MovimentacaoTipo>();
 
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();
-            entity.Property(u => u.Role)  .HasColumnType("user_role");
-            entity.Property(u => u.Status).HasColumnType("user_status");
         });
 
         modelBuilder.Entity<Produto>(entity =>
@@ -75,7 +73,6 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<MovimentacaoEstoque>(entity =>
         {
-            entity.Property(m => m.Tipo).HasColumnType("movimentacao_tipo");
 
             entity.HasOne(m => m.Produto)
                   .WithMany(p => p.Movimentacoes)
@@ -171,8 +168,6 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Alerta>(entity =>
         {
-            entity.Property(a => a.Tipo).HasColumnType("alerta_tipo");
-
             entity.HasOne(a => a.Usuario)
                   .WithMany(u => u.Alertas)
                   .HasForeignKey(a => a.UsuarioId)
