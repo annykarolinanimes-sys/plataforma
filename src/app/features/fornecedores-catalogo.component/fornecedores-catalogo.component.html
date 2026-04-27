@@ -1,0 +1,389 @@
+<div class="fornecedores-container">
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-truck"></i>
+      </div>
+      <div>
+        <h1>Fornecedores</h1>
+        <p>Catálogo de fornecedores da empresa</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="abrirModalNovo()">
+      <i class="las la-plus"></i> Novo Fornecedor
+    </button>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="filter-group">
+        <i class="las la-search"></i>
+        <input
+          type="text"
+          placeholder="Pesquisar por nome, código ou NIF…"
+          [value]="filtroSearch"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+      </div>
+
+      <label class="toggle-label">
+        <span class="toggle-switch">
+          <input type="checkbox" [checked]="mostrarInativos" (change)="toggleInativos()" />
+          <span class="toggle-slider"></span>
+        </span>
+        Mostrar inactivos
+      </label>
+    </div>
+
+    @if (pagedResult()) {
+      <span class="results-count">
+        {{ pagedResult()!.total }} fornecedor{{ pagedResult()!.total !== 1 ? 'es' : '' }}
+      </span>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>A carregar fornecedores…</span>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table" aria-label="Lista de fornecedores">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Fornecedor</th>
+            <th>NIF</th>
+            <th>Contacto</th>
+            <th>Localidade</th>
+            <th>Estado</th>
+            <th class="col-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of fornecedores(); track f.id) {
+            <tr [class.row--inactive]="!f.ativo">
+              <td>
+                <code class="codigo-tag">{{ f.codigo }}</code>
+              </td>
+
+              <td>
+                <strong class="fornecedor-nome">{{ f.nome }}</strong>
+                @if (f.email) {
+                  <span class="text-muted">
+                    <i class="las la-envelope"></i> {{ f.email }}
+                  </span>
+                }
+              </td>
+
+              <td>
+                @if (f.nif) {
+                  <span class="nif-tag">{{ f.nif }}</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <td>
+                @if (f.telefone) {
+                  <span class="contact-info">
+                    <i class="las la-phone"></i> {{ f.telefone }}
+                  </span>
+                }
+                @if (f.contactoNome) {
+                  <span class="text-muted">{{ f.contactoNome }}</span>
+                }
+                @if (!f.telefone && !f.contactoNome) {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <td>
+                @if (f.localidade) {
+                  <span class="location-info">
+                    <i class="las la-map-marker-alt"></i> {{ f.localidade }}
+                    @if (f.pais && f.pais !== 'Portugal') {
+                      <span class="country-tag">{{ f.pais }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <td>
+                <span class="badge"
+                      [class.badge--active]="f.ativo"
+                      [class.badge--inactive]="!f.ativo">
+                  <span class="badge__dot"></span>
+                  {{ f.ativo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <td class="actions-cell">
+                <button class="btn-icon btn-icon--edit"
+                        (click)="abrirModalEditar(f)" title="Editar">
+                  <i class="las la-edit"></i>
+                </button>
+                @if (f.ativo) {
+                  <button class="btn-icon btn-icon--danger"
+                          (click)="desativarFornecedor(f)" title="Desactivar">
+                    <i class="las la-ban"></i>
+                  </button>
+                } @else {
+                  <button class="btn-icon btn-icon--success"
+                          (click)="ativarFornecedor(f)" title="Activar">
+                    <i class="las la-undo-alt"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+
+          @if (fornecedores().length === 0) {
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <i class="las la-truck-loading"></i>
+                  <p>Nenhum fornecedor encontrado</p>
+                  <small>Altere os filtros ou adicione um novo fornecedor.</small>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pagedResult() && pagedResult()!.totalPages > 1) {
+      <div class="pagination">
+        <button class="pagination__btn"
+                [disabled]="currentPage === 1"
+                (click)="goToPage(currentPage - 1)"
+                aria-label="Página anterior">
+          <i class="las la-angle-left"></i>
+        </button>
+
+        @for (p of pages; track p) {
+          <button class="pagination__btn"
+                  [class.pagination__btn--active]="p === currentPage"
+                  (click)="goToPage(p)">
+            {{ p }}
+          </button>
+        }
+
+        <button class="pagination__btn"
+                [disabled]="currentPage === pagedResult()!.totalPages"
+                (click)="goToPage(currentPage + 1)"
+                aria-label="Página seguinte">
+          <i class="las la-angle-right"></i>
+        </button>
+
+        <span class="pagination__info">
+          Página {{ currentPage }} de {{ pagedResult()!.totalPages }}
+          ({{ pagedResult()!.total }} registos)
+        </span>
+      </div>
+    }
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="fecharModal()"
+       role="dialog" aria-modal="true"
+       [attr.aria-label]="isEditing() ? 'Editar fornecedor' : 'Novo fornecedor'">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>
+          <i class="las"
+             [class.la-truck]="!isEditing()"
+             [class.la-edit]="isEditing()"></i>
+          {{ isEditing() ? 'Editar Fornecedor' : 'Novo Fornecedor' }}
+        </h3>
+        <button class="btn-close" (click)="fecharModal()" aria-label="Fechar">
+          <i class="las la-times"></i>
+        </button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="modal-alert modal-alert--error">
+          <i class="las la-exclamation-circle"></i> {{ errorMsg() }}
+        </div>
+      }
+
+      <div class="modal-body" [formGroup]="form">
+
+        <div class="form-section">
+          <h4 class="form-section__title">Identificação</h4>
+
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('codigo')">
+              <label for="codigo">Código <span class="required">*</span></label>
+              <input id="codigo" type="text" formControlName="codigo"
+                     placeholder="Ex: FORN-001" autocomplete="off" />
+              @if (hasError('codigo', 'required')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Código é obrigatório.
+                </span>
+              }
+              @if (hasError('codigo', 'maxlength')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Máximo 50 caracteres.
+                </span>
+              }
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('nome')">
+              <label for="nome">Nome <span class="required">*</span></label>
+              <input id="nome" type="text" formControlName="nome"
+                     placeholder="Razão social ou nome comercial" />
+              @if (hasError('nome', 'required')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Nome é obrigatório.
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group" [class.form-group--error]="hasError('nif')">
+            <label for="nif">NIF / NIPC</label>
+            <input id="nif" type="text" formControlName="nif"
+                   placeholder="Ex: 123456789" />
+            @if (hasError('nif', 'pattern')) {
+              <span class="field-error">
+                <i class="las la-exclamation-circle"></i>
+                NIF inválido — 5 a 20 caracteres alfanuméricos.
+              </span>
+            }
+            <span class="field-hint">
+              <i class="las la-info-circle"></i> Deve ser único por utilizador.
+            </span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Contacto</h4>
+
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('email')">
+              <label for="email">E-mail</label>
+              <div class="input-icon">
+                <i class="las la-envelope"></i>
+                <input id="email" type="email" formControlName="email"
+                       placeholder="fornecedor@exemplo.pt" />
+              </div>
+              @if (hasError('email', 'email')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Endereço de e-mail inválido.
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="telefone">Telefone</label>
+              <div class="input-icon">
+                <i class="las la-phone"></i>
+                <input id="telefone" type="tel" formControlName="telefone"
+                       placeholder="+351 900 000 000" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactoNome">Nome do Contacto</label>
+              <input id="contactoNome" type="text" formControlName="contactoNome"
+                     placeholder="Pessoa de contacto" />
+            </div>
+            <div class="form-group">
+              <label for="contactoTelefone">Telefone do Contacto</label>
+              <input id="contactoTelefone" type="tel" formControlName="contactoTelefone"
+                     placeholder="+351 900 000 000" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Morada</h4>
+
+          <div class="form-group">
+            <label for="morada">Morada</label>
+            <input id="morada" type="text" formControlName="morada"
+                   placeholder="Rua, nº, andar" />
+          </div>
+
+          <div class="form-row form-row--3">
+            <div class="form-group">
+              <label for="localidade">Localidade</label>
+              <input id="localidade" type="text" formControlName="localidade"
+                     placeholder="Lisboa" />
+            </div>
+            <div class="form-group">
+              <label for="codigoPostal">Código Postal</label>
+              <input id="codigoPostal" type="text" formControlName="codigoPostal"
+                     placeholder="1000-001" />
+            </div>
+            <div class="form-group">
+              <label for="pais">País</label>
+              <input id="pais" type="text" formControlName="pais"
+                     placeholder="Portugal" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Informação Adicional</h4>
+
+          <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" rows="3" formControlName="observacoes"
+                      placeholder="Notas internas sobre o fornecedor…"></textarea>
+          </div>
+
+          @if (isEditing()) {
+            <div class="form-group form-group--inline">
+              <label class="checkbox-label" for="ativo">
+                <input id="ativo" type="checkbox" formControlName="ativo" />
+                <span class="checkbox-custom"></span>
+                Fornecedor activo
+              </label>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModal()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="salvarFornecedor()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Fornecedor
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

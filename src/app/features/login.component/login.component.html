@@ -1,0 +1,180 @@
+
+<div class="login-wrapper">
+  <div class="login-card">
+  
+    <div class="brand-side">
+      <div class="brand-content">
+        <div class="logo">
+          <i class="las la-chart-line"></i>
+          <h1>Accusoft</h1>
+        </div>
+        <div class="brand-tagline">
+          <p>Soluções inteligentes para<br>gestão empresarial</p>
+        </div>
+        <div class="brand-features">
+          <div class="feature">
+            <i class="las la-shield-alt"></i>
+            <span>Segurança garantida</span>
+          </div>
+          <div class="feature">
+            <i class="las la-chart-line"></i>
+            <span>Análise em tempo real</span>
+          </div>
+          <div class="feature">
+            <i class="las la-users"></i>
+            <span>Gestão completa</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+ 
+    <div class="form-side">
+      <div class="form-container">
+
+        <div class="form-header">
+          <h2>{{ formTitle() }}</h2>
+          <p>{{ formSubtitle() }}</p>
+        </div>
+
+        @if (message().visible) {
+          <div class="message-toast" [class.error]="message().type === 'error'" [class.success]="message().type === 'success'">
+            {{ message().text }}
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+
+          @if (isSignup()) {
+            <div class="input-group">
+              <div class="input-icon">
+                <i class="las la-user"></i>
+              </div>
+              <input
+                type="text"
+                [ngModel]="name()"
+                (ngModelChange)="name.set($event)"
+                name = "name"
+                class="input-field"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Nome completo"
+                required>
+            </div>
+          }
+
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="las la-envelope"></i>
+            </div>
+            <input
+              type="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              name = "email"
+              class="input-field"
+              autocomplete="email"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="exemplo@email.com"
+              required>
+          </div>
+
+          @if (!isForgot()) {
+            <div class="input-group">
+              <div class="input-icon">
+                <i class="las la-lock"></i>
+              </div>
+              <input
+                [type]="passwordInputType()"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)" 
+                name="password"
+                class="input-field"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Senha"
+                autocomplete="current-password"
+                required>
+                
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+              >
+                <i class="las" [ngClass]="togglePasswordIcon()"></i>
+              </button>
+            </div>
+          }
+
+          @if (isSignup()) {
+            <div class="input-group">
+              <div class="input-icon">
+                <i class="las la-lock"></i>
+              </div>
+              <input
+                [type]="passwordInputType()"
+                class="input-field"
+                [ngModel]="confirmPassword"
+                (ngModelChange)="confirmPassword.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Confirmar senha"
+                required>
+            </div>
+          }
+
+          @if (isLogin()) {
+            <div class="form-options">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [ngModel]="rememberMe()"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="rememberMe.set($event)"
+                  name="rememberMe">
+                <span>Lembrar-me</span>
+              </label>
+            </div>
+          }
+
+
+          <button type="submit" class="login-btn">
+            <span>{{ actionText() }}</span>
+            <i class="las la-arrow-right"></i>
+          </button>
+        </form>
+
+        <div class="signup-prompt">
+
+          @if (isLogin()) {
+            <span>
+              Não tem uma conta?
+              <a href="#" (click)="$event.preventDefault(); switchMode('signup')">Cadastre-se</a>
+            </span>
+            <a href="#" class="forgot-link-bottom" (click)="$event.preventDefault(); switchMode('forgot')">
+              Esqueceu a senha?
+            </a>
+          }
+
+          @if (isSignup()) {
+            <span>
+              Já tem uma conta?
+              <a href="#" (click)="$event.preventDefault(); switchMode('login')">Fazer login</a>
+            </span>
+          }
+
+          @if (isForgot()) {
+            <span>
+              Lembrou a senha?
+              <a href="#" (click)="$event.preventDefault(); switchMode('login')">Voltar ao login</a>
+            </span>
+          }
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" [class.show]="toast().visible">
+  <i class="las la-check-circle"></i>
+  <span>{{ toast().message }}</span>
+</div>

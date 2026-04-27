@@ -1,0 +1,237 @@
+<div class="processos-container">
+  <!-- Cabeçalho -->
+  <div class="page-header">
+    <div class="header-title">
+      <h1><i class="las la-chalkboard"></i> Processos Logísticos</h1>
+      <p>Gestão integrada de todos os processos de armazém e logística</p>
+    </div>
+  </div>
+
+  <!-- Menu Colapsável de Processos -->
+  <div class="processos-menu">
+    
+    <!-- 1. Entradas -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('entradas')">
+        <i class="las la-box"></i>
+        <span>Entradas</span>
+        <i class="las" [class.la-angle-down]="!isOpen('entradas')" [class.la-angle-up]="isOpen('entradas')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('entradas')">
+        <div class="sub-item" (click)="irParaPagina('rececao')">
+          <i class="las la-clipboard-list"></i> Receção de Mercadorias
+        </div>
+        <div class="sub-item" (click)="irParaPagina('conferencia')">
+          <i class="las la-check-double"></i> Conferência e Qualidade
+        </div>
+        <div class="sub-item" (click)="irParaPagina('devolucoes')">
+          <i class="las la-undo-alt"></i> Devoluções
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Cross Dock -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('crossdock')">
+        <i class="las la-exchange-alt"></i>
+        <span>Cross Dock</span>
+        <i class="las" [class.la-angle-down]="!isOpen('crossdock')" [class.la-angle-up]="isOpen('crossdock')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('crossdock')">
+        <div class="sub-item" (click)="irParaPagina('crossdock_rececao')">
+          <i class="las la-truck"></i> Receção Cross Dock
+        </div>
+        <div class="sub-item" (click)="irParaPagina('crossdock_expedicao')">
+          <i class="las la-shipping-fast"></i> Expedição Cross Dock
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Put Away -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('putaway')">
+        <i class="las la-map-marker-alt"></i>
+        <span>Put Away</span>
+        <i class="las" [class.la-angle-down]="!isOpen('putaway')" [class.la-angle-up]="isOpen('putaway')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('putaway')">
+        <div class="sub-item" (click)="irParaPagina('putaway_localizacao')">
+          <i class="las la-location-arrow"></i> Sugestão de Localização
+        </div>
+        <div class="sub-item" (click)="irParaPagina('putaway_armazenagem')">
+          <i class="las la-warehouse"></i> Armazenagem
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Paletes e Contentores -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('paletes')">
+        <i class="las la-pallet"></i>
+        <span>Paletes e Contentores</span>
+        <i class="las" [class.la-angle-down]="!isOpen('paletes')" [class.la-angle-up]="isOpen('paletes')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('paletes')">
+        <div class="sub-item" (click)="irParaPagina('paletes_gestao')">
+          <i class="las la-clipboard-list"></i> Gestão de Paletes
+        </div>
+        <div class="sub-item" (click)="irParaPagina('contentores_rastreio')">
+          <i class="las la-qrcode"></i> Rastreio de Contentores
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Picking -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('picking')">
+        <i class="las la-route"></i>
+        <span>Picking</span>
+        <i class="las" [class.la-angle-down]="!isOpen('picking')" [class.la-angle-up]="isOpen('picking')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('picking')">
+        <div class="sub-item" (click)="irParaPagina('picking_onda')">
+          <i class="las la-list-ol"></i> Picking por Onda
+        </div>
+        <div class="sub-item" (click)="irParaPagina('picking_zona')">
+          <i class="las la-map"></i> Picking por Zona
+        </div>
+        <div class="sub-item" (click)="irParaPagina('picking_batch')">
+          <i class="las la-layer-group"></i> Picking Batch
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Reabastecimento -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('reabastecimento')">
+        <i class="las la-truck-loading"></i>
+        <span>Reabastecimento</span>
+        <i class="las" [class.la-angle-down]="!isOpen('reabastecimento')" [class.la-angle-up]="isOpen('reabastecimento')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('reabastecimento')">
+        <div class="sub-item" (click)="irParaPagina('reabastecimento_auto')">
+          <i class="las la-robot"></i> Reabastecimento Automático
+        </div>
+        <div class="sub-item" (click)="irParaPagina('reposicao')">
+          <i class="las la-exchange-alt"></i> Reposição de Picking
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Auditoria -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('auditoria')">
+        <i class="las la-clipboard-check"></i>
+        <span>Auditoria</span>
+        <i class="las" [class.la-angle-down]="!isOpen('auditoria')" [class.la-angle-up]="isOpen('auditoria')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('auditoria')">
+        <div class="sub-item" (click)="irParaPagina('auditoria_qualidade')">
+          <i class="las la-check-circle"></i> Auditoria de Qualidade
+        </div>
+        <div class="sub-item" (click)="irParaPagina('auditoria_processos')">
+          <i class="las la-chart-line"></i> Auditoria de Processos
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Inventários -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('inventarios')">
+        <i class="las la-calculator"></i>
+        <span>Inventários</span>
+        <i class="las" [class.la-angle-down]="!isOpen('inventarios')" [class.la-angle-up]="isOpen('inventarios')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('inventarios')">
+        <div class="sub-item" (click)="irParaPagina('inventario_ciclico')">
+          <i class="las la-sync-alt"></i> Inventário Cíclico
+        </div>
+        <div class="sub-item" (click)="irParaPagina('inventario_geral')">
+          <i class="las la-database"></i> Inventário Geral
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Embarque -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('embarque')">
+        <i class="las la-ship"></i>
+        <span>Embarque</span>
+        <i class="las" [class.la-angle-down]="!isOpen('embarque')" [class.la-angle-up]="isOpen('embarque')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('embarque')">
+        <div class="sub-item" (click)="irParaPagina('embarque_expedicao')">
+          <i class="las la-truck"></i> Expedição
+        </div>
+        <div class="sub-item" (click)="irParaPagina('embarque_cargas')">
+          <i class="las la-boxes"></i> Gestão de Cargas
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. Manufactura -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('manufactura')">
+        <i class="las la-industry"></i>
+        <span>Manufactura</span>
+        <i class="las" [class.la-angle-down]="!isOpen('manufactura')" [class.la-angle-up]="isOpen('manufactura')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('manufactura')">
+        <div class="sub-item" (click)="irParaPagina('manufactura_ordens')">
+          <i class="las la-clipboard-list"></i> Ordens de Produção
+        </div>
+        <div class="sub-item" (click)="irParaPagina('manufactura_materiais')">
+          <i class="las la-microchip"></i> Consumo de Materiais
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. Controle de Incidentes -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('incidentes')">
+        <i class="las la-exclamation-triangle"></i>
+        <span>Controle de Incidentes</span>
+        <i class="las" [class.la-angle-down]="!isOpen('incidentes')" [class.la-angle-up]="isOpen('incidentes')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('incidentes')">
+        <div class="sub-item" (click)="irParaPagina('incidentes_registo')">
+          <i class="las la-plus-circle"></i> Registo de Incidentes
+        </div>
+        <div class="sub-item" (click)="irParaPagina('incidentes_analise')">
+          <i class="las la-chart-pie"></i> Análise de Incidentes
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Controle de Ativos -->
+    <div class="menu-section">
+      <div class="menu-header" (click)="toggleSection('ativos')">
+        <i class="las la-microchip"></i>
+        <span>Controle de Ativos</span>
+        <i class="las" [class.la-angle-down]="!isOpen('ativos')" [class.la-angle-up]="isOpen('ativos')"></i>
+      </div>
+      <div class="menu-content" [class.open]="isOpen('ativos')">
+        <div class="sub-item" (click)="irParaPagina('ativos_equipamentos')">
+          <i class="las la-tools"></i> Equipamentos
+        </div>
+        <div class="sub-item" (click)="irParaPagina('ativos_manutencao')">
+          <i class="las la-wrench"></i> Manutenção
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  @if (paginaAtiva()) {
+    <div class="content-area">
+      <div class="content-header">
+        <h2><i [class]="paginaIcone()"></i> {{ paginaTitulo() }}</h2>
+        <button class="btn-close" (click)="fecharConteudo()">×</button>
+      </div>
+      <div class="content-body">
+        <p>Conteúdo de <strong>{{ paginaTitulo() }}</strong> será carregado aqui...</p>
+        <p>Pode integrar os componentes existentes (EnvComponent, AlertaComponent, etc.) aqui.</p>
+      </div>
+    </div>
+  }
+</div>

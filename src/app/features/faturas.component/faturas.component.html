@@ -1,0 +1,371 @@
+<!-- src/app/features/faturas.component/faturas.component.html -->
+<div class="faturas-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <h1><i class="las la-file-invoice"></i> Faturas</h1>
+      <p>Gestão de faturas, clientes, equipamentos e serviços</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="abrirModalNovaFatura()">
+        <i class="las la-plus"></i> Nova Fatura
+      </button>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  @if (errorMsg()) {
+    <div class="alert-error">
+      <i class="las la-exclamation-circle"></i> {{ errorMsg() }}
+      <button class="alert-close" (click)="clearError()">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert-success">
+      <i class="las la-check-circle"></i> {{ successMsg() }}
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label><i class="las la-search"></i> Pesquisar</label>
+        <input type="text" placeholder="Cliente ou Nº Fatura..." [(ngModel)]="filtroSearch" (ngModelChange)="carregarFaturas()" />
+      </div>
+      <div class="filter-group">
+        <label><i class="las la-tag"></i> Estado</label>
+        <select [(ngModel)]="filtroEstado" (ngModelChange)="carregarFaturas()">
+          <option value="">Todos</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Paga">Paga</option>
+          <option value="Cancelada">Cancelada</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="las la-spinner la-spin"></i>
+      <span>A carregar faturas...</span>
+    </div>
+  }
+
+  <!-- Tabela de Faturas -->
+  @if (!isLoading()) {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Fatura</th>
+              <th>Cliente</th>
+              <th>Data Doc</th>
+              <th>Estado</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fat of faturas(); track fat.id) {
+              <tr (click)="selecionarFatura(fat)" [class.row-selected]="selectedFatura()?.id === fat.id">
+                <td><code>{{ fat.numeroFatura }}</code></td>
+                <td>{{ fat.clienteNome }}</td>
+                <td>{{ formatarData(fat.dataDoc) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getEstadoClass(fat.estado)">
+                    {{ fat.estado }}
+                  </span>
+                </td>
+                <td><strong>{{ formatarMoeda(fat.valorTotal) }}</strong></td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-action btn-pdf" (click)="imprimirPdf(fat)" title="PDF">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  <button class="btn-action btn-edit" (click)="abrirModalEditarFatura(fat)" title="Editar">
+                    <i class="las la-edit"></i>
+                  </button>
+                  <button class="btn-action btn-delete" (click)="confirmarDelete(fat)" title="Eliminar">
+                    <i class="las la-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (faturas().length === 0) {
+              <tr>
+                <td colspan="6" class="empty-state">
+                  <i class="las la-file-invoice"></i> Nenhuma fatura encontrada.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Modal Detalhe da Fatura -->
+@if (showDetailModal() && selectedFatura()) {
+  <div class="modal-overlay" (click)="fecharModalDetalhe()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-file-invoice"></i> Fatura {{ selectedFatura()?.numeroFatura }}</h3>
+        <button class="modal-close" (click)="fecharModalDetalhe()">×</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Informações do Cliente -->
+        <div class="info-section">
+          <h4><i class="las la-user"></i> Informações do Cliente</h4>
+          <div class="info-grid">
+            <div class="info-item"><span>Nome:</span><strong>{{ selectedFatura()?.clienteNome }}</strong></div>
+            <div class="info-item"><span>Contacto:</span><span>{{ selectedFatura()?.clienteContacto }}</span></div>
+            @if (selectedFatura()?.clienteEmail) {
+              <div class="info-item"><span>Email:</span><span>{{ selectedFatura()?.clienteEmail }}</span></div>
+            }
+            @if (selectedFatura()?.clienteNif) {
+              <div class="info-item"><span>NIF:</span><span>{{ selectedFatura()?.clienteNif }}</span></div>
+            }
+            @if (selectedFatura()?.clienteMorada) {
+              <div class="info-item"><span>Morada:</span><span>{{ selectedFatura()?.clienteMorada }}</span></div>
+            }
+          </div>
+        </div>
+
+        <!-- Informações do Serviço -->
+        @if (selectedFatura()?.quemExecutou || selectedFatura()?.horasTrabalho || selectedFatura()?.materialUtilizado) {
+          <div class="info-section">
+            <h4><i class="las la-tools"></i> Dados do Serviço</h4>
+            <div class="info-grid">
+              @if (selectedFatura()?.quemExecutou) {
+                <div class="info-item"><span>Executado por:</span><strong>{{ selectedFatura()?.quemExecutou }}</strong></div>
+              }
+              @if (selectedFatura()?.horasTrabalho) {
+                <div class="info-item"><span>Horas trabalhadas:</span><strong>{{ selectedFatura()?.horasTrabalho }}h</strong></div>
+              }
+              @if (selectedFatura()?.materialUtilizado) {
+                <div class="info-item full-width"><span>Material utilizado:</span><span>{{ selectedFatura()?.materialUtilizado }}</span></div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Tabela de Itens (Equipamentos) -->
+        <div class="info-section">
+          <h4><i class="las la-car"></i> Equipamentos</h4>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Marca</th><th>Modelo</th><th>Cor</th><th>Matrícula</th><th>Qtd</th><th>Preço Unit.</th><th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of selectedFatura()?.itens; track $index) {
+                  <tr>
+                    <td>{{ item.marca }}</td>
+                    <td>{{ item.modelo }}</td>
+                    <td>{{ item.cor }}</td>
+                    <td><code>{{ item.matricula }}</code></td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>{{ formatarMoeda(item.precoUnitario) }}</td>
+                    <td><strong>{{ formatarMoeda(item.subtotal || 0) }}</strong></td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                  <td><strong>{{ formatarMoeda(selectedFatura()?.valorTotal || 0) }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        @if (selectedFatura()?.observacoes) {
+          <div class="info-section">
+            <h4><i class="las la-sticky-note"></i> Observações</h4>
+            <p>{{ selectedFatura()?.observacoes }}</p>
+          </div>
+        }
+
+        <!-- Estado -->
+        <div class="info-section">
+          <h4><i class="las la-info-circle"></i> Estado</h4>
+          <span class="badge" [ngClass]="getEstadoClass(selectedFatura()?.estado || '')">
+            {{ selectedFatura()?.estado }}
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModalDetalhe()">Fechar</button>
+        <button class="btn-primary" (click)="imprimirPdf(selectedFatura()!)">
+          <i class="las la-file-pdf"></i> Imprimir PDF
+        </button>
+        <button class="btn-edit" (click)="abrirModalEditarFatura(selectedFatura()!)">
+          <i class="las la-edit"></i> Editar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Criar/Editar Fatura -->
+@if (showFormModal()) {
+  <div class="modal-overlay" (click)="fecharModalForm()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las" [class.la-plus-circle]="!isEditing()" [class.la-edit]="isEditing()"></i>
+          {{ isEditing() ? 'Editar Fatura' : 'Nova Fatura' }}
+        </h3>
+        <button class="modal-close" (click)="fecharModalForm()">×</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Dados do Cliente -->
+        <div class="form-section">
+          <h4><i class="las la-user"></i> Dados do Cliente</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome do Cliente <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="formCliente.clienteNome" placeholder="Nome completo" />
+            </div>
+            <div class="form-group">
+              <label>Contacto <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="formCliente.clienteContacto" placeholder="Telefone/Email" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="formCliente.clienteEmail" placeholder="cliente@email.com" />
+            </div>
+            <div class="form-group">
+              <label>NIF</label>
+              <input type="text" [(ngModel)]="formCliente.clienteNif" placeholder="123456789" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Morada</label>
+            <input type="text" [(ngModel)]="formCliente.clienteMorada" placeholder="Rua, nº, cidade" />
+          </div>
+        </div>
+
+        <!-- Dados do Serviço -->
+        <div class="form-section">
+          <h4><i class="las la-tools"></i> Dados do Serviço</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Quem executou</label>
+              <input type="text" [(ngModel)]="formCliente.quemExecutou" placeholder="Nome do técnico" />
+            </div>
+            <div class="form-group">
+              <label>Horas de trabalho</label>
+              <input type="number" step="0.5" [(ngModel)]="formCliente.horasTrabalho" placeholder="Ex: 2.5" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Material utilizado</label>
+            <textarea rows="2" [(ngModel)]="formCliente.materialUtilizado" placeholder="Descrever materiais utilizados..."></textarea>
+          </div>
+        </div>
+
+        <!-- Equipamentos -->
+        <div class="form-section">
+          <h4><i class="las la-car"></i> Equipamentos</h4>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Marca</th><th>Modelo</th><th>Cor</th><th>Matrícula</th><th>Qtd</th><th>Preço Unit.</th><th>Subtotal</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of formItens; track $index; let i = $index) {
+                  <tr>
+                    <td><input type="text" [(ngModel)]="item.marca" placeholder="Marca" class="input-sm" /></td>
+                    <td><input type="text" [(ngModel)]="item.modelo" placeholder="Modelo" class="input-sm" /></td>
+                    <td><input type="text" [(ngModel)]="item.cor" placeholder="Cor" class="input-sm" /></td>
+                    <td><input type="text" [(ngModel)]="item.matricula" placeholder="Matrícula" class="input-sm" /></td>
+                    <td><input type="number" [(ngModel)]="item.quantidade" min="1" class="input-sm qty" (change)="calcularSubtotal(i)" /></td>
+                    <td><input type="number" [(ngModel)]="item.precoUnitario" min="0" step="0.01" class="input-sm price" (change)="calcularSubtotal(i)" /></td>
+                    <td class="subtotal-cell">{{ formatarMoeda(item.subtotal || 0) }}</td>
+                    <td><button class="btn-icon-small danger" (click)="removerItem(i)"><i class="las la-trash"></i></button></td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="7">
+                    <button class="btn-link" (click)="adicionarItem()">
+                      <i class="las la-plus"></i> Adicionar equipamento
+                    </button>
+                  </td>
+                </tr>
+                <tr class="total-row-form">
+                  <td colspan="6" class="text-right"><strong>Total da Fatura:</strong></td>
+                  <td><strong>{{ formatarMoeda(valorTotalForm()) }}</strong></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Outros Campos -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data do Documento</label>
+            <input type="date" [(ngModel)]="formCliente.dataDoc" />
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select [(ngModel)]="formCliente.estado">
+              <option value="Pendente">Pendente</option>
+              <option value="Paga">Paga</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea rows="2" [(ngModel)]="formCliente.observacoes" placeholder="Observações adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModalForm()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarFatura()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? 'A guardar...' : 'Guardar Fatura' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Confirmar Delete -->
+@if (showDeleteConfirm()) {
+  <div class="modal-overlay" (click)="fecharConfirmacao()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-trash"></i> Confirmar eliminação</h3>
+        <button class="modal-close" (click)="fecharConfirmacao()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja eliminar a fatura <strong>{{ faturaParaDelete()?.numeroFatura }}</strong>?</p>
+        <p class="text-warning">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharConfirmacao()">Cancelar</button>
+        <button class="btn-danger" (click)="eliminarFatura()">
+          <i class="las la-trash"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}

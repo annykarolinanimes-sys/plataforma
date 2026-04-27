@@ -1,0 +1,30 @@
+/* You can add global styles to this file, and also import other style files */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background-color: #f4f7f6; 
+    
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('data:image/svg+xml,...'); 
+    background-repeat: repeat;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
