@@ -371,6 +371,71 @@
   content: '✓'; color: white; font-size: 10px; font-weight: 700; line-height: 1;
 }
 
+/* ─── Formulário inline (estados create/edit) ───────────────────────────── */
+
+.form-page {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--slate-200);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-left i {
+  font-size: 1.5rem;
+  color: var(--blue);
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--slate-900);
+}
+
+.form-body {
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--slate-200);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.clickable-row:hover {
+  background: var(--slate-50);
+}
+
+.modal-content--sm {
+  max-width: 450px;
+}
+
 @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scaleIn  { from { opacity: 0; transform: scale(.96) translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes slideDown{ from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }

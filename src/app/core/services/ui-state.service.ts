@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 
 export type FaturaUIState = 'list' | 'create' | 'edit' | 'details';
 export type VeiculoUIState = 'list' | 'create' | 'edit' | 'details';
+export type FornecedorUIState = 'list' | 'create' | 'edit';
 
 @Injectable({ providedIn: 'root' })
 export class UiStateService {
@@ -80,4 +81,30 @@ export class UiStateService {
   isVeiculoCreate(): boolean { return this.veiculoState() === 'create'; }
   isVeiculoEdit(): boolean { return this.veiculoState() === 'edit'; }
   isVeiculoDetails(): boolean { return this.veiculoState() === 'details'; }
+
+  private fornecedorState = signal<FornecedorUIState>('list');
+  private selectedFornecedorId = signal<number | null>(null);
+
+  readonly currentFornecedorState = this.fornecedorState.asReadonly();
+  readonly currentFornecedorId = this.selectedFornecedorId.asReadonly();
+
+  goToFornecedorList(): void {
+    this.fornecedorState.set('list');
+    this.selectedFornecedorId.set(null);
+  }
+
+  goToFornecedorCreate(): void {
+    this.fornecedorState.set('create');
+    this.selectedFornecedorId.set(null);
+  }
+
+  goToFornecedorEdit(id: number): void {
+    this.fornecedorState.set('edit');
+    this.selectedFornecedorId.set(id);
+  }
+
+  isFornecedorList(): boolean { return this.fornecedorState() === 'list'; }
+  isFornecedorCreate(): boolean { return this.fornecedorState() === 'create'; }
+  isFornecedorEdit(): boolean { return this.fornecedorState() === 'edit'; }
+
 }

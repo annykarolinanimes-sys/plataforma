@@ -147,11 +147,8 @@
           @if (isLogin()) {
             <span>
               Não tem uma conta?
-              <a href="#" (click)="$event.preventDefault(); switchMode('signup')">Cadastre-se</a>
+              <a href="#" (click)="$event.preventDefault(); switchMode('signup')">Registe-se</a>
             </span>
-            <a href="#" class="forgot-link-bottom" (click)="$event.preventDefault(); switchMode('forgot')">
-              Esqueceu a senha?
-            </a>
           }
 
           @if (isSignup()) {
@@ -161,13 +158,7 @@
             </span>
           }
 
-          @if (isForgot()) {
-            <span>
-              Lembrou a senha?
-              <a href="#" (click)="$event.preventDefault(); switchMode('login')">Voltar ao login</a>
-            </span>
-          }
-
+  
         </div>
       </div>
     </div>

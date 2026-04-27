@@ -44,7 +44,6 @@ export class ProdutosComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
 
-    // Pesquisa com debounce (300 ms) para não disparar em cada tecla
     this.searchInput$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
