@@ -782,6 +782,139 @@ namespace Accusoft.Api.Migrations
                     b.ToTable("produtos");
                 });
 
+            modelBuilder.Entity("Accusoft.Api.Models.Recepcao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime>("DataRecepcao")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_recepcao");
+
+                    b.Property<string>("DocumentoReferencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("documento_referencia");
+
+                    b.Property<string>("Fornecedor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("fornecedor");
+
+                    b.Property<string>("NumeroRecepcao")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_recepcao");
+
+                    b.Property<string>("Prioridade")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("prioridade");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TipoEntrada")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_entrada");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("rececoes");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.RecepcaoItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Conformidade")
+                        .HasColumnType("boolean")
+                        .HasColumnName("conformidade");
+
+                    b.Property<string>("Localizacao")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("localizacao");
+
+                    b.Property<string>("Lote")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("lote");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<string>("ProdutoNome")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("produto_nome");
+
+                    b.Property<int>("QuantidadeEsperada")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantidade_esperada");
+
+                    b.Property<int>("QuantidadeRecebida")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantidade_recebida");
+
+                    b.Property<int>("QuantidadeRejeitada")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantidade_rejeitada");
+
+                    b.Property<int>("RecepcaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("recepcao_id");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("sku");
+
+                    b.Property<DateOnly?>("Validade")
+                        .HasColumnType("date")
+                        .HasColumnName("validade");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecepcaoId");
+
+                    b.ToTable("recepcao_itens");
+                });
+
             modelBuilder.Entity("Accusoft.Api.Models.RotaCatalogo", b =>
                 {
                     b.Property<int>("Id")
@@ -1257,6 +1390,28 @@ namespace Accusoft.Api.Migrations
                     b.Navigation("Fornecedor");
                 });
 
+            modelBuilder.Entity("Accusoft.Api.Models.Recepcao", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.RecepcaoItem", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Recepcao", "Recepcao")
+                        .WithMany("Itens")
+                        .HasForeignKey("RecepcaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recepcao");
+                });
+
             modelBuilder.Entity("Accusoft.Api.Models.RotaCatalogo", b =>
                 {
                     b.HasOne("Accusoft.Api.Models.User", "CriadoPorUtilizador")
@@ -1318,6 +1473,11 @@ namespace Accusoft.Api.Migrations
                     b.Navigation("Estoques");
 
                     b.Navigation("Movimentacoes");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Recepcao", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.User", b =>

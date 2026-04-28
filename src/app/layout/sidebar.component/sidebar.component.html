@@ -33,7 +33,7 @@
         @if (collapsed() && processosMenuOpen()) {
           <div class="floating-submenu">
             @for (item of processosSubmenu; track item.label) {
-              <a class="nav-subitem" [routerLink]="item.route" [queryParams]="item.queryParams" (click)="processosMenuOpen.set(false)">
+              <a class="nav-subitem" [routerLink]="item.route" (click)="processosMenuOpen.set(false)">
                 <i [class]="'las ' + item.icon"></i>
                 <span>{{ item.label }}</span>
               </a>
@@ -45,7 +45,7 @@
           <ul class="nav-submenu">
             @for (item of processosSubmenu; track item.label) {
               <li>
-                <a class="nav-subitem" [routerLink]="item.route" [queryParams]="item.queryParams">
+                <a class="nav-subitem" [routerLink]="item.route">
                   <i [class]="'las ' + item.icon"></i>
                   <span>{{ item.label }}</span>
                 </a>

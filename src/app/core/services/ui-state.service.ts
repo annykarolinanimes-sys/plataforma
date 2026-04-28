@@ -3,6 +3,17 @@ import { Injectable, signal } from '@angular/core';
 export type FaturaUIState = 'list' | 'create' | 'edit' | 'details';
 export type VeiculoUIState = 'list' | 'create' | 'edit' | 'details';
 export type FornecedorUIState = 'list' | 'create' | 'edit';
+export type RecepcaoUIState = 'list' | 'create' | 'edit';
+export type AtribuicaoUIState = 'list' | 'create' | 'edit';
+export type FechoViagemUIState = 'list' | 'create' | 'edit';
+export type GestaoViagemUIState = 'list' | 'create' | 'edit';
+export type IncidenteUIState = 'list' | 'create' | 'edit';
+export type GuiaUIState = 'list' | 'create' | 'edit';
+
+
+
+
+
 
 @Injectable({ providedIn: 'root' })
 export class UiStateService {
@@ -106,5 +117,156 @@ export class UiStateService {
   isFornecedorList(): boolean { return this.fornecedorState() === 'list'; }
   isFornecedorCreate(): boolean { return this.fornecedorState() === 'create'; }
   isFornecedorEdit(): boolean { return this.fornecedorState() === 'edit'; }
+
+  private recepcaoState = signal<RecepcaoUIState>('list');
+  private selectedRecepcaoId = signal<number | null>(null);
+
+  readonly currentRecepcaoState = this.recepcaoState.asReadonly();
+  readonly currentRecepcaoId = this.selectedRecepcaoId.asReadonly();
+
+  goToRecepcaoList(): void {
+    this.recepcaoState.set('list');
+    this.selectedRecepcaoId.set(null);
+  }
+
+  goToRecepcaoCreate(): void {
+    this.recepcaoState.set('create');
+    this.selectedRecepcaoId.set(null);
+  }
+
+  goToRecepcaoEdit(id: number): void {
+    this.recepcaoState.set('edit');
+    this.selectedRecepcaoId.set(id);
+  }
+
+  isRecepcaoList(): boolean { return this.recepcaoState() === 'list'; }
+  isRecepcaoCreate(): boolean { return this.recepcaoState() === 'create'; }
+  isRecepcaoEdit(): boolean { return this.recepcaoState() === 'edit'; }
+
+
+  private atribuicaoState = signal<AtribuicaoUIState>('list');
+  private selectedAtribuicaoId = signal<number | null>(null);
+
+  readonly currentAtribuicaoState = this.atribuicaoState.asReadonly();
+  readonly currentAtribuicaoId = this.selectedAtribuicaoId.asReadonly();
+
+  goToAtribuicaoList(): void {
+    this.atribuicaoState.set('list');
+    this.selectedAtribuicaoId.set(null);
+  }
+
+  goToAtribuicaoCreate(): void {
+    this.atribuicaoState.set('create');
+    this.selectedAtribuicaoId.set(null);
+  }
+
+  goToAtribuicaoEdit(id: number): void {
+    this.atribuicaoState.set('edit');
+    this.selectedAtribuicaoId.set(id);
+  }
+
+  isAtribuicaoList(): boolean { return this.atribuicaoState() === 'list'; }
+  isAtribuicaoCreate(): boolean { return this.atribuicaoState() === 'create'; }
+  isAtribuicaoEdit(): boolean { return this.atribuicaoState() === 'edit'; }
+
+  private fechoViagemState = signal<FechoViagemUIState>('list');
+  private selectedFechoViagemId = signal<number | null>(null);
+
+  readonly currentFechoViagemState = this.fechoViagemState.asReadonly();
+  readonly currentFechoViagemId = this.selectedFechoViagemId.asReadonly();
+
+  goToFechoViagemList(): void {
+    this.fechoViagemState.set('list');
+    this.selectedFechoViagemId.set(null);
+  }
+
+  goToFechoViagemCreate(): void {
+    this.fechoViagemState.set('create');
+    this.selectedFechoViagemId.set(null);
+  }
+
+  goToFechoViagemEdit(id: number): void {
+    this.fechoViagemState.set('edit');
+    this.selectedFechoViagemId.set(id);
+  }
+
+  isFechoViagemList(): boolean { return this.fechoViagemState() === 'list'; }
+  isFechoViagemCreate(): boolean { return this.fechoViagemState() === 'create'; }
+  isFechoViagemEdit(): boolean { return this.fechoViagemState() === 'edit'; }
+
+  private gestaoViagemState = signal<GestaoViagemUIState>('list');
+  private selectedGestaoViagemId = signal<number | null>(null);
+
+  readonly currentGestaoViagemState = this.gestaoViagemState.asReadonly();
+  readonly currentGestaoViagemId = this.selectedGestaoViagemId.asReadonly();
+
+  goToGestaoViagemList(): void {
+    this.gestaoViagemState.set('list');
+    this.selectedGestaoViagemId.set(null);
+  }
+
+  goToGestaoViagemCreate(): void {
+    this.gestaoViagemState.set('create');
+    this.selectedGestaoViagemId.set(null);
+  }
+
+  goToGestaoViagemEdit(id: number): void {
+    this.gestaoViagemState.set('edit');
+    this.selectedGestaoViagemId.set(id);
+  }
+
+  isGestaoViagemList(): boolean { return this.gestaoViagemState() === 'list'; }
+  isGestaoViagemCreate(): boolean { return this.gestaoViagemState() === 'create'; }
+  isGestaoViagemEdit(): boolean { return this.gestaoViagemState() === 'edit'; }
+
+  private incidenteState = signal<IncidenteUIState>('list');
+  private selectedIncidenteId = signal<number | null>(null);
+
+  readonly currentIncidenteState = this.incidenteState.asReadonly();
+  readonly currentIncidenteId = this.selectedIncidenteId.asReadonly();
+
+  goToIncidenteList(): void {
+    this.incidenteState.set('list');
+    this.selectedIncidenteId.set(null);
+  }
+
+  goToIncidenteCreate(): void {
+    this.incidenteState.set('create');
+    this.selectedIncidenteId.set(null);
+  }
+
+  goToIncidenteEdit(id: number): void {
+    this.incidenteState.set('edit');
+    this.selectedIncidenteId.set(id);
+  }
+
+  isIncidenteList(): boolean { return this.incidenteState() === 'list'; }
+  isIncidenteCreate(): boolean { return this.incidenteState() === 'create'; }
+  isIncidenteEdit(): boolean { return this.incidenteState() === 'edit'; }
+
+  private guiaState = signal<GuiaUIState>('list');
+  private selectedGuiaId = signal<number | null>(null);
+
+  readonly currentGuiaState = this.guiaState.asReadonly();
+  readonly currentGuiaId = this.selectedGuiaId.asReadonly();
+
+  goToGuiaList(): void {
+    this.guiaState.set('list');
+    this.selectedGuiaId.set(null);
+  }
+
+  goToGuiaCreate(): void {
+    this.guiaState.set('create');
+    this.selectedGuiaId.set(null);
+  }
+
+  goToGuiaEdit(id: number): void {
+    this.guiaState.set('edit');
+    this.selectedGuiaId.set(id);
+  }
+
+  isGuiaList(): boolean { return this.guiaState() === 'list'; }
+  isGuiaCreate(): boolean { return this.guiaState() === 'create'; }
+  isGuiaEdit(): boolean { return this.guiaState() === 'edit'; }
 
 }

@@ -71,4 +71,10 @@ public class Produto
 
     public ICollection<Estoque>             Estoques      { get; set; } = [];
     public ICollection<MovimentacaoEstoque> Movimentacoes { get; set; } = [];
+
+    [Column("peso_unitario")]
+    public decimal PesoUnitario { get; set; } = 0;
+
+    [Column("volume_unitario")]
+    public int VolumeUnitario { get; set; } = 0;
 }

@@ -22,6 +22,7 @@ export class SidebarComponent {
   get isCollapsed(): boolean {
       return this.collapsed();
   }
+  
   readonly navItems = [
     { icon: 'la-tachometer-alt', label: 'Dashboards', route: '/dashboard' },
     { icon: 'la-chalkboard', label: 'Processos', route: null, hasSubmenu: true, submenuKey: 'processos' },
@@ -31,13 +32,13 @@ export class SidebarComponent {
     { icon: 'la-cog', label: 'Definições', route: '/definicao' },
   ];
 
+  // CORRIGIDO: Rotas diretas sem prefixo /processos
   processosSubmenu = [
     { icon: 'la-box', label: 'Recepção', route: '/recepcao' },
-    { icon: 'la-exchange-alt', label: 'Atribuições', route: '/processos', queryParams: { processo: 'atribuicao' } },
-    { icon: 'la-route', label: 'Fecho de Viagem', route: '/processos', queryParams: { processo: 'fechoviagem' } },
-    { icon: 'la-calculator', label: 'Gestão de Viagens', route: '/processos', queryParams: { processo: 'gestaoviagens' } },
-    { icon: 'la-chart-line', label: 'Roteirização', route: '/processos', queryParams: { processo: 'roteirizacao' } },
-    { icon: 'la-exclamation-triangle', label: 'Incidentes', route: '/processos', queryParams: { processo: 'incidentes' } },
+    { icon: 'la-exchange-alt', label: 'Atribuições', route: '/atribuicoes' },
+    { icon: 'la-route', label: 'Fecho de Viagem', route: '/fecho-viagem' },
+    { icon: 'la-calculator', label: 'Gestão de Viagens', route: '/gestao-viagens' },
+    { icon: 'la-exclamation-triangle', label: 'Incidentes', route: '/incidentes' },
   ];
 
   catalogoSubmenu = [
@@ -77,22 +78,6 @@ export class SidebarComponent {
     if (this.impressaoMenuOpen()) {
       this.processosMenuOpen.set(false);
       this.catalogoMenuOpen.set(false);
-    }
-  }
-
-  irParaProcesso(processo: string): void {
-    if (processo === 'entradas') {
-      this.router.navigate(['/entradas']);
-    } else {
-      this.router.navigate(['/processos'], { queryParams: { processo } });
-    }
-  }
-
-  navegarPara(route: string, queryParams?: any): void {
-    if (queryParams) {
-      this.router.navigate([route], { queryParams });
-    } else {
-      this.router.navigate([route]);
     }
   }
 }

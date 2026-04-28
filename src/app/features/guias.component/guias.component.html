@@ -1,0 +1,634 @@
+<div class="guias-container">
+
+  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
+  @if (currentState() === 'list') {
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-file-alt"></i>
+        </div>
+        <div>
+          <h1>Guias de Transporte</h1>
+          <p>Documentos operacionais para transporte, remessa e entrega</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Guia
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Nº Guia, Cliente..."
+            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-tag"></i>
+          <select [value]="filtroTipo" (change)="onTipoChange($any($event.target).value)">
+            <option value="">Todos os tipos</option>
+            @for (t of tipos; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-chart-line"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} guia{{ pagedResult()!.total !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar guias…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Guia</th>
+              <th>Tipo</th>
+              <th>Cliente</th>
+              <th>Transportadora</th>
+              <th>Data Emissão</th>
+              <th>Status</th>
+              <th>Peso</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (g of guias(); track g.id) {
+              <tr [class.row--cancelada]="g.status === 'Cancelada'" (click)="goToEdit(g)" class="clickable-row">
+                <td class="numero-cell">
+                  <code class="numero-tag">{{ g.numeroGuia }}</code>
+                </td>
+                <td>
+                  <span class="tipo-badge">{{ g.tipo }}</span>
+                </td>
+                <td>
+                  <strong>{{ g.clienteNome || '—' }}</strong>
+                </td>
+                <td>
+                  {{ g.transportadoraNome || '—' }}
+                </td>
+                <td>
+                  {{ formatarData(g.dataEmissao) }}
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(g.status)">{{ g.status }}</span>
+                </td>
+                <td>
+                  {{ formatarPeso(g.pesoTotalKg) }}
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-icon btn-icon--print" (click)="imprimirGuia(g, $event)" title="Imprimir PDF">
+                    <i class="las la-print"></i>
+                  </button>
+                  @if (g.status !== 'Cancelada' && g.status !== 'Enviada') {
+                    <button class="btn-icon btn-icon--edit" (click)="goToEdit(g, $event)" title="Editar">
+                      <i class="las la-edit"></i>
+                    </button>
+                    <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(g, $event)" title="Cancelar">
+                      <i class="las la-ban"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+            @if (guias().length === 0) {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <i class="las la-file-alt"></i>
+                    <p>Nenhuma guia encontrada</p>
+                    <small>Altere os filtros ou crie uma nova guia.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+            <i class="las la-angle-left"></i>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">
+              {{ p }}
+            </button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage }} de {{ totalPages() }} ({{ totalGuias() }} registos)
+          </span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ─── MODO: CRIAR GUIA ──────────────────────────────────────────────── -->
+  @if (currentState() === 'create') {
+
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-file-alt"></i>
+          <h2>Nova Guia</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()">
+          <i class="las la-times"></i> Cancelar
+        </button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="alert alert--error">{{ errorMsg() }}</div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+
+        <!-- Dados Gerais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Gerais</h4>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('tipo')">
+              <label>Tipo de Guia <span class="required">*</span></label>
+              <select formControlName="tipo">
+                @for (t of tipos; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Atribuição (opcional)</label>
+              <select formControlName="atribuicaoId">
+                <option [value]="null">Seleccione uma atribuição...</option>
+                @for (a of atribuicoes(); track a.id) {
+                  <option [value]="a.id">{{ a.numeroAtribuicao }} - {{ a.clienteNome }}</option>
+                }
+              </select>
+              <span class="field-hint">Preenche automaticamente origem/destino</span>
+            </div>
+
+            <div class="form-group">
+              <label>Cliente</label>
+              <select formControlName="clienteId">
+                <option [value]="null">Seleccione um cliente...</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id">{{ c.nome }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transportadora</label>
+              <select formControlName="transportadoraId">
+                <option [value]="null">Seleccione uma transportadora...</option>
+                @for (t of transportadoras(); track t.id) {
+                  <option [value]="t.id">{{ t.nome }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Data Prevista Entrega</label>
+              <input type="date" formControlName="dataPrevistaEntrega" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Endereços -->
+        <div class="form-section">
+          <h4 class="form-section__title">Endereços</h4>
+          <div class="form-group">
+            <label>Endereço de Origem</label>
+            <input type="text" formControlName="enderecoOrigem" placeholder="Local de partida" />
+          </div>
+          <div class="form-group">
+            <label>Endereço de Destino</label>
+            <input type="text" formControlName="enderecoDestino" placeholder="Local de chegada" />
+          </div>
+        </div>
+
+        <!-- Itens -->
+        <div class="form-section">
+          <div class="section-header">
+            <h4 class="form-section__title">
+              <i class="las la-list"></i> Itens / Produtos
+            </h4>
+            <button type="button" class="btn-link" (click)="adicionarItem()">
+              <i class="las la-plus-circle"></i> Adicionar produto
+            </button>
+          </div>
+
+          <div class="itens-grid" formArrayName="itens">
+            @for (item of itensArray.controls; track $index; let i = $index) {
+              <div class="item-card" [formGroupName]="i">
+                <div class="card-header-item">
+                  <span class="card-title">Item #{{ i + 1 }}</span>
+                  <button type="button" class="btn-remove" (click)="removerItem(i)">
+                    <i class="las la-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="card-body-item">
+                  <div class="item-row">
+                    <div class="item-field" style="flex: 2;">
+                      <label>Produto <span class="required">*</span></label>
+                      <select formControlName="produtoId" (change)="onProdutoChange(i)">
+                        <option [value]="null">Seleccione um produto...</option>
+                        @for (p of produtos(); track p.id) {
+                          <option [value]="p.id">{{ p.sku }} - {{ p.nome }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="item-field">
+                      <label>Quantidade <span class="required">*</span></label>
+                      <input type="number" formControlName="quantidade" min="1" (change)="calcularTotaisItem(i)" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Código</label>
+                      <input type="text" formControlName="produtoSku" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Peso Unitário (kg)</label>
+                      <input type="number" formControlName="pesoUnitario" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Peso Total (kg)</label>
+                      <input type="number" formControlName="pesoTotal" readonly [disabled]="true" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Volume Unitário (m³)</label>
+                      <input type="number" formControlName="volumeUnitario" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Volume Total (m³)</label>
+                      <input type="number" formControlName="volumeTotal" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Lote</label>
+                      <input type="text" formControlName="lote" placeholder="Nº do lote" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field full-width">
+                      <label>Observações do Item</label>
+                      <input type="text" formControlName="observacoes" placeholder="Notas sobre este item" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Totais resumo -->
+          <div class="totais-resumo">
+            <div class="total-item">
+              <span class="total-label">Total de Itens:</span>
+              <span class="total-value">{{ itensArray.controls.length }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">Peso Total:</span>
+              <span class="total-value">{{ calcularPesoTotal() | number:'1.2-2' }} kg</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">Volume Total:</span>
+              <span class="total-value">{{ calcularVolumeTotal() | number:'1.0-0' }} m³</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="form-section">
+          <h4 class="form-section__title">Informações Complementares</h4>
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais sobre o transporte..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Instruções Especiais</label>
+            <textarea rows="2" formControlName="instrucoesEspeciais" placeholder="Instruções para o transportador..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Guia
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODO: EDITAR GUIA ──────────────────────────────────────────────── -->
+  @if (currentState() === 'edit') {
+
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-edit"></i>
+          <h2>Editar Guia</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()">
+          <i class="las la-times"></i> Cancelar
+        </button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="alert alert--error">{{ errorMsg() }}</div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+
+        <!-- Dados Gerais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Gerais</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Guia</label>
+              <select formControlName="tipo">
+                @for (t of tipos; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Atribuição</label>
+              <select formControlName="atribuicaoId">
+                <option [value]="null">Seleccione uma atribuição...</option>
+                @for (a of atribuicoes(); track a.id) {
+                  <option [value]="a.id">{{ a.numeroAtribuicao }} - {{ a.clienteNome }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Cliente</label>
+              <select formControlName="clienteId">
+                <option [value]="null">Seleccione um cliente...</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id">{{ c.nome }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transportadora</label>
+              <select formControlName="transportadoraId">
+                <option [value]="null">Seleccione uma transportadora...</option>
+                @for (t of transportadoras(); track t.id) {
+                  <option [value]="t.id">{{ t.nome }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Data Prevista Entrega</label>
+              <input type="date" formControlName="dataPrevistaEntrega" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Endereços -->
+        <div class="form-section">
+          <h4 class="form-section__title">Endereços</h4>
+          <div class="form-group">
+            <label>Endereço de Origem</label>
+            <input type="text" formControlName="enderecoOrigem" placeholder="Local de partida" />
+          </div>
+          <div class="form-group">
+            <label>Endereço de Destino</label>
+            <input type="text" formControlName="enderecoDestino" placeholder="Local de chegada" />
+          </div>
+        </div>
+
+        <!-- Itens -->
+        <div class="form-section">
+          <div class="section-header">
+            <h4 class="form-section__title">
+              <i class="las la-list"></i> Itens / Produtos
+            </h4>
+            <button type="button" class="btn-link" (click)="adicionarItem()">
+              <i class="las la-plus-circle"></i> Adicionar produto
+            </button>
+          </div>
+
+          <div class="itens-grid" formArrayName="itens">
+            @for (item of itensArray.controls; track $index; let i = $index) {
+              <div class="item-card" [formGroupName]="i">
+                <div class="card-header-item">
+                  <span class="card-title">Item #{{ i + 1 }}</span>
+                  <button type="button" class="btn-remove" (click)="removerItem(i)">
+                    <i class="las la-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="card-body-item">
+                  <div class="item-row">
+                    <div class="item-field" style="flex: 2;">
+                      <label>Produto</label>
+                      <select formControlName="produtoId" (change)="onProdutoChange(i)">
+                        <option [value]="null">Seleccione um produto...</option>
+                        @for (p of produtos(); track p.id) {
+                          <option [value]="p.id">{{ p.sku }} - {{ p.nome }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="item-field">
+                      <label>Quantidade</label>
+                      <input type="number" formControlName="quantidade" min="1" (change)="calcularTotaisItem(i)" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Código</label>
+                      <input type="text" formControlName="produtoSku" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Peso Unitário (kg)</label>
+                      <input type="number" formControlName="pesoUnitario" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Peso Total (kg)</label>
+                      <input type="number" formControlName="pesoTotal" readonly [disabled]="true" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Volume Unitário (m³)</label>
+                      <input type="number" formControlName="volumeUnitario" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Volume Total (m³)</label>
+                      <input type="number" formControlName="volumeTotal" readonly [disabled]="true" />
+                    </div>
+                    <div class="item-field">
+                      <label>Lote</label>
+                      <input type="text" formControlName="lote" placeholder="Nº do lote" />
+                    </div>
+                  </div>
+
+                  <div class="item-row">
+                    <div class="item-field full-width">
+                      <label>Observações do Item</label>
+                      <input type="text" formControlName="observacoes" placeholder="Notas sobre este item" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Totais resumo -->
+          <div class="totais-resumo">
+            <div class="total-item">
+              <span class="total-label">Total de Itens:</span>
+              <span class="total-value">{{ itensArray.controls.length }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">Peso Total:</span>
+              <span class="total-value">{{ calcularPesoTotal() | number:'1.2-2' }} kg</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">Volume Total:</span>
+              <span class="total-value">{{ calcularVolumeTotal() | number:'1.0-0' }} m³</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="form-section">
+          <h4 class="form-section__title">Informações Complementares</h4>
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Instruções Especiais</label>
+            <textarea rows="2" formControlName="instrucoesEspeciais" placeholder="Instruções para o transportador..."></textarea>
+          </div>
+        </div>
+
+        <!-- Status (apenas visível na edição) -->
+        <div class="form-section">
+          <h4 class="form-section__title">Status</h4>
+          <div class="form-group">
+            <label>Status da Guia</label>
+            <select formControlName="status">
+              @for (s of statusList; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+          @if (form.get('status')?.value === 'Enviada') {
+            <div class="form-group">
+              <label>Data de Entrega Real</label>
+              <input type="date" formControlName="dataEntregaReal" />
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Guia
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ─────────────────────────────── -->
+@if (showDeleteConfirm() && guiaParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar cancelamento</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que pretende cancelar a guia <strong>{{ guiaParaDelete()?.numeroGuia }}</strong>?</p>
+        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-ban"></i> Cancelar Guia
+        </button>
+      </div>
+    </div>
+  </div>
+}

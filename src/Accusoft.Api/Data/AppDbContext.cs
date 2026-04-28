@@ -21,6 +21,18 @@ public class AppDbContext : DbContext
     public DbSet<Estoque>                Estoques               => Set<Estoque>();
     public DbSet<MovimentacaoEstoque>    MovimentacoesEstoque   => Set<MovimentacaoEstoque>();
     public DbSet<Veiculo>                Veiculos               => Set<Veiculo>();
+    public DbSet<Recepcao> Rececoes => Set<Recepcao>();
+    public DbSet<RecepcaoItem> RecepcaoItens => Set<RecepcaoItem>();
+    public DbSet<Atribuicao> Atribuicoes => Set<Atribuicao>();
+    public DbSet<AtribuicaoAjudante> AtribuicaoAjudantes => Set<AtribuicaoAjudante>();
+    public DbSet<AtribuicaoEntrega> AtribuicaoEntregas => Set<AtribuicaoEntrega>();
+    public DbSet<FechoViagem> FechosViagem => Set<FechoViagem>();
+    public DbSet<GestaoViagem> GestaoViagens => Set<GestaoViagem>();
+    public DbSet<Incidente> Incidentes => Set<Incidente>();
+    public DbSet<Guia> Guias => Set<Guia>();
+    public DbSet<GuiaItem> GuiaItens => Set<GuiaItem>();
+
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,7 +42,6 @@ public class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<UserStatus>();
         modelBuilder.HasPostgresEnum<AlertaTipo>();
         modelBuilder.HasPostgresEnum<MovimentacaoTipo>();
-
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();

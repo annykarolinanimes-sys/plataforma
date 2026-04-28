@@ -1,0 +1,349 @@
+<div class="recepcao-container">
+
+  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
+  @if (currentState() === 'list') {
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-boxes"></i>
+        </div>
+        <div>
+          <h1>Recepção de Mercadoria</h1>
+          <p>Gestão de entradas de produtos e materiais</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Recepção
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Nº Recepção, Fornecedor..."
+            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+
+        <label class="toggle-label">
+          <span class="toggle-switch">
+            <input type="checkbox" [checked]="filtroStatus === 'Cancelada'" (change)="toggleInativos()" />
+            <span class="toggle-slider"></span>
+          </span>
+          Mostrar canceladas
+        </label>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} recepção{{ pagedResult()!.total !== 1 ? 'ões' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar recepções…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Recepção</th><th>Fornecedor</th><th>Data</th><th>Status</th><th>Prioridade</th><th>Itens</th><th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rececoes(); track r.id) {
+              <tr [class.row--cancelada]="r.status === 'Cancelada'" (click)="goToEdit(r)" class="clickable-row">
+                <td><code class="numero-tag">{{ r.numeroRecepcao }}</code></td>
+                <td><strong class="fornecedor-nome">{{ r.fornecedor }}</strong></td>
+                <td>{{ formatarDataSimples(r.dataRecepcao) }}</td>
+                <td><span class="status-badge" [ngClass]="getStatusClass(r.status)">{{ r.status }}</span></td>
+                <td><span class="prioridade-badge" [ngClass]="getPrioridadeClass(r.prioridade)">{{ r.prioridade }}</span></td>
+                <td>{{ r.totalItens }} itens / {{ r.totalUnidades }} un.</td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (r.status === 'Pendente') {
+                    <button class="btn-icon btn-icon--success" (click)="concluirRecepcao(r, $event)" title="Concluir"><i class="las la-check-circle"></i></button>
+                  }
+                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(r, $event)" title="Editar"><i class="las la-edit"></i></button>
+                  @if (r.status !== 'Cancelada') {
+                    <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(r, $event)" title="Cancelar"><i class="las la-ban"></i></button>
+                  }
+                </td>
+              </tr>
+            }
+            @if (rececoes().length === 0) {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <i class="las la-box-open"></i>
+                    <p>Nenhuma recepção encontrada</p>
+                    <small>Altere os filtros ou crie uma nova recepção.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
+          <span class="pagination__info">Página {{ currentPage }} de {{ totalPages() }} ({{ totalRecepcoes() }} registos)</span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ─── MODO: CRIAR RECEPÇÃO ────────────────────────────────────────────── -->
+  @if (currentState() === 'create') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-plus-circle"></i>
+          <h2>Nova Recepção</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i></button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="alert alert--error">{{ errorMsg() }}</div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Gerais</h4>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('fornecedor')">
+              <label>Fornecedor <span class="required">*</span></label>
+              <input type="text" formControlName="fornecedor" placeholder="Nome do fornecedor" />
+              @if (hasError('fornecedor', 'required')) {
+                <span class="field-error"><i class="las la-exclamation-circle"></i> Fornecedor é obrigatório.</span>
+              }
+            </div>
+            <div class="form-group">
+              <label>Tipo de Entrada</label>
+              <select formControlName="tipoEntrada">
+                <option value="Fornecedor">Fornecedor</option>
+                <option value="Transferencia">Transferência entre armazéns</option>
+                <option value="Devolucao">Devolução de cliente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Prioridade</label>
+              <select formControlName="prioridade">
+                @for (p of prioridades; track p) {
+                  <option [value]="p">{{ p }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Documento de Referência</label>
+            <input type="text" formControlName="documentoReferencia" placeholder="Nota de encomenda, guia, etc." />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <h4 class="form-section__title"><i class="las la-list"></i> Itens</h4>
+            <button type="button" class="btn-link" (click)="adicionarItem()">
+              <i class="las la-plus-circle"></i> Adicionar item
+            </button>
+          </div>
+
+          <div class="itens-grid" formArrayName="itens">
+            @for (item of itensArray.controls; track $index; let i = $index) {
+              <div class="item-card" [formGroupName]="i">
+                <div class="card-header-item">
+                  <span class="card-title">Item #{{ i + 1 }}</span>
+                  <button type="button" class="btn-remove" (click)="removerItem(i)" title="Remover item">
+                    <i class="las la-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="card-body-item">
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>SKU <span class="required">*</span></label>
+                      <input type="text" formControlName="sku" placeholder="Ex: PROD-001" />
+                    </div>
+                    <div class="item-field">
+                      <label>Produto <span class="required">*</span></label>
+                      <input type="text" formControlName="produtoNome" placeholder="Nome do produto" />
+                    </div>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Qtd. Esperada</label>
+                      <input type="number" formControlName="quantidadeEsperada" min="1" />
+                    </div>
+                    <div class="item-field">
+                      <label>Qtd. Recebida</label>
+                      <input type="number" formControlName="quantidadeRecebida" min="0" />
+                    </div>
+                    <div class="item-field">
+                      <label>Qtd. Rejeitada</label>
+                      <input type="number" formControlName="quantidadeRejeitada" min="0" />
+                    </div>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-field">
+                      <label>Lote</label>
+                      <input type="text" formControlName="lote" placeholder="Nº do lote" />
+                    </div>
+                    <div class="item-field">
+                      <label>Validade</label>
+                      <input type="date" formControlName="validade" />
+                    </div>
+                    <div class="item-field">
+                      <label>Localização</label>
+                      <input type="text" formControlName="localizacao" placeholder="Ex: A1-01" />
+                    </div>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-field full-width">
+                      <label>Observações</label>
+                      <input type="text" formControlName="observacoes" placeholder="Notas sobre este item" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarRecepcao()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Recepção
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODO: EDITAR RECEPÇÃO ───────────────────────────────────────────── -->
+  @if (currentState() === 'edit') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-edit"></i>
+          <h2>Editar Recepção</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="alert alert--error">{{ errorMsg() }}</div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+        <!-- Mesmo conteúdo do modo create -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Gerais</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Fornecedor <span class="required">*</span></label><input type="text" formControlName="fornecedor" /></div>
+            <div class="form-group"><label>Prioridade</label><select formControlName="prioridade">@for (p of prioridades; track p) { <option [value]="p">{{ p }}</option> }</select></div>
+          </div>
+          <div class="form-group"><label>Documento de Referência</label><input type="text" formControlName="documentoReferencia" /></div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <h4 class="form-section__title"><i class="las la-list"></i> Itens</h4>
+            <button type="button" class="btn-link" (click)="adicionarItem()"><i class="las la-plus-circle"></i> Adicionar item</button>
+          </div>
+
+          <div class="itens-grid" formArrayName="itens">
+            @for (item of itensArray.controls; track $index; let i = $index) {
+              <div class="item-card" [formGroupName]="i">
+                <div class="card-header-item">
+                  <span class="card-title">Item #{{ i + 1 }}</span>
+                  <button type="button" class="btn-remove" (click)="removerItem(i)"><i class="las la-trash-alt"></i></button>
+                </div>
+                <div class="card-body-item">
+                  <div class="item-row"><div class="item-field"><label>SKU</label><input type="text" formControlName="sku" /></div><div class="item-field"><label>Produto</label><input type="text" formControlName="produtoNome" /></div></div>
+                  <div class="item-row"><div class="item-field"><label>Qtd. Esperada</label><input type="number" formControlName="quantidadeEsperada" /></div><div class="item-field"><label>Qtd. Recebida</label><input type="number" formControlName="quantidadeRecebida" /></div><div class="item-field"><label>Qtd. Rejeitada</label><input type="number" formControlName="quantidadeRejeitada" /></div></div>
+                  <div class="item-row"><div class="item-field"><label>Lote</label><input type="text" formControlName="lote" /></div><div class="item-field"><label>Validade</label><input type="date" formControlName="validade" /></div><div class="item-field"><label>Localização</label><input type="text" formControlName="localizacao" /></div></div>
+                  <div class="item-row"><div class="item-field full-width"><label>Observações</label><input type="text" formControlName="observacoes" /></div></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarRecepcao()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Recepção }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ─────────────────────────────── -->
+@if (showDeleteConfirm() && recepcaoParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar cancelamento</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que pretende cancelar a recepção <strong>{{ recepcaoParaDelete()?.numeroRecepcao }}</strong>?</p>
+        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()"><i class="las la-ban"></i> Cancelar Recepção</button>
+      </div>
+    </div>
+  </div>
+}

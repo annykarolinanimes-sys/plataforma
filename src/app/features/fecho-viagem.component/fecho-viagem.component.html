@@ -1,0 +1,368 @@
+<div class="fecho-viagem-container">
+
+  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
+  @if (currentState() === 'list') {
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-flag-checkered"></i>
+        </div>
+        <div>
+          <h1>Fecho de Viagem</h1>
+          <p>Encerramento oficial de viagens, registo de consumos e preparação para faturação</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Novo Fecho
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Nº Fecho, Atribuição, Cliente..."
+            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} fecho{{ pagedResult()!.total !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar fechos…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Fecho</th><th>Atribuição</th><th>Cliente</th><th>Data Fecho</th><th>Status</th><th>Custo Total</th><th>Km</th><th>Faturado</th><th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of fechos(); track f.id) {
+              <tr [class.row--cancelado]="f.status === 'Cancelado'" (click)="goToEdit(f)" class="clickable-row">
+                <td><code class="numero-tag">{{ f.numeroFecho }}</code></td>
+                <td>{{ f.atribuicaoNumero || '—' }}</td>
+                <td><strong class="cliente-nome">{{ f.clienteNome || '—' }}</strong></td>
+                <td>{{ formatarData(f.dataFecho) }}</td>
+                <td><span class="status-badge" [ngClass]="getStatusClass(f.status)">{{ f.status }}</span></td>
+                <td><strong>{{ formatarMoeda(f.custoTotal) }}</strong></td>
+                <td>{{ formatarKm(f.quilometrosPercorridos || 0) }}</td>
+                <td>
+                  @if (f.faturado) {
+                    <span class="badge-faturado"><i class="las la-check-circle"></i> Sim</span>
+                  } @else {
+                    <span class="badge-nao-faturado"><i class="las la-clock"></i> Não</span>
+                  }
+                <td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (f.status === 'Pendente') {
+                    <button class="btn-icon btn-icon--process" (click)="processarFecho(f, $event)" title="Processar para faturação"><i class="las la-receipt"></i></button>
+                  }
+                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(f, $event)" title="Editar"><i class="las la-edit"></i></button>
+                  @if (f.status !== 'Cancelado') {
+                    <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(f, $event)" title="Cancelar"><i class="las la-ban"></i></button>
+                  }
+                </td>
+              </tr>
+            }
+            @if (fechos().length === 0) {
+              <tr>
+                <td colspan="9">
+                  <div class="empty-state">
+                    <i class="las la-flag-checkered"></i>
+                    <p>Nenhum fecho de viagem encontrado</p>
+                    <small>Altere os filtros ou crie um novo fecho.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
+          <span class="pagination__info">Página {{ currentPage }} de {{ totalPages() }} ({{ totalFechos() }} registos)</span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ─── MODO: CRIAR FECHO ──────────────────────────────────────────────── -->
+  @if (currentState() === 'create') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-flag-checkered"></i>
+          <h2>Novo Fecho de Viagem</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+
+        <!-- Dados Gerais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados da Viagem</h4>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('atribuicaoId')">
+              <label>Atribuição <span class="required">*</span></label>
+              <select formControlName="atribuicaoId">
+                <option [value]="null">Selecione uma atribuição concluída...</option>
+                @for (a of atribuicoes(); track a.id) {
+                  <option [value]="a.id">{{ a.numeroAtribuicao }} - {{ a.clienteNome }}</option>
+                }
+              </select>
+              @if (isLoadingAtribuicoes()) {
+                <span class="field-hint"><i class="las la-spinner la-spin"></i> A carregar atribuições...</span>
+              }
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data/Hora Início Real</label>
+              <input type="datetime-local" formControlName="dataInicioReal" />
+            </div>
+            <div class="form-group">
+              <label>Data/Hora Fim Real</label>
+              <input type="datetime-local" formControlName="dataFimReal" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Consumos -->
+        <div class="form-section">
+          <h4 class="form-section__title">Consumos e Custos</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Combustível (Litros)</label>
+              <input type="number" step="0.1" formControlName="combustivelLitros" min="0" placeholder="0.0" />
+            </div>
+            <div class="form-group">
+              <label>Combustível (Custo €)</label>
+              <input type="number" step="0.01" formControlName="combustivelCusto" min="0" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Portagens (€)</label>
+              <input type="number" step="0.01" formControlName="portagensCusto" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label>Outros Custos (€)</label>
+              <input type="number" step="0.01" formControlName="outrosCustos" min="0" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descrição de Custos Extras</label>
+            <input type="text" formControlName="custosExtrasDescricao" placeholder="Ex: Manutenção, estacionamento..." />
+          </div>
+        </div>
+
+        <!-- Quilometragem -->
+        <div class="form-section">
+          <h4 class="form-section__title">Quilometragem</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Km Início</label>
+              <input type="number" formControlName="quilometrosInicio" min="0" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label>Km Fim</label>
+              <input type="number" formControlName="quilometrosFim" min="0" placeholder="0" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Entregas -->
+        <div class="form-section">
+          <h4 class="form-section__title">Entregas</h4>
+          <div class="form-group">
+            <label>Observações sobre entregas pendentes</label>
+            <textarea rows="2" formControlName="entregasPendentesObs" placeholder="Justificação para entregas não realizadas..."></textarea>
+          </div>
+        </div>
+
+        <!-- Incidentes -->
+        <div class="form-section">
+          <h4 class="form-section__title">Incidentes</h4>
+          <div class="form-group form-group--inline">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="temIncidentes" />
+              <span class="checkbox-custom"></span>
+              Houve incidentes durante a viagem
+            </label>
+          </div>
+
+          @if (ctrl('temIncidentes').value) {
+            <div class="form-group">
+              <label>Descrição dos Incidentes</label>
+              <textarea rows="3" formControlName="incidentesDescricao" placeholder="Descreva os incidentes ocorridos..."></textarea>
+            </div>
+          }
+        </div>
+
+        <!-- Observações -->
+        <div class="form-section">
+          <h4 class="form-section__title">Observações Gerais</h4>
+          <div class="form-group">
+            <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais sobre o fecho..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarFecho()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Fecho }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODO: EDITAR FECHO ──────────────────────────────────────────────── -->
+  @if (currentState() === 'edit') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-edit"></i>
+          <h2>Editar Fecho de Viagem</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+        <!-- Mesmo conteúdo do modo create -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados da Viagem</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Atribuição</label><input type="text" [value]="ctrl('atribuicaoId').value" disabled class="disabled-input" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Data/Hora Início Real</label><input type="datetime-local" formControlName="dataInicioReal" /></div>
+            <div class="form-group"><label>Data/Hora Fim Real</label><input type="datetime-local" formControlName="dataFimReal" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Consumos e Custos</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Combustível (Litros)</label><input type="number" step="0.1" formControlName="combustivelLitros" /></div>
+            <div class="form-group"><label>Combustível (Custo €)</label><input type="number" step="0.01" formControlName="combustivelCusto" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Portagens (€)</label><input type="number" step="0.01" formControlName="portagensCusto" /></div>
+            <div class="form-group"><label>Outros Custos (€)</label><input type="number" step="0.01" formControlName="outrosCustos" /></div>
+          </div>
+          <div class="form-group"><label>Descrição de Custos Extras</label><input type="text" formControlName="custosExtrasDescricao" /></div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Quilometragem</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Km Início</label><input type="number" formControlName="quilometrosInicio" /></div>
+            <div class="form-group"><label>Km Fim</label><input type="number" formControlName="quilometrosFim" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Entregas</h4>
+          <div class="form-group"><label>Observações sobre entregas pendentes</label><textarea rows="2" formControlName="entregasPendentesObs"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Incidentes</h4>
+          <div class="form-group form-group--inline">
+            <label class="checkbox-label"><input type="checkbox" formControlName="temIncidentes" /><span class="checkbox-custom"></span> Houve incidentes durante a viagem</label>
+          </div>
+          @if (ctrl('temIncidentes').value) {
+            <div class="form-group"><label>Descrição dos Incidentes</label><textarea rows="3" formControlName="incidentesDescricao"></textarea></div>
+          }
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Observações Gerais</h4>
+          <div class="form-group"><textarea rows="2" formControlName="observacoes"></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarFecho()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Fecho }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ─────────────────────────────── -->
+@if (showDeleteConfirm() && fechoParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar cancelamento</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que pretende cancelar o fecho <strong>{{ fechoParaDelete()?.numeroFecho }}</strong>?</p>
+        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()"><i class="las la-ban"></i> Cancelar Fecho</button>
+      </div>
+    </div>
+  </div>
+}
