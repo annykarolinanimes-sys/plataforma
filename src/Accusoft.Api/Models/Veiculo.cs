@@ -27,7 +27,7 @@ public class Veiculo
     [Column("vin"), MaxLength(50)]
     public string? Vin { get; set; }
 
-    [Column("tipo_combustivel"), MaxLength(30)]
+    [Column("tipo_combustivel"), MaxLength(50)]
     public string? TipoCombustivel { get; set; }
 
     [Column("cilindrada")]
@@ -39,8 +39,9 @@ public class Veiculo
     [Column("lugares")]
     public int? Lugares { get; set; }
 
-    [Column("peso")]
-    public int? Peso { get; set; }
+    /// <summary>Peso em kg — decimal para permitir meias toneladas (ex: 1750.5 kg).</summary>
+    [Column("peso", TypeName = "decimal(10,2)")]
+    public decimal? Peso { get; set; }
 
     [Column("proprietario_id")]
     public int? ProprietarioId { get; set; }

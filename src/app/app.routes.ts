@@ -32,8 +32,8 @@ export const routes: Routes = [
       { path: 'catalogo/rotas', loadComponent: () => import('./features/rotas-catalogo.component/rotas-catalogo.component').then(m => m.RotasCatalogoComponent) },
       
       { path: 'impressao/etiquetas', loadComponent: () => import('./features/etiquetas.component/etiquetas.component').then(m => m.EtiquetasComponent) },
-      //{ path: 'impressao/guias', loadComponent: () => import('./features/guias/guias.component').then(m => m.GuiasComponent) },
-      //{ path: 'impressao/documentos', loadComponent: () => import('./features/documentos-impressao/documentos-impressao.component').then(m => m.DocumentosImpressaoComponent) },
+      { path: 'impressao/guias', loadComponent: () => import('./features/guias.component/guias.component').then(m => m.GuiasComponent) },
+      { path: 'impressao/documentos', loadComponent: () => import('./features/documentos.component/documentos.component').then(m => m.DocumentosComponent) },
       
       { path: 'faturas', loadComponent: () => import('./features/faturas.component/faturas.component').then(m => m.FaturasComponent) },
       { path: 'definicao', loadComponent: () => import('./features/definicao.component/definicao.component').then(m => m.DefinicaoComponent) },

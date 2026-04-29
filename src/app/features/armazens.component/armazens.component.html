@@ -1,87 +1,694 @@
 <div class="armazens-container">
+
   <div class="page-header">
-    <h1><i class="las la-warehouse"></i> Armazéns</h1>
-    <p>Gestão de armazéns, depósitos e localizações de stock</p>
+    <div class="page-header__left">
+      <div class="page-header__icon" aria-hidden="true">
+        <i class="las la-warehouse"></i>
+      </div>
+      <div>
+        <h1>Armazéns</h1>
+        <p>Gestão de armazéns, depósitos e localizações de stock</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="abrirModalNovo()" aria-label="Criar novo armazém">
+      <i class="las la-plus" aria-hidden="true"></i> Novo Armazém
+    </button>
   </div>
 
   @if (errorMsg()) {
-    <div class="alert-error"><i class="las la-exclamation-circle"></i> {{ errorMsg() }}<button class="alert-close" (click)="clearError()">×</button></div>
+    <div class="alert alert--error" role="alert" aria-live="assertive">
+      <i class="las la-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()" aria-label="Fechar">×</button>
+    </div>
   }
   @if (successMsg()) {
-    <div class="alert-success"><i class="las la-check-circle"></i> {{ successMsg() }}</div>
+    <div class="alert alert--success" role="status" aria-live="polite">
+      <i class="las la-check-circle" aria-hidden="true"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
   }
 
   <div class="toolbar">
     <div class="filters">
-      <div class="filter-group">
-        <i class="las la-search"></i>
-        <input type="text" placeholder="Pesquisar por nome ou código..." [(ngModel)]="filtroSearch" (ngModelChange)="carregarArmazens()" />
+      <div class="filter-group" [class.focused]="filtroSearch.length > 0">
+        <i class="las la-search" aria-hidden="true"></i>
+        <input
+          type="search"
+          placeholder="Pesquisar por nome, código ou localidade…"
+          [value]="filtroSearch"
+          (input)="onSearchChange($any($event.target).value)"
+          aria-label="Pesquisar armazéns"
+        />
       </div>
-      <label class="checkbox-label">
-        <input type="checkbox" [(ngModel)]="mostrarInativos" (ngModelChange)="toggleInativos()" />
-        <i class="las la-eye-slash"></i> Mostrar inactivos
+
+      <label class="toggle-label">
+        <span class="toggle-switch">
+          <input
+            type="checkbox"
+            [checked]="mostrarInativos"
+            (change)="toggleInativos()"
+            aria-label="Mostrar armazéns inactivos"
+          />
+          <span class="toggle-slider"></span>
+        </span>
+        <span>Mostrar inactivos</span>
       </label>
     </div>
-    <button class="btn-primary" (click)="abrirModalNovo()"><i class="las la-plus"></i> Novo Armazém</button>
+
+    @if (pagedResult()) {
+      <span class="results-count" aria-live="polite">
+        {{ totalArmazens() }} armazém{{ totalArmazens() !== 1 ? 'ns' : '' }}
+      </span>
+    }
   </div>
 
-  @if (isLoading()) { <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div> }
-
-  @if (!isLoading()) {
-    <div class="table-container">
-      <table class="data-table">
+  @if (isLoading()) {
+    <div class="table-container" aria-busy="true">
+      <table class="data-table" aria-hidden="true">
         <thead>
-          <tr><th>Código</th><th>Nome</th><th>Tipo</th><th>Localidade</th><th>Responsável</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
+          <tr>
+            <th>Código</th><th>Nome / Tipo</th><th>Localidade</th>
+            <th>Responsável</th><th>Estado</th><th>Ações</th>
+          </tr>
         </thead>
         <tbody>
-          @for (a of armazens(); track a.id) {
-            <tr>
-              <td><code>{{ a.codigo }}</code></td>
-              <td><strong>{{ a.nome }}</strong></td>
-              <td>{{ a.tipo === 'principal' ? 'Principal' : (a.tipo === 'secundario' ? 'Secundário' : (a.tipo === 'deposito' ? 'Depósito' : a.tipo)) }}</td>
-              <td>{{ a.localidade || '—' }}</td>
-              <td>{{ a.responsavelNome || '—' }}</td>
-              <td>{{ a.telefone || '—' }}</td>
-              <td><span class="badge" [class.badge-ok]="a.ativo" [class.badge-danger]="!a.ativo">{{ a.ativo ? 'Activo' : 'Inactivo' }}</span></td>
-              <td class="actions-cell">
-                <button class="btn-icon" (click)="abrirModalEditar(a)" title="Editar"><i class="las la-edit"></i></button>
-                @if (a.ativo) {
-                  <button class="btn-icon danger" (click)="desativarArmazem(a)" title="Desactivar"><i class="las la-trash"></i></button>
-                } @else {
-                  <button class="btn-icon success" (click)="ativarArmazem(a)" title="Activar"><i class="las la-undo-alt"></i></button>
-                }
+          @for (i of [1,2,3,4,5]; track i) {
+            <tr class="skeleton-row">
+              <td><span class="skeleton skeleton--sm"></span></td>
+              <td>
+                <span class="skeleton skeleton--lg"></span>
+                <span class="skeleton skeleton--md mt-4"></span>
               </td>
+              <td><span class="skeleton skeleton--md"></span></td>
+              <td><span class="skeleton skeleton--md"></span></td>
+              <td><span class="skeleton skeleton--badge"></span></td>
+              <td><span class="skeleton skeleton--actions"></span></td>
             </tr>
           }
-          @if (armazens().length === 0) { <tr><td colspan="8" class="empty-state">Nenhum armazém encontrado</td></tr> }
         </tbody>
       </table>
     </div>
   }
+
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table" aria-label="Lista de armazéns">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Nome / Tipo</th>
+            <th scope="col">Localidade</th>
+            <th scope="col">Responsável</th>
+            <th scope="col">Contactos</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="col-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of armazens(); track a.id) {
+            <tr [class.row--inactive]="!a.ativo">
+
+              <td>
+                <code class="codigo-tag">{{ a.codigo }}</code>
+              </td>
+
+              <td>
+                <strong class="armazem-nome">{{ a.nome }}</strong>
+                @if (a.tipo) {
+                  <span class="tipo-pill">
+                    <i class="las la-tag" aria-hidden="true"></i>
+                    {{ formatarTipo(a.tipo) }}
+                  </span>
+                }
+              </td>
+
+              <td>
+                @if (a.localidade) {
+                  <span class="location-info">
+                    <i class="las la-map-marker-alt" aria-hidden="true"></i>
+                    {{ a.localidade }}
+                    @if (a.pais && a.pais !== 'Portugal') {
+                      <span class="country-tag">{{ a.pais }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <!-- Responsável -->
+              <td>
+                @if (a.responsavelNome) {
+                  <div class="contact-stack">
+                    <span class="contact-name">
+                      <i class="las la-user-tie" aria-hidden="true"></i>
+                      {{ a.responsavelNome }}
+                    </span>
+                    @if (a.responsavelTelefone) {
+                      <span class="contact-phone">
+                        <i class="las la-phone" aria-hidden="true"></i>
+                        {{ a.responsavelTelefone }}
+                      </span>
+                    }
+                  </div>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <!-- Contactos (badge compacto) -->
+              <td>
+                <div class="contact-badges">
+                  @if (a.telefone) {
+                    <span class="contact-badge contact-badge--phone"
+                          [title]="a.telefone"
+                          aria-label="Telefone: {{ a.telefone }}">
+                      <i class="las la-phone" aria-hidden="true"></i>
+                      {{ a.telefone }}
+                    </span>
+                  }
+                  @if (a.email) {
+                    <span class="contact-badge contact-badge--email"
+                          [title]="a.email"
+                          aria-label="Email: {{ a.email }}">
+                      <i class="las la-envelope" aria-hidden="true"></i>
+                      <span class="badge-text-clip">{{ a.email }}</span>
+                    </span>
+                  }
+                  @if (!a.telefone && !a.email) {
+                    <span class="text-muted">—</span>
+                  }
+                </div>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span
+                  class="badge"
+                  [class.badge--active]="a.ativo"
+                  [class.badge--inactive]="!a.ativo"
+                  [attr.aria-label]="a.ativo ? 'Armazém activo' : 'Armazém inactivo'"
+                >
+                  <span class="badge__dot" aria-hidden="true"></span>
+                  {{ a.ativo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <!-- Ações -->
+              <td class="actions-cell">
+                <button
+                  class="btn-icon btn-icon--edit"
+                  (click)="abrirModalEditar(a)"
+                  [attr.aria-label]="'Editar armazém ' + a.nome"
+                  title="Editar"
+                >
+                  <i class="las la-edit" aria-hidden="true"></i>
+                </button>
+
+                @if (a.ativo) {
+                  <button
+                    class="btn-icon btn-icon--danger"
+                    (click)="abrirConfirm(a, 'desativar')"
+                    [attr.aria-label]="'Desactivar armazém ' + a.nome"
+                    title="Desactivar"
+                  >
+                    <i class="las la-ban" aria-hidden="true"></i>
+                  </button>
+                } @else {
+                  <button
+                    class="btn-icon btn-icon--success"
+                    (click)="abrirConfirm(a, 'ativar')"
+                    [attr.aria-label]="'Activar armazém ' + a.nome"
+                    title="Activar"
+                  >
+                    <i class="las la-undo-alt" aria-hidden="true"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+
+          @if (armazens().length === 0) {
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <div class="empty-state__icon" aria-hidden="true">
+                    <i class="las la-warehouse"></i>
+                  </div>
+                  <p class="empty-state__title">Nenhum armazém encontrado</p>
+                  <small class="empty-state__sub">
+                    Ajuste os filtros ou crie um novo armazém.
+                  </small>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginação -->
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Paginação de armazéns">
+        <button
+          class="pagination__btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Página anterior"
+        >
+          <i class="las la-angle-left" aria-hidden="true"></i>
+        </button>
+
+        @for (p of pages(); track p) {
+          <button
+            class="pagination__btn"
+            [class.pagination__btn--active]="p === currentPage"
+            [attr.aria-current]="p === currentPage ? 'page' : null"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+
+        <button
+          class="pagination__btn"
+          [disabled]="currentPage === totalPages()"
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Página seguinte"
+        >
+          <i class="las la-angle-right" aria-hidden="true"></i>
+        </button>
+
+        <span class="pagination__info">
+          Página {{ currentPage }} de {{ totalPages() }}
+          ({{ totalArmazens() }} registos)
+        </span>
+      </nav>
+    }
+  }
 </div>
 
-<!-- Modal Novo/Editar -->
+<!-- ══════════════════════ MODAL CRIAR / EDITAR ═════════════════════ -->
 @if (showModal()) {
-  <div class="modal-overlay" (click)="fecharModal()">
+  <div
+    class="modal-overlay"
+    (click)="fecharModal()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="isEditing() ? 'Editar armazém' : 'Novo armazém'"
+  >
     <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header"><h3>{{ isEditing() ? 'Editar Armazém' : 'Novo Armazém' }}</h3><button class="modal-close" (click)="fecharModal()">×</button></div>
-      <div class="modal-body">
-        <div class="form-row"><div class="form-group"><label>Código <span class="required">*</span></label><input type="text" [(ngModel)]="formArmazem.codigo" /></div>
-        <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" [(ngModel)]="formArmazem.nome" /></div></div>
-        <div class="form-row"><div class="form-group"><label>Tipo</label>
-          <select [(ngModel)]="formArmazem.tipo"><option value="principal">Principal</option><option value="secundario">Secundário</option><option value="deposito">Depósito</option><option value="loja">Loja</option></select>
-        </div>
-        <div class="form-group"><label>Morada</label><input type="text" [(ngModel)]="formArmazem.morada" /></div></div>
-        <div class="form-row"><div class="form-group"><label>Localidade</label><input type="text" [(ngModel)]="formArmazem.localidade" /></div>
-        <div class="form-group"><label>Código Postal</label><input type="text" [(ngModel)]="formArmazem.codigoPostal" /></div></div>
-        <div class="form-row"><div class="form-group"><label>País</label><input type="text" [(ngModel)]="formArmazem.pais" /></div>
-        <div class="form-group"><label>Telefone</label><input type="text" [(ngModel)]="formArmazem.telefone" /></div></div>
-        <div class="form-row"><div class="form-group"><label>Email</label><input type="email" [(ngModel)]="formArmazem.email" /></div>
-        <div class="form-group"><label>Responsável (nome)</label><input type="text" [(ngModel)]="formArmazem.responsavelNome" /></div></div>
-        <div class="form-group"><label>Responsável (telefone)</label><input type="text" [(ngModel)]="formArmazem.responsavelTelefone" /></div>
-        <div class="form-group"><label>Observações</label><textarea rows="2" [(ngModel)]="formArmazem.observacoes"></textarea></div>
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h3>
+          <i class="las"
+             [class.la-warehouse]="!isEditing()"
+             [class.la-edit]="isEditing()"
+             aria-hidden="true"></i>
+          {{ isEditing() ? 'Editar Armazém' : 'Novo Armazém' }}
+        </h3>
+        <button class="btn-close" (click)="fecharModal()" aria-label="Fechar modal">
+          <i class="las la-times" aria-hidden="true"></i>
+        </button>
       </div>
-      <div class="modal-footer"><button class="btn-secondary" (click)="fecharModal()">Cancelar</button><button class="btn-primary" (click)="salvarArmazem()" [disabled]="isSaving()"><i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i> {{ isSaving() ? 'A guardar...' : 'Guardar' }}</button></div>
+
+      <!-- Erro inline -->
+      @if (errorMsg()) {
+        <div class="modal-alert modal-alert--error" role="alert">
+          <i class="las la-exclamation-circle" aria-hidden="true"></i>
+          {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Tabs -->
+      <div class="modal-tabs" role="tablist" aria-label="Secções do formulário">
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'identificacao'"
+          (click)="setTab('identificacao')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'identificacao'"
+          id="tab-id"
+          aria-controls="panel-id"
+        >
+          <i class="las la-id-card" aria-hidden="true"></i> Identificação
+        </button>
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'morada'"
+          (click)="setTab('morada')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'morada'"
+          id="tab-morada"
+          aria-controls="panel-morada"
+        >
+          <i class="las la-map-marker-alt" aria-hidden="true"></i> Morada
+        </button>
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'contacto'"
+          (click)="setTab('contacto')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'contacto'"
+          id="tab-contacto"
+          aria-controls="panel-contacto"
+        >
+          <i class="las la-phone" aria-hidden="true"></i> Contacto
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body" [formGroup]="form">
+
+        <!-- ── Aba: Identificação ── -->
+        @if (activeTab() === 'identificacao') {
+          <div id="panel-id" role="tabpanel" aria-labelledby="tab-id">
+
+            <div class="form-row">
+              <!-- Código -->
+              <div class="form-group" [class.form-group--error]="hasError('codigo')">
+                <label for="codigo">
+                  Código <span class="required" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="codigo"
+                  type="text"
+                  formControlName="codigo"
+                  placeholder="Ex: ARM-001"
+                  autocomplete="off"
+                  (input)="form.get('codigo')?.setValue(
+                    $any($event.target).value.toUpperCase(), {emitEvent:true})"
+                />
+                @if (hasError('codigo', 'required')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    Código é obrigatório.
+                  </span>
+                }
+                @if (hasError('codigo', 'maxlength')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    Máximo 50 caracteres.
+                  </span>
+                }
+              </div>
+
+              <!-- Tipo -->
+              <div class="form-group">
+                <label for="tipo">Tipo de Armazém</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-tag" aria-hidden="true"></i>
+                  <select id="tipo" formControlName="tipo">
+                    @for (t of tiposArmazem; track t) {
+                      <option [value]="t">{{ formatarTipo(t) }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nome -->
+            <div class="form-group" [class.form-group--error]="hasError('nome')">
+              <label for="nome">
+                Nome <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="nome"
+                type="text"
+                formControlName="nome"
+                placeholder="Nome completo do armazém"
+              />
+              @if (hasError('nome', 'required')) {
+                <span class="field-error" role="alert">
+                  <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                  Nome é obrigatório.
+                </span>
+              }
+              @if (hasError('nome', 'maxlength')) {
+                <span class="field-error" role="alert">
+                  <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                  Máximo 200 caracteres.
+                </span>
+              }
+            </div>
+
+            <!-- Observações -->
+            <div class="form-group">
+              <label for="observacoes">Observações</label>
+              <textarea
+                id="observacoes"
+                rows="3"
+                formControlName="observacoes"
+                placeholder="Notas internas sobre este armazém…"
+              ></textarea>
+            </div>
+
+            @if (isEditing()) {
+              <div class="form-group form-group--inline">
+                <label class="checkbox-label" for="ativo">
+                  <input id="ativo" type="checkbox" formControlName="ativo" />
+                  <span class="checkbox-custom" aria-hidden="true"></span>
+                  Armazém activo
+                </label>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Aba: Morada ── -->
+        @if (activeTab() === 'morada') {
+          <div id="panel-morada" role="tabpanel" aria-labelledby="tab-morada">
+
+            <!-- Morada (linha completa) -->
+            <div class="form-group">
+              <label for="morada">Morada</label>
+              <div class="input-icon">
+                <i class="las la-map-marker-alt" aria-hidden="true"></i>
+                <input
+                  id="morada"
+                  type="text"
+                  formControlName="morada"
+                  placeholder="Rua, número, andar…"
+                />
+              </div>
+            </div>
+
+            <!-- Grid geográfico 3 colunas -->
+            <div class="form-row form-row--3">
+              <div class="form-group">
+                <label for="localidade">Localidade</label>
+                <input
+                  id="localidade"
+                  type="text"
+                  formControlName="localidade"
+                  placeholder="Ex: Lisboa"
+                />
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('codigoPostal')">
+                <label for="codigoPostal">Código Postal</label>
+                <input
+                  id="codigoPostal"
+                  type="text"
+                  formControlName="codigoPostal"
+                  placeholder="0000-000"
+                />
+                @if (hasError('codigoPostal', 'pattern')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    Formato inválido (ex: 1000-001).
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="pais">País</label>
+                <input
+                  id="pais"
+                  type="text"
+                  formControlName="pais"
+                  placeholder="Portugal"
+                />
+              </div>
+            </div>
+
+            <!-- Preview do endereço completo -->
+            @if (ctrl('localidade').value || ctrl('codigoPostal').value) {
+              <div class="address-preview">
+                <i class="las la-map" aria-hidden="true"></i>
+                <span>
+                  @if (ctrl('morada').value) { {{ ctrl('morada').value }}, }
+                  @if (ctrl('codigoPostal').value) { {{ ctrl('codigoPostal').value }} }
+                  @if (ctrl('localidade').value) { {{ ctrl('localidade').value }} }
+                  @if (ctrl('pais').value && ctrl('pais').value !== 'Portugal') {
+                    — {{ ctrl('pais').value }}
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Aba: Contacto ── -->
+        @if (activeTab() === 'contacto') {
+          <div id="panel-contacto" role="tabpanel" aria-labelledby="tab-contacto">
+
+            <div class="form-section-title">
+              <i class="las la-building" aria-hidden="true"></i>
+              Contactos do Armazém
+            </div>
+
+            <div class="form-row">
+              <!-- Telefone -->
+              <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <div class="input-icon">
+                  <i class="las la-phone" aria-hidden="true"></i>
+                  <input
+                    id="telefone"
+                    type="tel"
+                    formControlName="telefone"
+                    placeholder="+351 200 000 000"
+                  />
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="form-group" [class.form-group--error]="hasError('email')">
+                <label for="email">Email</label>
+                <div class="input-icon">
+                  <i class="las la-envelope" aria-hidden="true"></i>
+                  <input
+                    id="email"
+                    type="email"
+                    formControlName="email"
+                    placeholder="armazem@empresa.pt"
+                  />
+                </div>
+                @if (hasError('email', 'email')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    Email inválido.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-section-title" style="margin-top: 8px;">
+              <i class="las la-user-tie" aria-hidden="true"></i>
+              Responsável
+            </div>
+
+            <div class="form-row">
+              <!-- Responsável nome -->
+              <div class="form-group">
+                <label for="responsavelNome">Nome do Responsável</label>
+                <input
+                  id="responsavelNome"
+                  type="text"
+                  formControlName="responsavelNome"
+                  placeholder="Nome completo"
+                />
+              </div>
+
+              <!-- Responsável telefone -->
+              <div class="form-group">
+                <label for="responsavelTelefone">Telefone do Responsável</label>
+                <div class="input-icon">
+                  <i class="las la-mobile" aria-hidden="true"></i>
+                  <input
+                    id="responsavelTelefone"
+                    type="tel"
+                    formControlName="responsavelTelefone"
+                    placeholder="+351 900 000 000"
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModal()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="salvarArmazem()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm" aria-hidden="true"></span> A guardar…
+          } @else {
+            <i class="las la-save" aria-hidden="true"></i> Guardar Armazém
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════ MODAL DE CONFIRMAÇÃO ══════════════════════ -->
+@if (showConfirmModal() && armazemAlvo()) {
+  <div
+    class="modal-overlay modal-overlay--confirm"
+    (click)="cancelarConfirm()"
+    role="alertdialog"
+    aria-modal="true"
+    [attr.aria-label]="confirmType() === 'desativar'
+      ? 'Confirmar desactivação de ' + armazemAlvo()!.nome
+      : 'Confirmar activação de '    + armazemAlvo()!.nome"
+  >
+    <div class="modal-content modal-content--sm" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>
+          <i class="las"
+             [class.la-ban]="confirmType() === 'desativar'"
+             [class.la-check-circle]="confirmType() === 'ativar'"
+             aria-hidden="true"></i>
+          {{ confirmType() === 'desativar' ? 'Desactivar Armazém' : 'Activar Armazém' }}
+        </h3>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirm-icon"
+             [class.confirm-icon--danger]="confirmType() === 'desativar'"
+             [class.confirm-icon--success]="confirmType() === 'ativar'"
+             aria-hidden="true">
+          <i class="las"
+             [class.la-ban]="confirmType() === 'desativar'"
+             [class.la-undo-alt]="confirmType() === 'ativar'"></i>
+        </div>
+
+        <p class="confirm-text">
+          Tem a certeza que pretende
+          <strong>{{ confirmType() === 'desativar' ? 'desactivar' : 'activar' }}</strong>
+          o armazém <strong>{{ armazemAlvo()!.nome }}</strong>
+          <code>({{ armazemAlvo()!.codigo }})</code>?
+        </p>
+
+        @if (confirmType() === 'desativar') {
+          <p class="confirm-sub">
+            O armazém ficará inactivo mas poderá ser reactivado posteriormente.
+          </p>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarConfirm()">
+          <i class="las la-times" aria-hidden="true"></i> Cancelar
+        </button>
+        @if (confirmType() === 'desativar') {
+          <button class="btn-danger" (click)="executarConfirm()">
+            <i class="las la-ban" aria-hidden="true"></i> Desactivar
+          </button>
+        } @else {
+          <button class="btn-success" (click)="executarConfirm()">
+            <i class="las la-undo-alt" aria-hidden="true"></i> Activar
+          </button>
+        }
+      </div>
     </div>
   </div>
 }

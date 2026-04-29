@@ -1,282 +1,633 @@
 <div class="veiculos-container">
-
-  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
-  @if (currentState() === 'list') {
-
-    <div class="page-header">
-      <div class="page-header__left">
-        <div class="page-header__icon" aria-hidden="true">
-          <i class="las la-car"></i>
-        </div>
-        <div>
-          <h1>Frota de Veículos</h1>
-          <p>Gestão da frota própria e veículos de clientes</p>
-        </div>
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon" aria-hidden="true">
+        <i class="las la-car"></i>
       </div>
-      <button class="btn-primary" (click)="goToCreate()" aria-label="Adicionar novo veículo">
-        <i class="las la-plus" aria-hidden="true"></i> Novo Veículo
-      </button>
+      <div>
+        <h1>Frota de Veículos</h1>
+        <p>Gestão da frota própria e veículos de clientes</p>
+      </div>
     </div>
+    <button class="btn-primary" (click)="abrirModalNovo()" aria-label="Adicionar novo veículo">
+      <i class="las la-plus" aria-hidden="true"></i> Novo Veículo
+    </button>
+  </div>
 
-    <!-- Alertas -->
-    @if (errorMsg()) {
-      <div class="alert alert--error" role="alert">
-        <i class="las la-exclamation-circle" aria-hidden="true"></i>
-        <span>{{ errorMsg() }}</span>
-        <button class="alert__close" (click)="clearError()" aria-label="Fechar alerta">×</button>
-      </div>
-    }
-    @if (successMsg()) {
-      <div class="alert alert--success" role="status">
-        <i class="las la-check-circle" aria-hidden="true"></i>
-        <span>{{ successMsg() }}</span>
-      </div>
-    }
-
-    <!-- Toolbar com filtros -->
-    <div class="toolbar">
-      <div class="filters">
-        <div class="filter-group" [class.focused]="filtroSearch.length > 0">
-          <i class="las la-search" aria-hidden="true"></i>
-          <input type="search" placeholder="Matrícula, marca, modelo…"
-            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)"
-            aria-label="Pesquisar veículos" />
-        </div>
-
-        <div class="filter-select-wrap">
-          <i class="las la-gas-pump" aria-hidden="true"></i>
-          <select [value]="filtroCombustivel" (change)="onCombustivelChange($any($event.target).value)"
-            aria-label="Filtrar por tipo de combustível">
-            <option value="">Todos os combustíveis</option>
-            @for (c of combustivelOpcoes; track c) {
-              <option [value]="c">{{ c }}</option>
-            }
-          </select>
-        </div>
-
-        <label class="toggle-label" title="Mostrar registos inactivos">
-          <span class="toggle-switch">
-            <input type="checkbox" [checked]="mostrarInativos" (change)="toggleInativos()"
-              aria-label="Mostrar veículos inactivos" />
-            <span class="toggle-slider"></span>
-          </span>
-          <span>Mostrar inactivos</span>
-        </label>
-      </div>
-
-      @if (pagedResult()) {
-        <span class="results-count" aria-live="polite">
-          {{ totalVeiculos() }} veículo{{ totalVeiculos() !== 1 ? 's' : '' }}
-        </span>
-      }
+  @if (errorMsg()) {
+    <div class="alert alert--error" role="alert" aria-live="assertive">
+      <i class="las la-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()" aria-label="Fechar alerta">×</button>
     </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status" aria-live="polite">
+      <i class="las la-check-circle" aria-hidden="true"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
 
-    <!-- Tabela de listagem -->
-    @if (isLoading()) {
-      <div class="table-container" aria-busy="true">
-        <table class="data-table" aria-hidden="true">
-          <thead>
-            <tr><th>Matrícula</th><th>Marca / Modelo</th><th>Combustível</th><th>Proprietário</th><th>Estado</th><th>Ações</th></tr>
-          </thead>
-          <tbody>
-            @for (i of [1,2,3,4,5]; track i) {
-              <tr class="skeleton-row">
-                <td><span class="skeleton skeleton--sm"></span></td>
-                <td><span class="skeleton skeleton--lg"></span><span class="skeleton skeleton--md mt-4"></span></td>
-                <td><span class="skeleton skeleton--sm"></span></td>
-                <td><span class="skeleton skeleton--md"></span></td>
-                <td><span class="skeleton skeleton--badge"></span></td>
-                <td><span class="skeleton skeleton--actions"></span></td>
-             }
-          </tbody>
-        </table>
-      </div>
-    }
+  <div class="toolbar">
+    <div class="filters">
 
-    @if (!isLoading()) {
-      <div class="table-container">
-        <table class="data-table" aria-label="Lista de veículos">
-          <thead>
-            <tr><th>Matrícula</th><th>Marca / Modelo</th><th>Combustível</th><th>Proprietário</th><th>Estado</th><th class="col-actions">Ações</th></tr>
-          </thead>
-          <tbody>
-            @for (v of veiculos(); track v.id) {
-              <tr [class.row--inactive]="!v.ativo" (click)="goToEdit(v)" class="clickable-row">
-                <td><code class="matricula-tag">{{ v.matricula }}</code> @if (v.ano) { <span class="sub-info">{{ v.ano }}</span> }</td>
-                <td><strong class="veiculo-nome">{{ v.marca }}</strong><span class="sub-info">{{ v.modelo }}</span>@if (v.cor) { <span class="cor-pill"><i class="las la-palette"></i> {{ v.cor }}</span> }</td>
-                <td>@if (v.tipoCombustivel) { <span class="combustivel-tag"><i class="las la-gas-pump"></i> {{ v.tipoCombustivel }}</span> } @else { <span class="text-muted">—</span> }</td>
-                <td>@if (v.proprietario) { <span class="contact-info"><i class="las la-user"></i> {{ v.proprietario.nome }}</span> } @else { <span class="frota-tag"><i class="las la-building"></i> Frota própria</span> }</td>
-                <td><span class="badge" [class.badge--active]="v.ativo" [class.badge--inactive]="!v.ativo"><span class="badge__dot"></span>{{ v.ativo ? 'Activo' : 'Inactivo' }}</span></td>
-                <td class="actions-cell" (click)="$event.stopPropagation()">
-                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(v, $event)" title="Editar"><i class="las la-edit"></i></button>
-                  @if (v.ativo) {
-                    <button class="btn-icon btn-icon--danger" (click)="confirmarDesativar(v, $event)" title="Desactivar"><i class="las la-ban"></i></button>
-                  } @else {
-                    <button class="btn-icon btn-icon--success" (click)="ativarVeiculo(v)" title="Activar"><i class="las la-undo-alt"></i></button>
-                  }
-                </td>
-              </tr>
-            }
-            @if (veiculos().length === 0) {
-              <tr><td colspan="6"><div class="empty-state"><div class="empty-state__icon"><i class="las la-car-crash"></i></div><p class="empty-state__title">Nenhum veículo encontrado</p><small class="empty-state__sub">Ajuste os filtros ou adicione um novo veículo.</small></div></td></tr>
-            }
-          </tbody>
-        </table>
+      <div class="filter-group" [class.focused]="filtroSearch.length > 0">
+        <i class="las la-search" aria-hidden="true"></i>
+        <input
+          type="search"
+          placeholder="Matrícula, marca, modelo…"
+          [value]="filtroSearch"
+          (input)="onSearchChange($any($event.target).value)"
+          aria-label="Pesquisar veículos"
+        />
       </div>
 
-      @if (totalPages() > 1) {
-        <nav class="pagination" aria-label="Paginação de veículos">
-          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
-          @for (p of pages(); track p) {
-            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+      <div class="filter-select-wrap">
+        <i class="las la-gas-pump" aria-hidden="true"></i>
+        <select
+          [value]="filtroCombustivel"
+          (change)="onCombustivelChange($any($event.target).value)"
+          aria-label="Filtrar por tipo de combustível"
+        >
+          <option value="">Todos os combustíveis</option>
+          @for (c of combustivelOpcoes; track c) {
+            <option [value]="c">{{ c }}</option>
           }
-          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
-          <span class="pagination__info">Página {{ currentPage }} de {{ totalPages() }} ({{ totalVeiculos() }} registos)</span>
-        </nav>
-      }
+        </select>
+      </div>
+
+      <!-- Inativos toggle -->
+      <label class="toggle-label" title="Mostrar registos inactivos">
+        <span class="toggle-switch">
+          <input
+            type="checkbox"
+            [checked]="mostrarInativos"
+            (change)="toggleInativos()"
+            aria-label="Mostrar veículos inactivos"
+          />
+          <span class="toggle-slider"></span>
+        </span>
+        <span>Mostrar inactivos</span>
+      </label>
+    </div>
+
+    @if (pagedResult()) {
+      <span class="results-count" aria-live="polite">
+        {{ totalVeiculos() }} veículo{{ totalVeiculos() !== 1 ? 's' : '' }}
+      </span>
+    }
+  </div>
+
+  <!-- ══════════════════════ SKELETON LOADING ════════════════════════════ -->
+  @if (isLoading()) {
+    <div class="table-container" aria-busy="true" aria-label="A carregar veículos">
+      <table class="data-table" aria-hidden="true">
+        <thead>
+          <tr>
+            <th>Matrícula</th><th>Marca / Modelo</th>
+            <th>Combustível</th><th>Proprietário</th>
+            <th>Estado</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (i of [1,2,3,4,5]; track i) {
+            <tr class="skeleton-row">
+              <td><span class="skeleton skeleton--sm"></span></td>
+              <td><span class="skeleton skeleton--lg"></span><span class="skeleton skeleton--md mt-4"></span></td>
+              <td><span class="skeleton skeleton--sm"></span></td>
+              <td><span class="skeleton skeleton--md"></span></td>
+              <td><span class="skeleton skeleton--badge"></span></td>
+              <td><span class="skeleton skeleton--actions"></span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ══════════════════════════ DATA TABLE ══════════════════════════════ -->
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table" aria-label="Lista de veículos">
+        <thead>
+          <tr>
+            <th scope="col">Matrícula</th>
+            <th scope="col">Marca / Modelo</th>
+            <th scope="col">Combustível</th>
+            <th scope="col">Proprietário</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="col-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of veiculos(); track v.id) {
+            <tr [class.row--inactive]="!v.ativo">
+
+              <!-- Matrícula -->
+              <td>
+                <code class="matricula-tag">{{ v.matricula }}</code>
+                @if (v.ano) {
+                  <span class="sub-info">{{ v.ano }}</span>
+                }
+              </td>
+
+              <!-- Marca / Modelo -->
+              <td>
+                <strong class="veiculo-nome">{{ v.marca }}</strong>
+                <span class="sub-info">{{ v.modelo }}</span>
+                @if (v.cor) {
+                  <span class="cor-pill">
+                    <i class="las la-palette" aria-hidden="true"></i> {{ v.cor }}
+                  </span>
+                }
+              </td>
+
+              <!-- Combustível -->
+              <td>
+                @if (v.tipoCombustivel) {
+                  <span class="combustivel-tag">
+                    <i class="las la-gas-pump" aria-hidden="true"></i>
+                    {{ v.tipoCombustivel }}
+                  </span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+
+              <!-- Proprietário -->
+              <td>
+                @if (v.proprietario) {
+                  <span class="contact-info">
+                    <i class="las la-user" aria-hidden="true"></i>
+                    {{ v.proprietario.nome }}
+                  </span>
+                } @else {
+                  <span class="frota-tag">
+                    <i class="las la-building" aria-hidden="true"></i>
+                    Frota própria
+                  </span>
+                }
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span
+                  class="badge"
+                  [class.badge--active]="v.ativo"
+                  [class.badge--inactive]="!v.ativo"
+                  [attr.aria-label]="v.ativo ? 'Veículo activo' : 'Veículo inactivo'"
+                >
+                  <span class="badge__dot" aria-hidden="true"></span>
+                  {{ v.ativo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <!-- Ações -->
+              <td class="actions-cell">
+                <button
+                  class="btn-icon btn-icon--edit"
+                  (click)="abrirModalEditar(v)"
+                  [attr.aria-label]="'Editar veículo ' + v.matricula"
+                  title="Editar"
+                >
+                  <i class="las la-edit" aria-hidden="true"></i>
+                </button>
+
+                @if (v.ativo) {
+                  <button
+                    class="btn-icon btn-icon--danger"
+                    (click)="confirmarDesativar(v)"
+                    [attr.aria-label]="'Desactivar veículo ' + v.matricula"
+                    title="Desactivar"
+                  >
+                    <i class="las la-ban" aria-hidden="true"></i>
+                  </button>
+                } @else {
+                  <button
+                    class="btn-icon btn-icon--success"
+                    (click)="ativarVeiculo(v)"
+                    [attr.aria-label]="'Activar veículo ' + v.matricula"
+                    title="Activar"
+                  >
+                    <i class="las la-undo-alt" aria-hidden="true"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+
+          @if (veiculos().length === 0) {
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-state__icon" aria-hidden="true">
+                    <i class="las la-car-crash"></i>
+                  </div>
+                  <p class="empty-state__title">Nenhum veículo encontrado</p>
+                  <small class="empty-state__sub">Ajuste os filtros ou adicione um novo veículo.</small>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Paginação de veículos">
+        <button
+          class="pagination__btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+          aria-label="Página anterior"
+        >
+          <i class="las la-angle-left" aria-hidden="true"></i>
+        </button>
+
+        @for (p of pages(); track p) {
+          <button
+            class="pagination__btn"
+            [class.pagination__btn--active]="p === currentPage"
+            [attr.aria-current]="p === currentPage ? 'page' : null"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+
+        <button
+          class="pagination__btn"
+          [disabled]="currentPage === totalPages()"
+          (click)="goToPage(currentPage + 1)"
+          aria-label="Página seguinte"
+        >
+          <i class="las la-angle-right" aria-hidden="true"></i>
+        </button>
+
+        <span class="pagination__info">
+          Página {{ currentPage }} de {{ totalPages() }}
+          ({{ totalVeiculos() }} registos)
+        </span>
+      </nav>
     }
   }
-
-  <!-- ─── MODO: CRIAR VEÍCULO (formulário inline) ───────────────────────── -->
-  @if (currentState() === 'create') {
-    <div class="form-page">
-      <div class="form-header">
-        <div class="header-left">
-          <i class="las la-car"></i>
-          <h2>Novo Veículo</h2>
-        </div>
-        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
-      </div>
-
-      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
-
-      <div class="form-body" [formGroup]="form">
-        <!-- Tabs -->
-        <div class="form-tabs">
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'geral'" (click)="setTab('geral')"><i class="las la-id-card"></i> Dados Gerais</button>
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'tecnico'" (click)="setTab('tecnico')"><i class="las la-cogs"></i> Especificações</button>
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'vinculo'" (click)="setTab('vinculo')"><i class="las la-link"></i> Vínculos</button>
-        </div>
-
-        <!-- Tab: Dados Gerais -->
-        @if (activeTab() === 'geral') {
-          <div class="tab-panel">
-            <div class="form-row">
-              <div class="form-group" [class.form-group--error]="hasError('matricula')">
-                <label>Matrícula <span class="required">*</span></label>
-                <input type="text" formControlName="matricula" placeholder="Ex: AA-00-AA" (input)="form.get('matricula')?.setValue($any($event.target).value.toUpperCase())" />
-                @if (hasError('matricula')) { <span class="field-error">{{ getMatriculaErrorMsg() }}</span> }
-              </div>
-              <div class="form-group" [class.form-group--error]="hasError('ano')">
-                <label>Ano</label>
-                <input type="number" formControlName="ano" [min]="1900" [max]="currentYear + 1" />
-                @if (hasError('ano', 'min') || hasError('ano', 'max')) { <span class="field-error">Ano entre 1900 e {{ currentYear + 1 }}</span> }
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group" [class.form-group--error]="hasError('marca')">
-                <label>Marca <span class="required">*</span></label>
-                <input type="text" formControlName="marca" placeholder="Ex: Toyota" />
-              </div>
-              <div class="form-group" [class.form-group--error]="hasError('modelo')">
-                <label>Modelo <span class="required">*</span></label>
-                <input type="text" formControlName="modelo" placeholder="Ex: Corolla" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Cor</label><input type="text" formControlName="cor" placeholder="Ex: Branco" /></div>
-              <div class="form-group"><label>VIN / Chassis</label><input type="text" formControlName="vin" placeholder="17 caracteres" maxlength="17" /></div>
-            </div>
-            <div class="form-group"><label>Observações</label><textarea rows="2" formControlName="observacoes" placeholder="Notas internas..."></textarea></div>
-          </div>
-        }
-
-        <!-- Tab: Especificações Técnicas -->
-        @if (activeTab() === 'tecnico') {
-          <div class="tab-panel">
-            <div class="form-row">
-              <div class="form-group"><label>Tipo de Combustível</label><select formControlName="tipoCombustivel"><option value="">Seleccionar…</option>@for (c of combustivelOpcoes; track c) { <option [value]="c">{{ c }}</option> }</select></div>
-              <div class="form-group"><label>Cilindrada (cc)</label><input type="number" formControlName="cilindrada" min="0" max="99999" /></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Potência (cv)</label><input type="number" formControlName="potencia" min="0" max="9999" /></div>
-              <div class="form-group"><label>Nº de Lugares</label><input type="number" formControlName="lugares" min="1" max="200" /></div>
-            </div>
-            <div class="form-group"><label>Peso (kg)</label><input type="number" formControlName="peso" min="0" /></div>
-            <div class="specs-preview">
-              <div class="spec-item"><i class="las la-tachometer-alt"></i><span>{{ form.get('potencia')?.value || '—' }} cv</span><small>Potência</small></div>
-              <div class="spec-item"><i class="las la-cog"></i><span>{{ form.get('cilindrada')?.value || '—' }} cc</span><small>Cilindrada</small></div>
-              <div class="spec-item"><i class="las la-users"></i><span>{{ form.get('lugares')?.value || '—' }}</span><small>Lugares</small></div>
-              <div class="spec-item"><i class="las la-weight-hanging"></i><span>{{ form.get('peso')?.value || '—' }} kg</span><small>Peso</small></div>
-            </div>
-          </div>
-        }
-
-        <!-- Tab: Vínculos -->
-        @if (activeTab() === 'vinculo') {
-          <div class="tab-panel">
-            <div class="form-group"><label>ID do Proprietário (Cliente)</label><input type="number" formControlName="proprietarioId" placeholder="Deixar vazio para frota própria" min="1" /></div>
-            <div class="info-box"><i class="las la-lightbulb"></i><div><strong>Frota própria vs. Cliente</strong><p>Veículos sem proprietário são contabilizados na frota interna. Veículos com proprietário pertencem a clientes externos.</p></div></div>
-          </div>
-        }
-      </div>
-
-      <div class="form-footer">
-        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
-        <button class="btn-primary" (click)="salvarVeiculo()" [disabled]="isSaving()">
-          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Veículo }
-        </button>
-      </div>
-    </div>
-  }
-
-  <!-- ─── MODO: EDITAR VEÍCULO (formulário inline) ───────────────────────── -->
-  @if (currentState() === 'edit') {
-    <div class="form-page">
-      <div class="form-header">
-        <div class="header-left">
-          <i class="las la-edit"></i>
-          <h2>Editar Veículo</h2>
-        </div>
-        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
-      </div>
-
-      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
-
-      <div class="form-body" [formGroup]="form">
-        <!-- Mesmo conteúdo do formulário do modo create -->
-        <div class="form-tabs">
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'geral'" (click)="setTab('geral')"><i class="las la-id-card"></i> Dados Gerais</button>
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'tecnico'" (click)="setTab('tecnico')"><i class="las la-cogs"></i> Especificações</button>
-          <button type="button" class="form-tab" [class.active]="activeTab() === 'vinculo'" (click)="setTab('vinculo')"><i class="las la-link"></i> Vínculos</button>
-        </div>
-
-        <!-- Conteúdo idêntico ao modo create -->
-      </div>
-
-      <div class="form-footer">
-        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
-        <button class="btn-primary" (click)="salvarVeiculo()" [disabled]="isSaving()">
-          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Veículo }
-        </button>
-      </div>
-    </div>
-  }
-
 </div>
 
-<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ─────────────────────────────── -->
+<!-- ═════════════════════════ MODAL CRIAR / EDITAR ════════════════════════ -->
+@if (showModal()) {
+  <div
+    class="modal-overlay"
+    (click)="fecharModal()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="isEditing() ? 'Editar veículo' : 'Novo veículo'"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h3>
+          <i class="las" [class.la-car]="!isEditing()" [class.la-edit]="isEditing()" aria-hidden="true"></i>
+          {{ isEditing() ? 'Editar Veículo' : 'Novo Veículo' }}
+        </h3>
+        <button class="btn-close" (click)="fecharModal()" aria-label="Fechar modal">
+          <i class="las la-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Error inside modal -->
+      @if (errorMsg()) {
+        <div class="modal-alert modal-alert--error" role="alert">
+          <i class="las la-exclamation-circle" aria-hidden="true"></i> {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Tabs -->
+      <div class="modal-tabs" role="tablist" aria-label="Secções do formulário">
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'geral'"
+          (click)="setTab('geral')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'geral'"
+          id="tab-geral"
+          aria-controls="panel-geral"
+        >
+          <i class="las la-id-card" aria-hidden="true"></i> Dados Gerais
+        </button>
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'tecnico'"
+          (click)="setTab('tecnico')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'tecnico'"
+          id="tab-tecnico"
+          aria-controls="panel-tecnico"
+        >
+          <i class="las la-cogs" aria-hidden="true"></i> Especificações
+        </button>
+        <button
+          class="modal-tab"
+          [class.modal-tab--active]="activeTab() === 'vinculo'"
+          (click)="setTab('vinculo')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'vinculo'"
+          id="tab-vinculo"
+          aria-controls="panel-vinculo"
+        >
+          <i class="las la-link" aria-hidden="true"></i> Vínculos
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body" [formGroup]="form">
+
+        <!-- ── Aba: Dados Gerais ── -->
+        @if (activeTab() === 'geral') {
+          <div id="panel-geral" role="tabpanel" aria-labelledby="tab-geral">
+
+            <div class="form-row">
+              <!-- Matrícula -->
+              <div class="form-group" [class.form-group--error]="hasError('matricula')">
+                <label for="matricula">
+                  Matrícula <span class="required" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="matricula"
+                  type="text"
+                  formControlName="matricula"
+                  placeholder="Ex: 00-AA-00"
+                  autocomplete="off"
+                  [attr.aria-describedby]="hasError('matricula') ? 'err-matricula' : null"
+                  (input)="form.get('matricula')?.setValue($any($event.target).value.toUpperCase(), {emitEvent: true})"
+                />
+                @if (hasError('matricula')) {
+                  <span id="err-matricula" class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    {{ getMatriculaErrorMsg() }}
+                  </span>
+                }
+              </div>
+
+              <!-- Ano -->
+              <div class="form-group" [class.form-group--error]="hasError('ano')">
+                <label for="ano">Ano</label>
+                <input id="ano" type="number" formControlName="ano"
+                       [min]="1900" [max]="currentYear + 1"
+                       placeholder="{{ currentYear }}" />
+                @if (hasError('ano', 'min') || hasError('ano', 'max')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
+                    Ano entre 1900 e {{ currentYear + 1 }}.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <!-- Marca -->
+              <div class="form-group" [class.form-group--error]="hasError('marca')">
+                <label for="marca">Marca <span class="required" aria-hidden="true">*</span></label>
+                <input id="marca" type="text" formControlName="marca" placeholder="Ex: Toyota" />
+                @if (hasError('marca', 'required')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Marca é obrigatória.
+                  </span>
+                }
+              </div>
+
+              <!-- Modelo -->
+              <div class="form-group" [class.form-group--error]="hasError('modelo')">
+                <label for="modelo">Modelo <span class="required" aria-hidden="true">*</span></label>
+                <input id="modelo" type="text" formControlName="modelo" placeholder="Ex: Corolla" />
+                @if (hasError('modelo', 'required')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Modelo é obrigatório.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <!-- Cor -->
+              <div class="form-group">
+                <label for="cor">Cor</label>
+                <input id="cor" type="text" formControlName="cor" placeholder="Ex: Branco" />
+              </div>
+
+              <!-- VIN -->
+              <div class="form-group">
+                <label for="vin">VIN / Chassis</label>
+                <input id="vin" type="text" formControlName="vin"
+                       placeholder="17 caracteres" maxlength="17" />
+                <span class="field-hint">
+                  <i class="las la-info-circle" aria-hidden="true"></i>
+                  Número de identificação do veículo (opcional).
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="observacoes">Observações</label>
+              <textarea id="observacoes" rows="3" formControlName="observacoes"
+                        placeholder="Notas internas sobre este veículo…"></textarea>
+            </div>
+
+            @if (isEditing()) {
+              <div class="form-group form-group--inline">
+                <label class="checkbox-label" for="ativo">
+                  <input id="ativo" type="checkbox" formControlName="ativo" />
+                  <span class="checkbox-custom" aria-hidden="true"></span>
+                  Veículo activo
+                </label>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Aba: Especificações Técnicas ── -->
+        @if (activeTab() === 'tecnico') {
+          <div id="panel-tecnico" role="tabpanel" aria-labelledby="tab-tecnico">
+
+            <div class="form-row">
+              <!-- Combustível -->
+              <div class="form-group">
+                <label for="tipoCombustivel">Tipo de Combustível</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-gas-pump" aria-hidden="true"></i>
+                  <select id="tipoCombustivel" formControlName="tipoCombustivel">
+                    <option value="">Seleccionar…</option>
+                    @for (c of combustivelOpcoes; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <!-- Cilindrada -->
+              <div class="form-group" [class.form-group--error]="hasError('cilindrada')">
+                <label for="cilindrada">Cilindrada (cc)</label>
+                <input id="cilindrada" type="number" formControlName="cilindrada"
+                       min="0" max="99999" placeholder="Ex: 1600" />
+                @if (hasError('cilindrada')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Valor inválido.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <!-- Potência -->
+              <div class="form-group" [class.form-group--error]="hasError('potencia')">
+                <label for="potencia">Potência (cv)</label>
+                <input id="potencia" type="number" formControlName="potencia"
+                       min="0" max="9999" placeholder="Ex: 120" />
+                @if (hasError('potencia')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Valor inválido.
+                  </span>
+                }
+              </div>
+
+              <!-- Lugares -->
+              <div class="form-group" [class.form-group--error]="hasError('lugares')">
+                <label for="lugares">Nº de Lugares</label>
+                <input id="lugares" type="number" formControlName="lugares"
+                       min="1" max="200" placeholder="Ex: 5" />
+                @if (hasError('lugares')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Entre 1 e 200.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <!-- Peso -->
+              <div class="form-group" [class.form-group--error]="hasError('peso')">
+                <label for="peso">Peso (kg)</label>
+                <input id="peso" type="number" formControlName="peso"
+                       min="0" placeholder="Ex: 1500" />
+                @if (hasError('peso')) {
+                  <span class="field-error" role="alert">
+                    <i class="las la-exclamation-circle" aria-hidden="true"></i> Valor inválido.
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Specs summary card -->
+            <div class="specs-preview">
+              <div class="spec-item">
+                <i class="las la-tachometer-alt" aria-hidden="true"></i>
+                <span>{{ form.get('potencia')?.value || '—' }} cv</span>
+                <small>Potência</small>
+              </div>
+              <div class="spec-item">
+                <i class="las la-cog" aria-hidden="true"></i>
+                <span>{{ form.get('cilindrada')?.value || '—' }} cc</span>
+                <small>Cilindrada</small>
+              </div>
+              <div class="spec-item">
+                <i class="las la-users" aria-hidden="true"></i>
+                <span>{{ form.get('lugares')?.value || '—' }}</span>
+                <small>Lugares</small>
+              </div>
+              <div class="spec-item">
+                <i class="las la-weight-hanging" aria-hidden="true"></i>
+                <span>{{ form.get('peso')?.value || '—' }} kg</span>
+                <small>Peso</small>
+              </div>
+            </div>
+
+          </div>
+        }
+
+        <!-- ── Aba: Vínculos ── -->
+        @if (activeTab() === 'vinculo') {
+          <div id="panel-vinculo" role="tabpanel" aria-labelledby="tab-vinculo">
+
+            <div class="form-group">
+              <label for="proprietarioId">ID do Proprietário (Cliente)</label>
+              <div class="input-icon">
+                <i class="las la-user" aria-hidden="true"></i>
+                <input
+                  id="proprietarioId"
+                  type="number"
+                  formControlName="proprietarioId"
+                  placeholder="Deixar vazio se for frota própria"
+                  min="1"
+                />
+              </div>
+              <span class="field-hint">
+                <i class="las la-info-circle" aria-hidden="true"></i>
+                Se não pertencer a um cliente, o veículo ficará associado à frota própria da empresa.
+              </span>
+            </div>
+
+            <!-- Info box -->
+            <div class="info-box">
+              <i class="las la-lightbulb" aria-hidden="true"></i>
+              <div>
+                <strong>Frota própria vs. Cliente</strong>
+                <p>Veículos sem proprietário são contabilizados na frota interna da empresa.
+                   Veículos com proprietário pertencem a clientes externos e são rastreados separadamente.</p>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModal()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="salvarVeiculo()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm" aria-hidden="true"></span> A guardar…
+          } @else {
+            <i class="las la-save" aria-hidden="true"></i> Guardar Veículo
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════ CONFIRM DEACTIVATE MODAL ═══════════════════════ -->
 @if (showDeleteConfirm() && veiculoParaDelete()) {
-  <div class="modal-overlay modal-overlay--danger" (click)="cancelarDelete()" role="alertdialog" aria-modal="true">
+  <div
+    class="modal-overlay modal-overlay--danger"
+    (click)="cancelarDelete()"
+    role="alertdialog"
+    aria-modal="true"
+    [attr.aria-label]="'Confirmar desactivação de ' + veiculoParaDelete()!.matricula"
+  >
     <div class="modal-content modal-content--sm" (click)="$event.stopPropagation()">
-      <div class="modal-header"><h3><i class="las la-exclamation-triangle"></i> Confirmar desactivação</h3></div>
+      <div class="modal-header">
+        <h3>
+          <i class="las la-exclamation-triangle" aria-hidden="true"></i>
+          Confirmar desactivação
+        </h3>
+      </div>
       <div class="modal-body">
-        <p>Tem a certeza que pretende desactivar o veículo <strong>{{ veiculoParaDelete()!.matricula }}</strong> ({{ veiculoParaDelete()!.marca }} {{ veiculoParaDelete()!.modelo }})?</p>
-        <p style="margin-top: 8px; color:#64748b;">O veículo ficará inactivo e poderá ser reactivado posteriormente.</p>
+        <p>
+          Tem a certeza que pretende desactivar o veículo
+          <strong>{{ veiculoParaDelete()!.matricula }}</strong>
+          ({{ veiculoParaDelete()!.marca }} {{ veiculoParaDelete()!.modelo }})?
+        </p>
+        <p class="text-muted" style="margin-top: 8px;">
+          O veículo ficará inactivo e poderá ser reactivado posteriormente.
+        </p>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
-        <button class="btn-danger" (click)="executarDesativar()"><i class="las la-ban"></i> Desactivar</button>
+        <button class="btn-danger" (click)="executarDesativar()">
+          <i class="las la-ban" aria-hidden="true"></i> Desactivar
+        </button>
       </div>
     </div>
   </div>

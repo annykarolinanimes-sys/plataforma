@@ -9,6 +9,8 @@ export type FechoViagemUIState = 'list' | 'create' | 'edit';
 export type GestaoViagemUIState = 'list' | 'create' | 'edit';
 export type IncidenteUIState = 'list' | 'create' | 'edit';
 export type GuiaUIState = 'list' | 'create' | 'edit';
+export type DocumentoUIState = 'list' | 'create' | 'edit' | 'details';
+
 
 
 
@@ -268,5 +270,36 @@ export class UiStateService {
   isGuiaList(): boolean { return this.guiaState() === 'list'; }
   isGuiaCreate(): boolean { return this.guiaState() === 'create'; }
   isGuiaEdit(): boolean { return this.guiaState() === 'edit'; }
+
+  private documentoState = signal<DocumentoUIState>('list');
+  private selectedDocumentoId = signal<number | null>(null);
+
+  readonly currentDocumentoState = this.documentoState.asReadonly();
+  readonly currentDocumentoId = this.selectedDocumentoId.asReadonly();
+
+  goToDocumentoList(): void {
+    this.documentoState.set('list');
+    this.selectedDocumentoId.set(null);
+  }
+
+  goToDocumentoCreate(): void {
+    this.documentoState.set('create');
+    this.selectedDocumentoId.set(null);
+  }
+
+  goToDocumentoEdit(id: number): void {
+    this.documentoState.set('edit');
+    this.selectedDocumentoId.set(id);
+  }
+
+  goToDocumentoDetails(id: number): void {
+    this.documentoState.set('details');
+    this.selectedDocumentoId.set(id);
+  }
+
+  isDocumentoList(): boolean { return this.documentoState() === 'list'; }
+  isDocumentoCreate(): boolean { return this.documentoState() === 'create'; }
+  isDocumentoEdit(): boolean { return this.documentoState() === 'edit'; }
+  isDocumentoDetails(): boolean { return this.documentoState() === 'details'; }
 
 }

@@ -8,7 +8,6 @@ import {
 } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { VeiculosService, Veiculo, PagedResult } from '../../core/services/veiculos.service';
-import { UiStateService } from '../../core/services/ui-state.service';
 
 const MATRICULA_REGEX = /^([A-Z]{2}-\d{2}-[A-Z]{2}|\d{2}-[A-Z]{2}-\d{2}|\d{2}-\d{2}-[A-Z]{2})$/;
 
@@ -22,48 +21,51 @@ type ModalTab = 'geral' | 'tecnico' | 'vinculo';
   styleUrls: ['./veiculos.component.css']
 })
 export class VeiculosComponent implements OnInit, OnDestroy {
-  private readonly svc = inject(VeiculosService);
-  private readonly fb = inject(FormBuilder);
-  private readonly uiState = inject(UiStateService);
+  private readonly svc     = inject(VeiculosService);
+  private readonly fb      = inject(FormBuilder);
   private readonly destroy$ = new Subject<void>();
 
-  // Estado da UI (substitui a lógica de modais)
-  currentState = this.uiState.currentVeiculoState;
-  editingId = this.uiState.currentVeiculoId;
+  // ── State ─────────────────────────────────────────────────
+  pagedResult   = signal<PagedResult<Veiculo> | null>(null);
+  veiculos      = computed(() => this.pagedResult()?.items ?? []);
+  isLoading     = signal(false);
+  isSaving      = signal(false);
+  errorMsg      = signal<string | null>(null);
+  successMsg    = signal<string | null>(null);
 
-  // Dados
-  pagedResult = signal<PagedResult<Veiculo> | null>(null);
-  veiculos = computed(() => this.pagedResult()?.items ?? []);
-  isLoading = signal(false);
-  isSaving = signal(false);
-  errorMsg = signal<string | null>(null);
-  successMsg = signal<string | null>(null);
+  // ── Filters ───────────────────────────────────────────────
+  filtroSearch        = '';
+  filtroCombustivel   = '';
+  mostrarInativos     = false;
+  currentPage         = 1;
+  readonly pageSize   = 15;
 
-  // Filtros
-  filtroSearch = '';
-  filtroCombustivel = '';
-  mostrarInativos = false;
-  currentPage = 1;
-  readonly pageSize = 15;
+  // ── Modal ─────────────────────────────────────────────────
+  showModal     = signal(false);
+  isEditing     = signal(false);
+  editingId     = signal<number | null>(null);
+  activeTab     = signal<ModalTab>('geral');
 
-  // Formulário (inline)
+  // ── Form ──────────────────────────────────────────────────
   form!: FormGroup;
-  activeTab = signal<ModalTab>('geral');
 
-  // Modal apenas para ELIMINAR
-  showDeleteConfirm = signal(false);
-  veiculoParaDelete = signal<Veiculo | null>(null);
+  // ── Delete confirm ────────────────────────────────────────
+  showDeleteConfirm    = signal(false);
+  veiculoParaDelete    = signal<Veiculo | null>(null);
 
-  // Helpers
   private readonly searchInput$ = new Subject<string>();
+
   readonly currentYear = new Date().getFullYear();
   readonly combustivelOpcoes = [
     'Gasolina', 'Diesel', 'Híbrido', 'Eléctrico', 'GPL', 'Hidrogénio'
   ];
 
+  // ── Computed helpers ──────────────────────────────────────
   totalVeiculos = computed(() => this.pagedResult()?.total ?? 0);
-  totalPages = computed(() => this.pagedResult()?.totalPages ?? 0);
-  pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+  totalPages    = computed(() => this.pagedResult()?.totalPages ?? 0);
+  pages         = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1)
+  );
 
   ngOnInit(): void {
     this.initForm();
@@ -80,25 +82,34 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ── Form setup ────────────────────────────────────────────
   private initForm(): void {
     this.form = this.fb.group({
+      // Aba: Dados Gerais
       matricula: ['', [
         Validators.required,
         Validators.maxLength(20),
         Validators.pattern(MATRICULA_REGEX)
       ]],
-      marca: ['', [Validators.required, Validators.maxLength(100)]],
+      marca:  ['', [Validators.required, Validators.maxLength(100)]],
       modelo: ['', [Validators.required, Validators.maxLength(100)]],
-      cor: ['', Validators.maxLength(50)],
-      ano: [null, [Validators.min(1900), Validators.max(this.currentYear + 1)]],
-      vin: ['', Validators.maxLength(50)],
+      cor:    ['', Validators.maxLength(50)],
+      ano:    [null, [
+        Validators.min(1900),
+        Validators.max(this.currentYear + 1)
+      ]],
+      vin:    ['', Validators.maxLength(50)],
       observacoes: [''],
-      ativo: [true],
+      ativo:  [true],
+
+      // Aba: Especificações Técnicas
       tipoCombustivel: [''],
-      cilindrada: [null, [Validators.min(0), Validators.max(99999)]],
-      potencia: [null, [Validators.min(0), Validators.max(9999)]],
-      lugares: [null, [Validators.min(1), Validators.max(200)]],
-      peso: [null, [Validators.min(0)]],
+      cilindrada:      [null, [Validators.min(0), Validators.max(99999)]],
+      potencia:        [null, [Validators.min(0), Validators.max(9999)]],
+      lugares:         [null, [Validators.min(1), Validators.max(200)]],
+      peso:            [null, [Validators.min(0)]],
+
+      // Aba: Vínculos
       proprietarioId: [null],
     });
   }
@@ -111,22 +122,18 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     return error ? c.hasError(error) : true;
   }
 
-  // ─── Listagem e Filtros ─────────────────────────────────────────────────
-
+  // ── Load data ─────────────────────────────────────────────
   carregarVeiculos(): void {
     this.isLoading.set(true);
     this.svc.listar({
-      search: this.filtroSearch || undefined,
-      combustivel: this.filtroCombustivel || undefined,
-      ativo: this.mostrarInativos ? undefined : true,
-      page: this.currentPage,
-      pageSize: this.pageSize,
+      search:      this.filtroSearch        || undefined,
+      combustivel: this.filtroCombustivel   || undefined,
+      ativo:       this.mostrarInativos     ? undefined : true,
+      page:        this.currentPage,
+      pageSize:    this.pageSize,
     }).subscribe({
       next: (result) => { this.pagedResult.set(result); this.isLoading.set(false); },
-      error: (err) => {
-        this.errorMsg.set(err.message ?? err.error?.message ?? 'Erro ao carregar veículos');
-        this.isLoading.set(false);
-      }
+      error: (err)   => { this.errorMsg.set(err.message ?? err.error?.message ?? 'Erro ao carregar veículos'); this.isLoading.set(false); }
     });
   }
 
@@ -154,65 +161,55 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     this.carregarVeiculos();
   }
 
-  // ─── Ações de navegação (sem modais) ────────────────────────────────────
-
-  goToCreate(): void {
-    this.resetForm();
-    this.uiState.goToVeiculoCreate();
-  }
-
-  goToEdit(veiculo: Veiculo, event?: Event): void {
-    if (event) event.stopPropagation();
-    this.carregarDadosParaEdicao(veiculo);
-    this.uiState.goToVeiculoEdit(veiculo.id);
-  }
-
-  goToList(): void {
-    this.uiState.goToVeiculoList();
-    this.resetForm();
-    this.carregarVeiculos();
-  }
-
-  cancel(): void {
-    this.goToList();
-  }
-
-  // ─── Formulário inline ──────────────────────────────────────────────────
-
-  private resetForm(): void {
+  // ── Modal ─────────────────────────────────────────────────
+  abrirModalNovo(): void {
+    this.isEditing.set(false);
+    this.editingId.set(null);
     this.activeTab.set('geral');
     this.form.reset({ ativo: true });
     this.errorMsg.set(null);
+    this.showModal.set(true);
   }
 
-  private carregarDadosParaEdicao(v: Veiculo): void {
+  abrirModalEditar(v: Veiculo): void {
+    this.isEditing.set(true);
+    this.editingId.set(v.id);
     this.activeTab.set('geral');
     this.form.patchValue({
-      matricula: v.matricula,
-      marca: v.marca,
-      modelo: v.modelo,
-      cor: v.cor ?? '',
-      ano: v.ano ?? null,
-      vin: v.vin ?? '',
-      observacoes: v.observacoes ?? '',
-      ativo: v.ativo,
+      matricula:       v.matricula,
+      marca:           v.marca,
+      modelo:          v.modelo,
+      cor:             v.cor             ?? '',
+      ano:             v.ano             ?? null,
+      vin:             v.vin             ?? '',
+      observacoes:     v.observacoes     ?? '',
+      ativo:           v.ativo,
       tipoCombustivel: v.tipoCombustivel ?? '',
-      cilindrada: v.cilindrada ?? null,
-      potencia: v.potencia ?? null,
-      lugares: v.lugares ?? null,
-      peso: v.peso ?? null,
-      proprietarioId: v.proprietarioId ?? null,
+      cilindrada:      v.cilindrada      ?? null,
+      potencia:        v.potencia        ?? null,
+      lugares:         v.lugares         ?? null,
+      peso:            v.peso            ?? null,
+      proprietarioId:  v.proprietarioId  ?? null,
     });
+    this.errorMsg.set(null);
+    this.showModal.set(true);
+  }
+
+  fecharModal(): void {
+    this.showModal.set(false);
+    this.form.markAsUntouched();
     this.errorMsg.set(null);
   }
 
   setTab(tab: ModalTab): void { this.activeTab.set(tab); }
 
+  // ── Save ──────────────────────────────────────────────────
   salvarVeiculo(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
-      const geralFields = ['matricula', 'marca', 'modelo', 'cor', 'ano', 'vin'];
-      const tecFields = ['tipoCombustivel', 'cilindrada', 'potencia', 'lugares', 'peso'];
+      // Switch to first tab with errors
+      const geralFields = ['matricula','marca','modelo','cor','ano','vin'];
+      const tecFields   = ['tipoCombustivel','cilindrada','potencia','lugares','peso'];
       if (geralFields.some(f => this.ctrl(f).invalid)) this.activeTab.set('geral');
       else if (tecFields.some(f => this.ctrl(f).invalid)) this.activeTab.set('tecnico');
       this.errorMsg.set('Corrija os erros no formulário antes de continuar.');
@@ -224,31 +221,32 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     const v = this.form.getRawValue();
 
     const dto: Partial<Veiculo> = {
-      matricula: v.matricula.trim().toUpperCase(),
-      marca: v.marca.trim(),
-      modelo: v.modelo.trim(),
-      cor: v.cor?.trim() || undefined,
-      ano: v.ano || undefined,
-      vin: v.vin?.trim() || undefined,
-      observacoes: v.observacoes?.trim() || undefined,
-      ativo: v.ativo,
+      matricula:       v.matricula.trim().toUpperCase(),
+      marca:           v.marca.trim(),
+      modelo:          v.modelo.trim(),
+      cor:             v.cor?.trim()             || undefined,
+      ano:             v.ano                     || undefined,
+      vin:             v.vin?.trim()             || undefined,
+      observacoes:     v.observacoes?.trim()     || undefined,
+      ativo:           v.ativo,
       tipoCombustivel: v.tipoCombustivel?.trim() || undefined,
-      cilindrada: v.cilindrada || undefined,
-      potencia: v.potencia || undefined,
-      lugares: v.lugares || undefined,
-      peso: v.peso || undefined,
-      proprietarioId: v.proprietarioId || undefined,
+      cilindrada:      v.cilindrada              || undefined,
+      potencia:        v.potencia                || undefined,
+      lugares:         v.lugares                 || undefined,
+      peso:            v.peso                    || undefined,
+      proprietarioId:  v.proprietarioId          || undefined,
     };
 
-    const req$ = this.uiState.isVeiculoEdit() && this.editingId()
+    const req$ = this.isEditing() && this.editingId()
       ? this.svc.atualizar(this.editingId()!, dto as Veiculo)
       : this.svc.criar(dto as Veiculo);
 
     req$.subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.goToList();
-        this.showToast(this.uiState.isVeiculoEdit() ? 'Veículo actualizado com sucesso' : 'Veículo criado com sucesso');
+        this.fecharModal();
+        this.carregarVeiculos();
+        this.showToast(this.isEditing() ? 'Veículo actualizado com sucesso' : 'Veículo criado com sucesso');
       },
       error: (err) => {
         this.errorMsg.set(err.error?.message ?? err.message ?? 'Erro ao guardar veículo');
@@ -257,21 +255,9 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Ações ──────────────────────────────────────────────────────────────
-
-  ativarVeiculo(veiculo: Veiculo): void {
-    if (!confirm(`Activar o veículo ${veiculo.matricula}?`)) return;
-    this.svc.ativar(veiculo.id).subscribe({
-      next: () => { this.carregarVeiculos(); this.showToast('Veículo activado com sucesso'); },
-      error: (err) => this.errorMsg.set(err.error?.message ?? 'Erro ao activar')
-    });
-  }
-
-  // ─── Modal apenas para ELIMINAR (exceção) ───────────────────────────────
-
-  confirmarDesativar(veiculo: Veiculo, event?: Event): void {
-    if (event) event.stopPropagation();
-    this.veiculoParaDelete.set(veiculo);
+  // ── Delete ────────────────────────────────────────────────
+  confirmarDesativar(v: Veiculo): void {
+    this.veiculoParaDelete.set(v);
     this.showDeleteConfirm.set(true);
   }
 
@@ -284,17 +270,20 @@ export class VeiculosComponent implements OnInit, OnDestroy {
     const v = this.veiculoParaDelete();
     if (!v) return;
     this.svc.deletar(v.id).subscribe({
-      next: () => {
-        this.cancelarDelete();
-        this.carregarVeiculos();
-        this.showToast('Veículo desactivado com sucesso');
-      },
+      next: () => { this.cancelarDelete(); this.carregarVeiculos(); this.showToast('Veículo desactivado com sucesso'); },
       error: (err) => { this.errorMsg.set(err.error?.message ?? 'Erro ao desactivar'); this.cancelarDelete(); }
     });
   }
 
-  // ─── Helpers ────────────────────────────────────────────────────────────
+  ativarVeiculo(v: Veiculo): void {
+    if (!confirm(`Activar o veículo ${v.matricula}?`)) return;
+    this.svc.ativar(v.id).subscribe({
+      next: () => { this.carregarVeiculos(); this.showToast('Veículo activado com sucesso'); },
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'Erro ao activar')
+    });
+  }
 
+  // ── Utils ─────────────────────────────────────────────────
   showToast(msg: string): void {
     this.successMsg.set(msg);
     setTimeout(() => this.successMsg.set(null), 3500);
@@ -305,7 +294,7 @@ export class VeiculosComponent implements OnInit, OnDestroy {
   getMatriculaErrorMsg(): string {
     const c = this.ctrl('matricula');
     if (c.hasError('required')) return 'Matrícula é obrigatória.';
-    if (c.hasError('pattern')) return 'Formato inválido. Use: AA-00-AA, 00-AA-00 ou 00-00-AA.';
+    if (c.hasError('pattern'))  return 'Formato inválido. Use: AA-00-AA, 00-AA-00 ou 00-00-AA.';
     if (c.hasError('maxlength')) return 'Máximo 20 caracteres.';
     return '';
   }
