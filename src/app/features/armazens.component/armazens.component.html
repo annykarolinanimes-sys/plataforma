@@ -1,0 +1,122 @@
+<div class="armazens-container">
+  <div class="page-header">
+    <h1><i class="las la-warehouse"></i> Armazéns</h1>
+    <p>Gestão de armazéns, depósitos e localizações de stock</p>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert-error"><i class="las la-exclamation-circle"></i> {{ errorMsg() }}<button class="alert-close" (click)="clearError()">×</button></div>
+  }
+  @if (successMsg()) {
+    <div class="alert-success"><i class="las la-check-circle"></i> {{ successMsg() }}</div>
+  }
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="filter-group">
+        <i class="las la-search"></i>
+        <input type="text" placeholder="Pesquisar por nome ou código..." [(ngModel)]="filtroSearch" (ngModelChange)="carregarArmazens()" />
+      </div>
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="mostrarInativos" (ngModelChange)="toggleInativos()" />
+        <i class="las la-eye-slash"></i> Mostrar inactivos
+      </label>
+    </div>
+    <button class="btn-primary" (click)="abrirModalNovo()"><i class="las la-plus"></i> Novo Armazém</button>
+  </div>
+
+  @if (isLoading()) { <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div> }
+
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr><th>Código</th><th>Localização</th><th>Nome</th><th>Tipo</th><th>Morada</th><th>Código Postal</th><th>Estado</th><th>Ações</th></tr>
+        </thead>
+        <tbody>
+          @for (a of armazens(); track a.id) {
+            <tr>
+              <td><code>{{ a.codigo }}</code></td>
+              <td><code>{{ a.localizacao }}</code></td>
+              <td><strong>{{ a.nome }}</strong></td>
+              <td>{{ a.tipo === 'principal' ? 'Principal' : (a.tipo === 'secundario' ? 'Secundário' : (a.tipo === 'deposito' ? 'Depósito' : a.tipo)) }}</td>
+              <td>{{ a.morada || '—' }}</td>
+              <td>{{ a.codigoPostal || '—' }}</td>
+              <td><span class="badge" [class.badge-ok]="a.ativo" [class.badge-danger]="!a.ativo">{{ a.ativo ? 'Activo' : 'Inactivo' }}</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="abrirModalEditar(a)" title="Editar"><i class="las la-edit"></i></button>
+                @if (a.ativo) {
+                  <button class="btn-icon danger" (click)="desativarArmazem(a)" title="Desactivar"><i class="las la-trash"></i></button>
+                } @else {
+                  <button class="btn-icon success" (click)="ativarArmazem(a)" title="Activar"><i class="las la-undo-alt"></i></button>
+                }
+              </td>
+            </tr>
+          }
+          @if (armazens().length === 0) { <tr><td colspan="8" class="empty-state">Nenhum armazém encontrado</td></tr> }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal Novo/Editar -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="fecharModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header"><h3>{{ isEditing() ? 'Editar Armazém' : 'Novo Armazém' }}</h3><button class="modal-close" (click)="fecharModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código <small>(opcional - será gerado automaticamente se vazio)</small></label>
+            <input type="text" [(ngModel)]="formArmazem.codigo" placeholder="Ex: ARM-0001 ou deixe vazio para auto-gerar" />
+          </div>
+          <div class="form-group">
+            <label>Localização <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="formArmazem.localizacao" placeholder="Ex: A1-01" />
+          </div>
+          <div class="form-group">
+            <label>Nome <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="formArmazem.nome" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo</label>
+            <select [(ngModel)]="formArmazem.tipo">
+              <option value="principal">Principal</option>
+              <option value="secundario">Secundário</option>
+              <option value="deposito">Depósito</option>
+              <option value="loja">Loja</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Morada</label>
+            <input type="text" [(ngModel)]="formArmazem.morada" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código Postal</label>
+            <input type="text" [(ngModel)]="formArmazem.codigoPostal" placeholder="XXXX-XXX" />
+          </div>
+          <div class="form-group">
+            <label>País</label>
+            <input type="text" [(ngModel)]="formArmazem.pais" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="formArmazem.email" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea rows="2" [(ngModel)]="formArmazem.observacoes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn-secondary" (click)="fecharModal()">Cancelar</button><button class="btn-primary" (click)="salvarArmazem()" [disabled]="isSaving()"><i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i> {{ isSaving() ? 'A guardar...' : 'Guardar' }}</button></div>
+    </div>
+  </div>
+}

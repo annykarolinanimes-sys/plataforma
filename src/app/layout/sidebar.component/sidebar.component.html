@@ -1,0 +1,166 @@
+<aside class="sidebar" [class.collapsed]="collapsed()">
+
+  <div class="logo-area">
+    <div class="logo-icon">
+        <i class="las la-chart-line"></i>
+    </div>
+    @if (!collapsed()) {
+      <div class="logo-text">
+        <h1>Accusoft</h1>
+        <span>Logística</span>
+      </div>
+    }
+  </div>
+
+  <nav class="nav-menu">
+    <ul>
+      <li>
+        <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
+          <i class="las la-tachometer-alt"></i>
+          @if (!collapsed()) { <span>Dashboard</span> }
+        </a>
+      </li>
+
+      <li class="nav-section" (click)="toggleProcessosMenu()">
+        <div class="nav-section-header">
+          <i class="las la-chalkboard"></i>
+          @if (!collapsed()) { 
+            <span>Processos</span>
+            <i class="las" [class.la-angle-down]="!processosMenuOpen()" [class.la-angle-up]="processosMenuOpen()"></i>
+          }
+        </div>
+        
+        @if (collapsed() && processosMenuOpen()) {
+          <div class="floating-submenu">
+            @for (item of processosSubmenu; track item.label) {
+              <a class="nav-subitem" [routerLink]="item.route" (click)="processosMenuOpen.set(false)">
+                <i [class]="'las ' + item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        }
+        
+        @if (!collapsed() && processosMenuOpen()) {
+          <ul class="nav-submenu">
+            @for (item of processosSubmenu; track item.label) {
+              <li>
+                <a class="nav-subitem" [routerLink]="item.route">
+                  <i [class]="'las ' + item.icon"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </li>
+
+      <li class="nav-section" (click)="toggleCatalogoMenu()">
+        <div class="nav-section-header">
+          <i class="las la-book"></i>
+          @if (!collapsed()) { 
+            <span>Catálogo</span>
+            <i class="las" [class.la-angle-down]="!catalogoMenuOpen()" [class.la-angle-up]="catalogoMenuOpen()"></i>
+          }
+        </div>
+        
+        @if (collapsed() && catalogoMenuOpen()) {
+          <div class="floating-submenu">
+            @for (item of catalogoSubmenu; track item.label) {
+              <a class="nav-subitem" [routerLink]="item.route" (click)="catalogoMenuOpen.set(false)">
+                <i [class]="'las ' + item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        }
+        
+        @if (!collapsed() && catalogoMenuOpen()) {
+          <ul class="nav-submenu">
+            @for (item of catalogoSubmenu; track item.label) {
+              <li>
+                <a class="nav-subitem" [routerLink]="item.route">
+                  <i [class]="'las ' + item.icon"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </li>
+
+      <li class="nav-section" (click)="toggleImpressaoMenu()">
+        <div class="nav-section-header">
+          <i class="las la-print"></i>
+          @if (!collapsed()) { 
+            <span>Impressão</span>
+            <i class="las" [class.la-angle-down]="!impressaoMenuOpen()" [class.la-angle-up]="impressaoMenuOpen()"></i>
+          }
+        </div>
+        
+        @if (collapsed() && impressaoMenuOpen()) {
+          <div class="floating-submenu">
+            @for (item of impressaoSubmenu; track item.label) {
+              <a class="nav-subitem" [routerLink]="item.route" (click)="impressaoMenuOpen.set(false)">
+                <i [class]="'las ' + item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        }
+        
+        @if (!collapsed() && impressaoMenuOpen()) {
+          <ul class="nav-submenu">
+            @for (item of impressaoSubmenu; track item.label) {
+              <li>
+                <a class="nav-subitem" [routerLink]="item.route">
+                  <i [class]="'las ' + item.icon"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </li>
+
+      <li>
+        <a class="nav-item" routerLink="/faturas" routerLinkActive="active">
+          <i class="las la-file-invoice"></i>
+          @if (!collapsed()) { <span>Faturas</span> }
+        </a>
+      </li>
+
+      <li>
+        <a class="nav-item" routerLink="/definicao" routerLinkActive="active">
+          <i class="las la-cog"></i>
+          @if (!collapsed()) { <span>Definições</span> }
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  @if (auth.isAdmin()) {
+    <div class="admin-section">
+      <a class="nav-item admin-link" routerLink="/admin" routerLinkActive="active">
+        <i class="las la-user-shield"></i>
+        @if (!collapsed()) { <span>Admin</span> }
+      </a>
+    </div>
+  }
+
+  <div class="sidebar-footer">
+    <div class="user-tag">
+      <i class="las la-user-circle"></i>
+      @if (!collapsed()) {
+        <div class="user-info">
+          <div class="user-name">{{ auth.user()?.nome }}</div>
+          <div class="user-role">{{ auth.user()?.role === 'admin' ? 'Administrador' : 'Utilizador' }}</div>
+        </div>
+      }
+    </div>
+    <button class="logout-btn" (click)="auth.logout()" title="Sair">
+      <i class="las la-sign-out-alt"></i>
+    </button>
+  </div>
+
+</aside>

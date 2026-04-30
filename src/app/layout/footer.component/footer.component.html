@@ -1,0 +1,10 @@
+<footer class="footer">
+  <span class="copyright">
+    &copy; {{ ano }} <strong>Accusoft</strong> &mdash; Todos os direitos reservados
+  </span>
+  <nav class="footer-links">
+    @for (link of links; track link.route) {
+      <a [routerLink]="link.route">{{ link.label }}</a>
+    }
+  </nav>
+</footer>

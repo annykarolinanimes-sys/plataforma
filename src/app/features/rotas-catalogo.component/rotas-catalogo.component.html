@@ -1,0 +1,105 @@
+<div class="rotas-container">
+  <div class="page-header">
+    <h1><i class="las la-route"></i> Rotas</h1>
+    <p>Catálogo de rotas logísticas e itinerários</p>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert-error"><i class="las la-exclamation-circle"></i> {{ errorMsg() }}<button class="alert-close" (click)="clearError()">×</button></div>
+  }
+  @if (successMsg()) {
+    <div class="alert-success"><i class="las la-check-circle"></i> {{ successMsg() }}</div>
+  }
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="filter-group">
+        <i class="las la-search"></i>
+        <input type="text" placeholder="Pesquisar por código, nome, origem ou destino..." [(ngModel)]="filtroSearch" (ngModelChange)="carregarRotas()" />
+      </div>
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="mostrarInativos" (ngModelChange)="toggleInativos()" />
+        <i class="las la-eye-slash"></i> Mostrar inactivos
+      </label>
+    </div>
+    <button class="btn-primary" (click)="abrirModalNovo()"><i class="las la-plus"></i> Nova Rota</button>
+  </div>
+
+  @if (isLoading()) { <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div> }
+
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Código</th><th>Nome</th><th>Origem → Destino</th><th>Distância (km)</th><th>Transportadora</th><th>Estado</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rotas(); track r.id) {
+            <tr>
+              <td><code>{{ r.codigo }}</code></td>
+              <td><strong>{{ r.nome }}</strong><br><span class="text-muted">{{ r.descricao | slice:0:60 }}</span></td>
+              <td>{{ r.origem || '—' }} → {{ r.destino || '—' }}</td>
+              <td>{{ r.distanciaKm !== undefined ? (r.distanciaKm + ' km') : '—' }}</td>
+              <td>{{ r.transportadora?.nome || (r.transportadoraId ? 'ID: ' + r.transportadoraId : '—') }}</td>
+              <td><span class="badge" [class.badge-ok]="r.ativo" [class.badge-danger]="!r.ativo">{{ r.ativo ? 'Activa' : 'Inactiva' }}</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" (click)="abrirModalEditar(r)" title="Editar"><i class="las la-edit"></i></button>
+                @if (r.ativo) {
+                  <button class="btn-icon danger" (click)="desativarRota(r)" title="Desactivar"><i class="las la-trash"></i></button>
+                } @else {
+                  <button class="btn-icon success" (click)="ativarRota(r)" title="Activar"><i class="las la-undo-alt"></i></button>
+                }
+              </td>
+            </tr>
+          }
+          @if (rotas().length === 0) { <tr><td colspan="7" class="empty-state">Nenhuma rota encontrada</td></tr> }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal Novo/Editar -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="fecharModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditing() ? 'Editar Rota' : 'Nova Rota' }}</h3>
+        <button class="modal-close" (click)="fecharModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>Código <span class="required">*</span></label><input type="text" [(ngModel)]="formRota.codigo" /></div>
+          <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" [(ngModel)]="formRota.nome" /></div>
+        </div>
+        <div class="form-group"><label>Descrição</label><textarea rows="2" [(ngModel)]="formRota.descricao"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Origem</label><input type="text" [(ngModel)]="formRota.origem" /></div>
+          <div class="form-group"><label>Destino</label><input type="text" [(ngModel)]="formRota.destino" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Distância (km)</label><input type="number" step="0.1" [(ngModel)]="formRota.distanciaKm" /></div>
+          <div class="form-group"><label>Tempo estimado (min)</label><input type="number" [(ngModel)]="formRota.tempoEstimadoMin" /></div>
+        </div>
+        <div class="form-group">
+          <label>Transportadora</label>
+          <select [(ngModel)]="formRota.transportadoraId">
+            <option [ngValue]="undefined">Nenhuma</option>
+            @for (t of transportadoras(); track t.id) {
+              <option [ngValue]="t.id">{{ t.codigo }} - {{ t.nome }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModal()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarRota()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? 'A guardar...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

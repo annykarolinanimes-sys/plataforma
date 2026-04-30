@@ -1,0 +1,414 @@
+<div class="incidentes-container">
+
+  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
+  @if (currentState() === 'list') {
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-exclamation-triangle"></i>
+        </div>
+        <div>
+          <h1>Incidentes</h1>
+          <p>Registo e gestão de problemas operacionais – atrasos, avarias, danos e falhas</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Novo Incidente
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Nº Incidente, Título..."
+            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-chart-line"></i>
+          <select [value]="filtroGravidade" (change)="onGravidadeChange($any($event.target).value)">
+            <option value="">Todas as gravidades</option>
+            @for (g of gravidades; track g) {
+              <option [value]="g">{{ g }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} incidente{{ pagedResult()!.total !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar incidentes…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº</th><th>Data</th><th>Tipo</th><th>Título</th>
+              <th>Gravidade</th><th>Status</th><th>Associado a</th>
+              <th>Custo</th><th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of incidentes(); track i.id) {
+              <tr [class.row--resolvido]="i.status === 'Resolvido' || i.status === 'Fechado'"
+                  (click)="goToEdit(i)" class="clickable-row">
+                <td><code class="numero-tag">{{ i.numeroIncidente }}</code></td>
+                <td>{{ formatarData(i.dataOcorrencia) }}</td>
+                <td><span class="tipo-badge" [ngClass]="getTipoClass(i.tipo)">{{ i.tipo }}</span></td>
+                <td>
+                  <strong>{{ i.titulo }}</strong>
+                  @if (i.descricao) {
+                    <span class="text-muted">{{ i.descricao | slice:0:50 }}{{ i.descricao.length > 50 ? '…' : '' }}</span>
+                  }
+                </td>
+                <td><span class="gravidade-badge" [ngClass]="getGravidadeClass(i.gravidade)">{{ i.gravidade }}</span></td>
+                <td><span class="status-badge" [ngClass]="getStatusClass(i.status)">{{ i.status }}</span></td>
+                <td>
+                  @if (i.viagemNumero) {
+                    <span class="assoc-tag"><i class="las la-map-marked"></i> {{ i.viagemNumero }}</span>
+                  } @else if (i.veiculoMatricula) {
+                    <span class="assoc-tag"><i class="las la-car"></i> {{ i.veiculoMatricula }}</span>
+                  } @else if (i.clienteNome) {
+                    <span class="assoc-tag"><i class="las la-user"></i> {{ i.clienteNome }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  @if (i.custoAssociado && i.custoAssociado > 0) {
+                    <strong class="custo-valor">{{ formatarMoeda(i.custoAssociado) }}</strong>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (i.status === 'Aberto' || i.status === 'EmAnalise') {
+                    <button class="btn-icon btn-icon--resolve" (click)="abrirResolverModal(i, $event)" title="Resolver"><i class="las la-check-double"></i></button>
+                  }
+                  @if (i.status === 'Resolvido') {
+                    <button class="btn-icon btn-icon--close" (click)="fecharIncidente(i, $event)" title="Fechar"><i class="las la-lock"></i></button>
+                  }
+                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(i, $event)" title="Editar"><i class="las la-edit"></i></button>
+                  <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(i, $event)" title="Eliminar"><i class="las la-trash"></i></button>
+                </td>
+              </tr>
+            }
+            @if (incidentes().length === 0) {
+              <tr>
+                <td colspan="9">
+                  <div class="empty-state">
+                    <i class="las la-exclamation-triangle"></i>
+                    <p>Nenhum incidente encontrado</p>
+                    <small>Altere os filtros ou registe um novo incidente.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
+          <span class="pagination__info">Página {{ currentPage }} de {{ totalPages() }} ({{ totalIncidentes() }} registos)</span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ─── MODO: CRIAR INCIDENTE ───────────────────────────────────────────── -->
+  @if (currentState() === 'create') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-exclamation-triangle"></i>
+          <h2>Novo Incidente</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+
+        <!-- Dados Gerais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Informação do Incidente</h4>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('tipo')">
+              <label>Tipo <span class="required">*</span></label>
+              <select formControlName="tipo">
+                <option value="">Seleccione...</option>
+                @for (t of tipos; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group" [class.form-group--error]="hasError('gravidade')">
+              <label>Gravidade <span class="required">*</span></label>
+              <select formControlName="gravidade">
+                @for (g of gravidades; track g) {
+                  <option [value]="g">{{ g }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('titulo')">
+              <label>Título <span class="required">*</span></label>
+              <input type="text" formControlName="titulo" placeholder="Resumo do incidente" />
+            </div>
+            <div class="form-group">
+              <label>Data da Ocorrência</label>
+              <input type="date" formControlName="dataOcorrencia" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <textarea rows="3" formControlName="descricao" placeholder="Descrição detalhada do incidente..."></textarea>
+          </div>
+        </div>
+
+        <!-- Associação -->
+        <div class="form-section">
+          <h4 class="form-section__title">Associação</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Viagem ID</label>
+              <input type="number" formControlName="viagemId" min="1" placeholder="ID da viagem" />
+            </div>
+            <div class="form-group">
+              <label>Veículo ID</label>
+              <input type="number" formControlName="veiculoId" min="1" placeholder="ID do veículo" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cliente ID</label>
+              <input type="number" formControlName="clienteId" min="1" placeholder="ID do cliente" />
+            </div>
+            <div class="form-group">
+              <label>Atribuição ID</label>
+              <input type="number" formControlName="atribuicaoId" min="1" placeholder="ID da atribuição" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Causa e Ação -->
+        <div class="form-section">
+          <h4 class="form-section__title">Causa e Ação</h4>
+          <div class="form-group">
+            <label>Causa</label>
+            <textarea rows="2" formControlName="causa" placeholder="Causa do incidente..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Ação Corretiva</label>
+            <textarea rows="2" formControlName="acaoCorretiva" placeholder="Medidas tomadas..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Responsável pela Resolução</label>
+              <input type="text" formControlName="responsavelResolucao" placeholder="Nome do responsável" />
+            </div>
+            <div class="form-group">
+              <label>Custo Associado (€)</label>
+              <input type="number" step="0.01" formControlName="custoAssociado" min="0" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="form-section">
+          <h4 class="form-section__title">Observações</h4>
+          <div class="form-group">
+            <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarIncidente()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Incidente }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODO: EDITAR INCIDENTE ───────────────────────────────────────────── -->
+  @if (currentState() === 'edit') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-edit"></i>
+          <h2>Editar Incidente</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+        <!-- Mesmo conteúdo do modo create -->
+        <div class="form-section">
+          <h4 class="form-section__title">Informação do Incidente</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Tipo</label><select formControlName="tipo">@for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }</select></div>
+            <div class="form-group"><label>Gravidade</label><select formControlName="gravidade">@for (g of gravidades; track g) { <option [value]="g">{{ g }}</option> }</select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Título</label><input type="text" formControlName="titulo" /></div>
+            <div class="form-group"><label>Data Ocorrência</label><input type="date" formControlName="dataOcorrencia" /></div>
+          </div>
+          <div class="form-group"><label>Descrição</label><textarea rows="3" formControlName="descricao"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Associação</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Viagem ID</label><input type="number" formControlName="viagemId" /></div>
+            <div class="form-group"><label>Veículo ID</label><input type="number" formControlName="veiculoId" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Cliente ID</label><input type="number" formControlName="clienteId" /></div>
+            <div class="form-group"><label>Atribuição ID</label><input type="number" formControlName="atribuicaoId" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Causa e Ação</h4>
+          <div class="form-group"><label>Causa</label><textarea rows="2" formControlName="causa"></textarea></div>
+          <div class="form-group"><label>Ação Corretiva</label><textarea rows="2" formControlName="acaoCorretiva"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Responsável</label><input type="text" formControlName="responsavelResolucao" /></div>
+            <div class="form-group"><label>Custo</label><input type="number" step="0.01" formControlName="custoAssociado" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Observações</h4>
+          <div class="form-group"><textarea rows="2" formControlName="observacoes"></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarIncidente()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Incidente }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ─── MODAL DE RESOLUÇÃO DE INCIDENTE ────────────────────────────────────── -->
+@if (showResolverModal() && incidenteParaResolver()) {
+  <div class="modal-overlay" (click)="fecharResolverModal()">
+    <div class="modal-content modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-check-double"></i> Resolver Incidente</h3>
+        <button class="btn-close" (click)="fecharResolverModal()">×</button>
+      </div>
+      <div class="modal-body" [formGroup]="resolverForm">
+        <p class="modal-info">
+          <strong>Incidente:</strong> {{ incidenteParaResolver()?.numeroIncidente }} - {{ incidenteParaResolver()?.titulo }}
+        </p>
+        <div class="form-group" [class.form-group--error]="resolverCtrl('acaoCorretiva').invalid && resolverCtrl('acaoCorretiva').touched">
+          <label>Ação Corretiva <span class="required">*</span></label>
+          <textarea rows="3" formControlName="acaoCorretiva" placeholder="Descreva a ação tomada para resolver o incidente..."></textarea>
+          @if (resolverCtrl('acaoCorretiva').invalid && resolverCtrl('acaoCorretiva').touched) {
+            <span class="field-error"><i class="las la-exclamation-circle"></i> Ação corretiva é obrigatória.</span>
+          }
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Responsável pela Resolução</label>
+            <input type="text" formControlName="responsavelResolucao" placeholder="Nome do responsável" />
+          </div>
+          <div class="form-group">
+            <label>Custo Associado (€)</label>
+            <input type="number" step="0.01" formControlName="custoAssociado" min="0" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais sobre a resolução..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharResolverModal()">Cancelar</button>
+        <button class="btn-primary" (click)="resolverIncidente()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A processar… } @else { <i class="las la-check"></i> Resolver Incidente }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ───────────────────────────────── -->
+@if (showDeleteConfirm() && incidenteParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar eliminação</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que pretende eliminar o incidente <strong>{{ incidenteParaDelete()?.numeroIncidente }}</strong>?</p>
+        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()"><i class="las la-trash"></i> Eliminar</button>
+      </div>
+    </div>
+  </div>
+}

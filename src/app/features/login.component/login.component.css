@@ -1,0 +1,540 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Accusoft — Login Component (Tema Laranja com Bolinhas Animadas)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Camada de fundo com bolinhas animadas (laranja) */
+:host::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.15) 2px, transparent 2px),
+                      radial-gradient(circle at 80% 70%, rgba(234, 88, 12, 0.12) 2px, transparent 2px),
+                      radial-gradient(circle at 40% 90%, rgba(245, 158, 11, 0.1) 1.5px, transparent 1.5px),
+                      radial-gradient(circle at 90% 20%, rgba(249, 115, 22, 0.12) 2px, transparent 2px),
+                      radial-gradient(circle at 10% 50%, rgba(234, 88, 12, 0.08) 1.5px, transparent 1.5px);
+    background-size: 60px 60px, 80px 80px, 50px 50px, 70px 70px, 40px 40px;
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+    pointer-events: none;
+    animation: floatBubbles 40s linear infinite;
+    z-index: 0;
+}
+
+/* Segunda camada de bolinhas mais dispersas */
+:host::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 60% 40%, rgba(249, 115, 22, 0.08) 1.5px, transparent 1.5px),
+                      radial-gradient(circle at 30% 80%, rgba(245, 158, 11, 0.1) 2px, transparent 2px),
+                      radial-gradient(circle at 70% 15%, rgba(234, 88, 12, 0.06) 1.5px, transparent 1.5px);
+    background-size: 100px 100px, 120px 120px, 90px 90px;
+    background-position: 0 0, 0 0, 0 0;
+    pointer-events: none;
+    animation: floatBubblesReverse 35s linear infinite;
+    z-index: 0;
+}
+
+/* Animação das bolinhas (movimento suave) */
+@keyframes floatBubbles {
+    0% {
+        background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+    }
+    100% {
+        background-position: 200px 200px, -150px 150px, 120px -120px, -100px -100px, 80px -80px;
+    }
+}
+
+@keyframes floatBubblesReverse {
+    0% {
+        background-position: 0 0, 0 0, 0 0;
+    }
+    100% {
+        background-position: -100px 150px, 120px -80px, -80px 120px;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 1000px;
+    animation: fadeInUp 0.5s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-card {
+    display: flex;
+    background: white;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    z-index: 1;
+}
+
+.brand-side {
+    flex: 1;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #f59e0b 100%);
+    padding: 48px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-side::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.brand-content {
+    position: relative;
+    z-index: 1;
+    color: white;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+.logo i {
+    font-size: 2.5rem;
+    color: #fde047;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.logo h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff, #fef08a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.brand-tagline p {
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 48px;
+    opacity: 0.95;
+}
+
+.brand-features {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.feature i {
+    font-size: 1.2rem;
+    color: #fde047;
+}
+
+.form-side {
+    flex: 1;
+    padding: 48px 40px;
+    background: white;
+}
+
+.form-container {
+    width: 100%;
+}
+
+.form-header {
+    margin-bottom: 32px;
+}
+
+.form-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.form-header p {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+.input-field {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    outline: none;
+    color: #1e293b;
+}
+
+.input-field:focus {
+    border-color: #f97316;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.input-field.error-input {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: #f97316;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.checkbox-label input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #f97316;
+}
+
+.login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    border: none;
+    padding: 14px 20px;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    margin-bottom: 24px;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.35);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+}
+
+.divider span {
+    background: white;
+    padding: 0 16px;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.divider span {
+    position: relative;
+    z-index: 1;
+}
+
+.social-login {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.social-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    background: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.social-btn i {
+    font-size: 1.2rem;
+}
+
+.social-btn.google:hover {
+    background: #f8fafc;
+    border-color: #ea580c;
+    color: #ea580c;
+}
+
+.signup-prompt {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.signup-prompt a {
+    color: #f97316;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.signup-prompt a:hover {
+    color: #ea580c;
+    text-decoration: underline;
+}
+
+.forgot-link-bottom {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.message-toast {
+    background: #0f172a;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    text-align: center;
+    animation: slideIn 0.3s ease;
+}
+
+.message-toast.error {
+    background: #dc2626;
+}
+
+.message-toast.success {
+    background: #10b981;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    z-index: 1100;
+    transition: 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast i {
+    color: #10b981;
+    font-size: 1.2rem;
+}
+
+/* Spinner para o botão Google */
+.spinner-sm {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-top-color: #ea580c;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.social-btn.google:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .login-card {
+        flex-direction: column;
+    }
+    
+    .brand-side {
+        padding: 32px 24px;
+    }
+    
+    .logo {
+        margin-bottom: 24px;
+    }
+    
+    .brand-tagline p {
+        font-size: 1rem;
+        margin-bottom: 24px;
+    }
+    
+    .brand-features {
+        gap: 12px;
+    }
+    
+    .feature {
+        font-size: 0.8rem;
+    }
+    
+    .form-side {
+        padding: 32px 24px;
+    }
+    
+    .form-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .social-login {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-side {
+        padding: 24px 20px;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+}

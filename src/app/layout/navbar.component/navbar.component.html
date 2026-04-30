@@ -1,0 +1,46 @@
+<header class="navbar">
+
+  <div class="navbar-left">
+    <button
+      class="menu-toggle-btn"
+      (click)="toggle()"
+      aria-label="Alternar sidebar"
+    >
+      <i class="las la-bars"></i>
+    </button>
+
+    <div class="search-box">
+      <i class="las la-search"></i>
+      <input
+        type="text"
+        placeholder="Pesquisar..."
+        [(ngModel)]="searchQuery"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </div>
+  </div>
+
+  <div class="navbar-right">
+
+    <button class="icon-btn" aria-label="Notificações">
+      <i class="las la-bell"></i>
+      <span class="notif-dot"></span>
+    </button>
+
+    <div class="profile-area">
+      <div class="avatar">
+        <img
+          src="img/2.jpg"
+          alt="John Doe"
+          onerror="this.src='https://ui-avatars.com/api/?background=0D3B66&color=fff&name=John+Doe'"
+        />
+      </div>
+      <div class="profile-info">
+        <h4>John Doe</h4>
+        <p>Super admin</p>
+      </div>
+      <i class="las la-chevron-down"></i>
+    </div>
+
+  </div>
+</header>

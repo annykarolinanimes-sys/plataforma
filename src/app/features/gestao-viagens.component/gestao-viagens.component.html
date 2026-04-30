@@ -1,0 +1,357 @@
+<div class="gestao-viagens-container">
+
+  <!-- ─── MODO: LISTAGEM ─────────────────────────────────────────────────── -->
+  @if (currentState() === 'list') {
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-map-marked-alt"></i>
+        </div>
+        <div>
+          <h1>Gestão de Viagens</h1>
+          <p>Centro de controlo operacional – planeamento, execução e monitorização</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Viagem
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Nº Viagem, Rota, Motorista..."
+            [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s === 'EmCurso' ? 'Em Curso' : s }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} viage{{ pagedResult()!.total !== 1 ? 'ns' : 'm' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar viagens…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Viagem</th><th>Status</th><th>Prioridade</th>
+              <th>Rota</th><th>Veículo</th><th>Motorista</th>
+              <th>Distância</th><th>Desempenho</th><th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of viagens(); track v.id) {
+              <tr [class.row--cancelada]="v.status === 'Cancelada'" [class.row--concluida]="v.status === 'Concluida'"
+                  (click)="goToEdit(v)" class="clickable-row" [ngClass]="getDesempenhoClass(v)">
+                <td><code class="numero-tag">{{ v.numeroViagem }}</code></td>
+                <td><span class="status-badge" [ngClass]="getStatusClass(v.status)">{{ v.status === 'EmCurso' ? 'Em Curso' : v.status }}</span></td>
+                <td><span class="prioridade-badge" [ngClass]="getPrioridadeClass(v.prioridade)">{{ v.prioridade }}</span></td>
+                <td>{{ v.rotaNome || '—' }}</td>
+                <td>{{ v.veiculoMatricula || '—' }}</td>
+                <td>{{ v.motoristaNome || '—' }}</td>
+                <td>{{ formatarKm(v.distanciaTotalKm) }}</td>
+                <td class="performance-cell">
+                  @if (v.status === 'Concluida') {
+                    @if (v.atrasoHoras && v.atrasoHoras > 0) {
+                      <span class="performance-bad" title="Com atraso de {{ formatarTempo(v.atrasoHoras) }}">
+                        <i class="las la-exclamation-triangle"></i> Atraso
+                      </span>
+                    } @else if (v.tempoRealHoras && v.tempoEstimadoHoras && v.tempoRealHoras < v.tempoEstimadoHoras * 0.9) {
+                      <span class="performance-good" title="Antecipado">
+                        <i class="las la-tachometer-alt"></i> Rápido
+                      </span>
+                    } @else {
+                      <span class="performance-normal" title="Dentro do esperado">
+                        <i class="las la-clock"></i> Normal
+                      </span>
+                    }
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (v.status === 'Planeada') {
+                    <button class="btn-icon btn-icon--start" (click)="iniciarViagem(v, $event)" title="Iniciar"><i class="las la-play"></i></button>
+                  }
+                  @if (v.status === 'EmCurso') {
+                    <button class="btn-icon btn-icon--success" (click)="concluirViagem(v, $event)" title="Concluir"><i class="las la-check-circle"></i></button>
+                  }
+                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(v, $event)" title="Editar"><i class="las la-edit"></i></button>
+                  @if (v.status !== 'Cancelada' && v.status !== 'Concluida') {
+                    <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(v, $event)" title="Cancelar"><i class="las la-ban"></i></button>
+                  }
+                </td>
+              </tr>
+            }
+            @if (viagens().length === 0) {
+              <tr>
+                <td colspan="9">
+                  <div class="empty-state">
+                    <i class="las la-map-marked-alt"></i>
+                    <p>Nenhuma viagem encontrada</p>
+                    <small>Altere os filtros ou crie uma nova viagem.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
+          <span class="pagination__info">Página {{ currentPage }} de {{ totalPages() }} ({{ totalViagens() }} registos)</span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ─── MODO: CRIAR VIAGEM ──────────────────────────────────────────────── -->
+  @if (currentState() === 'create') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-plus-circle"></i>
+          <h2>Nova Viagem</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+
+        <!-- Dados Gerais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Planeamento</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prioridade</label>
+              <select formControlName="prioridade">
+                @for (p of prioridades; track p) {
+                  <option [value]="p">{{ p }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Data/Hora Início Planeada</label>
+              <input type="datetime-local" formControlName="dataInicioPlaneada" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data/Hora Fim Planeada</label>
+              <input type="datetime-local" formControlName="dataFimPlaneada" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Recursos -->
+        <div class="form-section">
+          <h4 class="form-section__title">Recursos</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Rota ID</label>
+              <input type="number" formControlName="rotaId" min="1" placeholder="ID da rota" />
+            </div>
+            <div class="form-group">
+              <label>Veículo ID</label>
+              <input type="number" formControlName="veiculoId" min="1" placeholder="ID do veículo" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Motorista ID</label>
+              <input type="number" formControlName="motoristaId" min="1" placeholder="ID do motorista" />
+            </div>
+            <div class="form-group">
+              <label>Transportadora ID</label>
+              <input type="number" formControlName="transportadoraId" min="1" placeholder="ID da transportadora" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Carga -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados da Carga</h4>
+          <div class="form-group">
+            <label>Descrição da Carga</label>
+            <input type="text" formControlName="cargaDescricao" placeholder="Ex: Produtos eletrónicos" />
+          </div>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('cargaPeso')">
+              <label>Peso (kg) <span class="required">*</span></label>
+              <input type="number" step="0.1" formControlName="cargaPeso" min="0" />
+            </div>
+            <div class="form-group" [class.form-group--error]="hasError('cargaVolume')">
+              <label>Volume (m³) <span class="required">*</span></label>
+              <input type="number" step="0.1" formControlName="cargaVolume" min="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Observações da Carga</label>
+            <textarea rows="2" formControlName="cargaObservacoes" placeholder="Notas sobre a carga..."></textarea>
+          </div>
+        </div>
+
+        <!-- Operacionais -->
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Operacionais</h4>
+          <div class="form-row">
+            <div class="form-group" [class.form-group--error]="hasError('distanciaTotalKm')">
+              <label>Distância Total (km) <span class="required">*</span></label>
+              <input type="number" step="0.1" formControlName="distanciaTotalKm" min="0" />
+            </div>
+            <div class="form-group">
+              <label>Tempo Estimado (horas)</label>
+              <input type="number" step="0.5" formControlName="tempoEstimadoHoras" min="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Observações Gerais</label>
+            <textarea rows="2" formControlName="observacoes" placeholder="Notas adicionais..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarViagem()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Viagem }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODO: EDITAR VIAGEM ──────────────────────────────────────────────── -->
+  @if (currentState() === 'edit') {
+    <div class="form-page">
+      <div class="form-header">
+        <div class="header-left">
+          <i class="las la-edit"></i>
+          <h2>Editar Viagem</h2>
+        </div>
+        <button class="btn-secondary" (click)="cancel()"><i class="las la-times"></i> Cancelar</button>
+      </div>
+
+      @if (errorMsg()) { <div class="alert alert--error">{{ errorMsg() }}</div> }
+
+      <div class="form-body" [formGroup]="form">
+        <!-- Mesmo conteúdo do modo create -->
+        <div class="form-section">
+          <h4 class="form-section__title">Planeamento</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Prioridade</label><select formControlName="prioridade">@for (p of prioridades; track p) { <option [value]="p">{{ p }}</option> }</select></div>
+            <div class="form-group"><label>Data/Hora Início Planeada</label><input type="datetime-local" formControlName="dataInicioPlaneada" /></div>
+          </div>
+          <div class="form-row"><div class="form-group"><label>Data/Hora Fim Planeada</label><input type="datetime-local" formControlName="dataFimPlaneada" /></div></div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Recursos</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Rota ID</label><input type="number" formControlName="rotaId" /></div>
+            <div class="form-group"><label>Veículo ID</label><input type="number" formControlName="veiculoId" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Motorista ID</label><input type="number" formControlName="motoristaId" /></div>
+            <div class="form-group"><label>Transportadora ID</label><input type="number" formControlName="transportadoraId" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Dados da Carga</h4>
+          <div class="form-group"><label>Descrição da Carga</label><input type="text" formControlName="cargaDescricao" /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Peso (kg)</label><input type="number" step="0.1" formControlName="cargaPeso" /></div>
+            <div class="form-group"><label>Volume (m³)</label><input type="number" step="0.1" formControlName="cargaVolume" /></div>
+          </div>
+          <div class="form-group"><label>Observações da Carga</label><textarea rows="2" formControlName="cargaObservacoes"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="form-section__title">Dados Operacionais</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Distância Total (km)</label><input type="number" step="0.1" formControlName="distanciaTotalKm" /></div>
+            <div class="form-group"><label>Tempo Estimado (horas)</label><input type="number" step="0.5" formControlName="tempoEstimadoHoras" /></div>
+          </div>
+          <div class="form-group"><label>Observações Gerais</label><textarea rows="2" formControlName="observacoes"></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" (click)="salvarViagem()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… } @else { <i class="las la-save"></i> Guardar Viagem }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ─── MODAL APENAS PARA ELIMINAR (exceção) ─────────────────────────────── -->
+@if (showDeleteConfirm() && viagemParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar cancelamento</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem a certeza que pretende cancelar a viagem <strong>{{ viagemParaDelete()?.numeroViagem }}</strong>?</p>
+        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()"><i class="las la-ban"></i> Cancelar Viagem</button>
+      </div>
+    </div>
+  </div>
+}

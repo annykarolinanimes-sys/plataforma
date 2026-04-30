@@ -1,0 +1,193 @@
+<div class="etiquetas-container">
+
+  <!-- Cabeçalho -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-tag"></i>
+      </div>
+      <div>
+        <h1>Etiquetas</h1>
+        <p>Geração e impressão de etiquetas com código de barras e QR Code</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  @if (errorMsg()) {
+    <div class="alert alert--error">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="errorMsg.set(null)">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert--success">
+      <i class="las la-check-circle"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+
+  <!-- Formulário -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <h3><i class="las la-print"></i> Gerar Etiquetas</h3>
+    </div>
+    <div class="form-card-body" [formGroup]="form">
+
+      <!-- Tipo -->
+      <div class="form-group">
+        <label>Tipo de Etiqueta <span class="required">*</span></label>
+        <div class="tipo-buttons">
+          @for (t of tipos; track t.value) {
+            <label class="tipo-option" [class.active]="form.get('tipo')?.value === t.value">
+              <input type="radio" formControlName="tipo" [value]="t.value">
+              <i [class]="'las ' + t.icon"></i>
+              <span>{{ t.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <!-- Entidade -->
+      <div class="form-group">
+        <label>
+          @if (form.get('tipo')?.value === 'produto') { Produto }
+          @else if (form.get('tipo')?.value === 'recepcao') { Recepção }
+          @else if (form.get('tipo')?.value === 'encomenda') { Encomenda }
+          @else { Palete }
+          <span class="required">*</span>
+        </label>
+
+        @if (form.get('tipo')?.value === 'produto') {
+          <select formControlName="entidadeId">
+            <option [value]="null">Seleccione um produto...</option>
+            @for (p of produtos(); track p.id) {
+              <option [value]="p.id">{{ p.sku }} - {{ p.nome }}</option>
+            }
+          </select>
+        }
+        @if (form.get('tipo')?.value === 'recepcao') {
+          <select formControlName="entidadeId">
+            <option [value]="null">Seleccione uma recepção...</option>
+            @for (r of rececoes(); track r.id) {
+              <option [value]="r.id">{{ r.numeroRecepcao }} - {{ r.fornecedor }}</option>
+            }
+          </select>
+        }
+        @if (form.get('tipo')?.value === 'encomenda') {
+          <select formControlName="entidadeId">
+            <option [value]="null">Seleccione uma encomenda...</option>
+            @for (e of encomendas(); track e.id) {
+              <option [value]="e.id">{{ e.numeroEncomenda }} - {{ e.clienteNome }}</option>
+            }
+          </select>
+        }
+        @if (form.get('tipo')?.value === 'palete') {
+          <select formControlName="entidadeId">
+            <option [value]="null">Seleccione uma palete...</option>
+            @for (p of paletes(); track p.id) {
+              <option [value]="p.id">{{ p.codigo }} - {{ p.localizacao || 'Sem localização' }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <!-- Quantidade e Formato -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantidade</label>
+          <input type="number" formControlName="quantidade" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label>Formato</label>
+          <div class="formato-buttons">
+            @for (f of formatos; track f.value) {
+              <label class="formato-option" [class.active]="form.get('formato')?.value === f.value">
+                <input type="radio" formControlName="formato" [value]="f.value">
+                <i [class]="'las ' + f.icon"></i>
+                <span>{{ f.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Template -->
+      <div class="form-group">
+        <label>Template</label>
+        <select formControlName="template">
+          @for (t of opcoesImpressao; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Opções -->
+      <label class="checkbox-label">
+        <input type="checkbox" formControlName="incluirTexto" />
+        <span class="checkbox-custom"></span>
+        <i class="las la-font"></i> Incluir texto descritivo
+      </label>
+
+      <!-- Botões -->
+      <div class="form-actions">
+        <button class="btn-secondary" type="button" (click)="limpar()">
+          <i class="las la-eraser"></i> Limpar
+        </button>
+        <button class="btn-primary" type="button" (click)="gerarEtiquetas()" [disabled]="isGenerating()">
+          @if (isGenerating()) {
+            <span class="spinner"></span> A gerar...
+          } @else {
+            <i class="las la-qrcode"></i> Gerar Etiquetas
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Pré-visualização -->
+  @if (showPreview() && etiquetasGeradas().length > 0) {
+    <div class="preview-card">
+      <div class="preview-header">
+        <h3><i class="las la-eye"></i> Pré-visualização</h3>
+        <div class="preview-actions">
+          <button class="btn-secondary" (click)="showPreview.set(false)">
+            <i class="las la-times"></i> Fechar
+          </button>
+          <button class="btn-primary" (click)="imprimir()">
+            <i class="las la-print"></i> Imprimir
+          </button>
+        </div>
+      </div>
+      <div class="preview-body">
+        <div class="etiquetas-grid">
+          @for (etiqueta of etiquetasGeradas(); track etiqueta.id) {
+            <div class="etiqueta-card">
+              <div class="etiqueta-conteudo">
+                <!-- Código de Barras -->
+                @if (form.get('formato')?.value === 'barcode' || form.get('formato')?.value === 'ambos') {
+                  <canvas #barcodeCanvas class="barcode-canvas"></canvas>
+                }
+                <!-- QR Code via API -->
+                @if (form.get('formato')?.value === 'qrcode' || form.get('formato')?.value === 'ambos') {
+                  <div class="qrcode-container">
+                    <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + etiqueta.codigo"
+                         style="width: 80px; height: 80px;"
+                         alt="QR Code" />
+                  </div>
+                }
+                <div class="etiqueta-codigo">{{ etiqueta.codigo }}</div>
+                @if (form.get('incluirTexto')?.value) {
+                  <div class="etiqueta-texto">{{ getTextoParaEtiqueta() }}</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
