@@ -31,7 +31,6 @@ public class AppDbContext : DbContext
     public DbSet<Incidente> Incidentes => Set<Incidente>();
     public DbSet<Guia> Guias => Set<Guia>();
     public DbSet<GuiaItem> GuiaItens => Set<GuiaItem>();
-    public DbSet<DocumentoGeral> DocumentosGerais => Set<DocumentoGeral>();
 
     
 

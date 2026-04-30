@@ -82,6 +82,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+app.UseCors(builder => builder
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
+
 if (app.Environment.IsDevelopment()) {
     using var scope = app.Services.CreateScope();
     scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();

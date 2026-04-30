@@ -364,48 +364,42 @@
         @if (activeTab() === 'identificacao') {
           <div id="panel-id" role="tabpanel" aria-labelledby="tab-id">
 
-            <div class="form-row">
-              <!-- Código -->
-              <div class="form-group" [class.form-group--error]="hasError('codigo')">
-                <label for="codigo">
-                  Código <span class="required" aria-hidden="true">*</span>
-                </label>
-                <input
-                  id="codigo"
-                  type="text"
-                  formControlName="codigo"
-                  placeholder="Ex: ARM-001"
-                  autocomplete="off"
-                  (input)="form.get('codigo')?.setValue(
-                    $any($event.target).value.toUpperCase(), {emitEvent:true})"
-                />
-                @if (hasError('codigo', 'required')) {
-                  <span class="field-error" role="alert">
-                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
-                    Código é obrigatório.
-                  </span>
-                }
-                @if (hasError('codigo', 'maxlength')) {
-                  <span class="field-error" role="alert">
-                    <i class="las la-exclamation-circle" aria-hidden="true"></i>
-                    Máximo 50 caracteres.
-                  </span>
-                }
-              </div>
-
-              <!-- Tipo -->
+            <!-- Código (apenas leitura) - apenas exibido em edição -->
+            @if (isEditing() && editingCodigo()) {
               <div class="form-group">
-                <label for="tipo">Tipo de Armazém</label>
-                <div class="select-icon-wrap">
-                  <i class="las la-tag" aria-hidden="true"></i>
-                  <select id="tipo" formControlName="tipo">
-                    @for (t of tiposArmazem; track t) {
-                      <option [value]="t">{{ formatarTipo(t) }}</option>
-                    }
-                  </select>
+                <label for="codigo">Código</label>
+                <div class="input-icon">
+                  <i class="las la-barcode" aria-hidden="true"></i>
+                  <input
+                    id="codigo"
+                    type="text"
+                    [value]="editingCodigo()"
+                    class="codigo-readonly"
+                    disabled
+                    readonly
+                    aria-label="Código do armazém (gerado automaticamente)"
+                  />
+                </div>
+                <small class="text-muted" style="font-size:0.7rem; margin-top: 4px;">
+                  <i class="las la-info-circle" aria-hidden="true"></i>
+                  O código é gerado automaticamente no formato ARM-00.
+                </small>
+              </div>
+            }
+
+            @if (!isEditing()) {
+              <div class="form-group">
+                <div class="codigo-preview" style="background: var(--amber-light); border: 1px solid var(--amber-mid); border-radius: var(--r-md); padding: 12px; margin-bottom: 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="las la-barcode" style="font-size: 1.2rem; color: var(--amber-dark);"></i>
+                    <div>
+                      <div style="font-size: 0.75rem; color: var(--slate-600); margin-bottom: 4px;">Código do Armazém</div>
+                      <div style="font-family: var(--font-mono); font-weight: 700; color: var(--amber-dark);">Gerado automaticamente (ARM-XX)</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            }
 
             <!-- Nome -->
             <div class="form-group" [class.form-group--error]="hasError('nome')">
@@ -432,6 +426,19 @@
               }
             </div>
 
+            <!-- Tipo -->
+            <div class="form-group">
+              <label for="tipo">Tipo de Armazém</label>
+              <div class="select-icon-wrap">
+                <i class="las la-tag" aria-hidden="true"></i>
+                <select id="tipo" formControlName="tipo">
+                  @for (t of tiposArmazem; track t) {
+                    <option [value]="t">{{ formatarTipo(t) }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
             <!-- Observações -->
             <div class="form-group">
               <label for="observacoes">Observações</label>
@@ -455,7 +462,7 @@
           </div>
         }
 
-        <!-- ── Aba: Morada ── -->
+        <!-- ── Aba: Morada (mesmo código, sem alterações) ── -->
         @if (activeTab() === 'morada') {
           <div id="panel-morada" role="tabpanel" aria-labelledby="tab-morada">
 
@@ -529,7 +536,7 @@
           </div>
         }
 
-        <!-- ── Aba: Contacto ── -->
+        <!-- ── Aba: Contacto (mesmo código, sem alterações) ── -->
         @if (activeTab() === 'contacto') {
           <div id="panel-contacto" role="tabpanel" aria-labelledby="tab-contacto">
 

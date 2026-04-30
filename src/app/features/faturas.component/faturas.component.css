@@ -16,6 +16,23 @@
   border: 1px solid #e2e8f0;
 }
 
+.page-header__icon {
+  width: 46px; height: 46px;
+  background: var(--amber-light);
+  border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: var(--amber-dark);
+  border: 1.5px solid var(--amber-mid);
+}
+
+.page-header__left { 
+  display: flex; 
+  align-items: center;
+  gap: 14px; 
+  
+}
+
+
 .header-title h1 {
   margin: 0;
   font-size: 1.4rem;

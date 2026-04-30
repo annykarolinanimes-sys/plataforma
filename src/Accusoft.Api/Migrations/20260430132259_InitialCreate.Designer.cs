@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Accusoft.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260428110201_InitialCreate")]
+    [Migration("20260430132259_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -165,6 +165,193 @@ namespace Accusoft.Api.Migrations
                     b.HasIndex("CriadoPor");
 
                     b.ToTable("armazens");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Atribuicao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("ClienteContacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("cliente_contacto");
+
+                    b.Property<string>("ClienteNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cliente_nome");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime>("DataAtribuicao")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_atribuicao");
+
+                    b.Property<DateTime?>("DataPrevistaFim")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_prevista_fim");
+
+                    b.Property<DateTime?>("DataPrevistaInicio")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_prevista_inicio");
+
+                    b.Property<decimal>("DistanciaTotalKm")
+                        .HasColumnType("numeric")
+                        .HasColumnName("distancia_total_km");
+
+                    b.Property<string>("EnderecoDestino")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("endereco_destino");
+
+                    b.Property<string>("EnderecoOrigem")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("endereco_origem");
+
+                    b.Property<int?>("MotoristaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("motorista_id");
+
+                    b.Property<string>("NumeroAtribuicao")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_atribuicao");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<string>("Prioridade")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("prioridade");
+
+                    b.Property<int?>("RotaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("rota_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<decimal?>("TempoEstimadoHoras")
+                        .HasColumnType("numeric")
+                        .HasColumnName("tempo_estimado_horas");
+
+                    b.Property<int?>("TransportadoraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("transportadora_id");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<int?>("VeiculoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("veiculo_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotoristaId");
+
+                    b.HasIndex("RotaId");
+
+                    b.HasIndex("TransportadoraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.ToTable("atribuicoes");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.AtribuicaoAjudante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AjudanteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ajudante_id");
+
+                    b.Property<int>("AtribuicaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("atribuicao_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AjudanteId");
+
+                    b.HasIndex("AtribuicaoId");
+
+                    b.ToTable("atribuicao_ajudantes");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.AtribuicaoEntrega", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AtribuicaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("atribuicao_id");
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("contacto");
+
+                    b.Property<string>("Destinatario")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("destinatario");
+
+                    b.Property<string>("Endereco")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("endereco");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer")
+                        .HasColumnName("ordem");
+
+                    b.Property<bool>("Realizada")
+                        .HasColumnType("boolean")
+                        .HasColumnName("realizada");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtribuicaoId");
+
+                    b.ToTable("atribuicao_entregas");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.AuditLog", b =>
@@ -374,6 +561,128 @@ namespace Accusoft.Api.Migrations
                     b.ToTable("estoque");
                 });
 
+            modelBuilder.Entity("Accusoft.Api.Models.FechoViagem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AtribuicaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("atribuicao_id");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<decimal?>("CombustivelCusto")
+                        .HasColumnType("numeric")
+                        .HasColumnName("combustivel_custo");
+
+                    b.Property<decimal?>("CombustivelLitros")
+                        .HasColumnType("numeric")
+                        .HasColumnName("combustivel_litros");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<decimal>("CustoTotal")
+                        .HasColumnType("numeric")
+                        .HasColumnName("custo_total");
+
+                    b.Property<string>("CustosExtrasDescricao")
+                        .HasColumnType("text")
+                        .HasColumnName("custos_extras_descricao");
+
+                    b.Property<DateTime>("DataFecho")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_fecho");
+
+                    b.Property<DateTime?>("DataFimReal")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_fim_real");
+
+                    b.Property<DateTime?>("DataInicioReal")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_inicio_real");
+
+                    b.Property<string>("EntregasNaoRealizadasIds")
+                        .HasColumnType("text")
+                        .HasColumnName("entregas_nao_realizadas_ids");
+
+                    b.Property<string>("EntregasPendentesObs")
+                        .HasColumnType("text")
+                        .HasColumnName("entregas_pendentes_obs");
+
+                    b.Property<int?>("FaturaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("fatura_id");
+
+                    b.Property<bool>("Faturado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("faturado");
+
+                    b.Property<string>("IncidentesDescricao")
+                        .HasColumnType("text")
+                        .HasColumnName("incidentes_descricao");
+
+                    b.Property<string>("NumeroFecho")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_fecho");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<decimal?>("OutrosCustos")
+                        .HasColumnType("numeric")
+                        .HasColumnName("outros_custos");
+
+                    b.Property<decimal?>("PortagensCusto")
+                        .HasColumnType("numeric")
+                        .HasColumnName("portagens_custo");
+
+                    b.Property<int?>("QuilometrosFim")
+                        .HasColumnType("integer")
+                        .HasColumnName("quilometros_fim");
+
+                    b.Property<int?>("QuilometrosInicio")
+                        .HasColumnType("integer")
+                        .HasColumnName("quilometros_inicio");
+
+                    b.Property<int?>("QuilometrosPercorridos")
+                        .HasColumnType("integer")
+                        .HasColumnName("quilometros_percorridos");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<bool>("TemIncidentes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tem_incidentes");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtribuicaoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("fechos_viagem");
+                });
+
             modelBuilder.Entity("Accusoft.Api.Models.FornecedorCatalogo", b =>
                 {
                     b.Property<int>("Id")
@@ -468,6 +777,411 @@ namespace Accusoft.Api.Migrations
                     b.HasIndex("CriadoPor");
 
                     b.ToTable("fornecedores");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.GestaoViagem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("CargaDescricao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("carga_descricao");
+
+                    b.Property<string>("CargaObservacoes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("carga_observacoes");
+
+                    b.Property<decimal>("CargaPeso")
+                        .HasColumnType("numeric")
+                        .HasColumnName("carga_peso");
+
+                    b.Property<int>("CargaVolume")
+                        .HasColumnType("integer")
+                        .HasColumnName("carga_volume");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao");
+
+                    b.Property<DateTime?>("DataFimPlaneada")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_fim_planeada");
+
+                    b.Property<DateTime?>("DataFimReal")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_fim_real");
+
+                    b.Property<DateTime?>("DataInicioPlaneada")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_inicio_planeada");
+
+                    b.Property<DateTime?>("DataInicioReal")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_inicio_real");
+
+                    b.Property<decimal>("DistanciaPercorridaKm")
+                        .HasColumnType("numeric")
+                        .HasColumnName("distancia_percorrida_km");
+
+                    b.Property<decimal>("DistanciaTotalKm")
+                        .HasColumnType("numeric")
+                        .HasColumnName("distancia_total_km");
+
+                    b.Property<int?>("MotoristaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("motorista_id");
+
+                    b.Property<string>("NumeroViagem")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_viagem");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("observacoes");
+
+                    b.Property<string>("Prioridade")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("prioridade");
+
+                    b.Property<int?>("RotaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("rota_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<decimal?>("TempoEstimadoHoras")
+                        .HasColumnType("numeric")
+                        .HasColumnName("tempo_estimado_horas");
+
+                    b.Property<int?>("TransportadoraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("transportadora_id");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<int?>("VeiculoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("veiculo_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotoristaId");
+
+                    b.HasIndex("RotaId");
+
+                    b.HasIndex("TransportadoraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.ToTable("gestao_viagens");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Guia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AtribuicaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("atribuicao_id");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<int?>("ClienteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("cliente_id");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<DateTime>("DataEmissao")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_emissao");
+
+                    b.Property<DateTime?>("DataEntregaReal")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_entrega_real");
+
+                    b.Property<DateTime?>("DataPrevistaEntrega")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_prevista_entrega");
+
+                    b.Property<string>("EnderecoDestino")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("endereco_destino");
+
+                    b.Property<string>("EnderecoOrigem")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("endereco_origem");
+
+                    b.Property<string>("InstrucoesEspeciais")
+                        .HasColumnType("text")
+                        .HasColumnName("instrucoes_especiais");
+
+                    b.Property<string>("NumeroGuia")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_guia");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<decimal>("PesoTotalKg")
+                        .HasColumnType("numeric")
+                        .HasColumnName("peso_total_kg");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo");
+
+                    b.Property<int>("TotalItens")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_itens");
+
+                    b.Property<int>("TotalVolumes")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_volumes");
+
+                    b.Property<int?>("TransportadoraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("transportadora_id");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<int>("VolumeTotalM3")
+                        .HasColumnType("integer")
+                        .HasColumnName("volume_total_m3");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtribuicaoId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("TransportadoraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("guias");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.GuiaItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GuiaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("guia_id");
+
+                    b.Property<string>("Lote")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("lote");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<decimal>("PesoTotal")
+                        .HasColumnType("numeric")
+                        .HasColumnName("peso_total");
+
+                    b.Property<decimal>("PesoUnitario")
+                        .HasColumnType("numeric")
+                        .HasColumnName("peso_unitario");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("produto_id");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantidade");
+
+                    b.Property<int>("VolumeTotal")
+                        .HasColumnType("integer")
+                        .HasColumnName("volume_total");
+
+                    b.Property<int>("VolumeUnitario")
+                        .HasColumnType("integer")
+                        .HasColumnName("volume_unitario");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuiaId");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("guia_itens");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Incidente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AcaoCorretiva")
+                        .HasColumnType("text")
+                        .HasColumnName("acao_corretiva");
+
+                    b.Property<int?>("AtribuicaoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("atribuicao_id");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em");
+
+                    b.Property<string>("Causa")
+                        .HasColumnType("text")
+                        .HasColumnName("causa");
+
+                    b.Property<int?>("ClienteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("cliente_id");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em");
+
+                    b.Property<decimal?>("CustoAssociado")
+                        .HasColumnType("numeric")
+                        .HasColumnName("custo_associado");
+
+                    b.Property<DateTime>("DataOcorrencia")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ocorrencia");
+
+                    b.Property<DateTime?>("DataResolucao")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_resolucao");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
+
+                    b.Property<string>("Gravidade")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("gravidade");
+
+                    b.Property<string>("NumeroIncidente")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("numero_incidente");
+
+                    b.Property<string>("Observacoes")
+                        .HasColumnType("text")
+                        .HasColumnName("observacoes");
+
+                    b.Property<string>("ResponsavelResolucao")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("responsavel_resolucao");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("titulo");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<int?>("VeiculoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("veiculo_id");
+
+                    b.Property<int?>("ViagemId")
+                        .HasColumnType("integer")
+                        .HasColumnName("viagem_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtribuicaoId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.HasIndex("ViagemId");
+
+                    b.ToTable("incidentes");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.Invoice", b =>
@@ -741,6 +1455,10 @@ namespace Accusoft.Api.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("nome");
 
+                    b.Property<decimal>("PesoUnitario")
+                        .HasColumnType("numeric")
+                        .HasColumnName("peso_unitario");
+
                     b.Property<decimal>("PrecoCompra")
                         .HasColumnType("decimal(15,4)")
                         .HasColumnName("preco_compra");
@@ -772,6 +1490,10 @@ namespace Accusoft.Api.Migrations
                     b.Property<bool>("ValidadeObrigatoria")
                         .HasColumnType("boolean")
                         .HasColumnName("validade_obrigatoria");
+
+                    b.Property<int>("VolumeUnitario")
+                        .HasColumnType("integer")
+                        .HasColumnName("volume_unitario");
 
                     b.HasKey("Id");
 
@@ -1222,8 +1944,8 @@ namespace Accusoft.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("observacoes");
 
-                    b.Property<int?>("Peso")
-                        .HasColumnType("integer")
+                    b.Property<decimal?>("Peso")
+                        .HasColumnType("decimal(10,2)")
                         .HasColumnName("peso");
 
                     b.Property<int?>("Potencia")
@@ -1235,8 +1957,8 @@ namespace Accusoft.Api.Migrations
                         .HasColumnName("proprietario_id");
 
                     b.Property<string>("TipoCombustivel")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("tipo_combustivel");
 
                     b.Property<string>("Vin")
@@ -1273,6 +1995,71 @@ namespace Accusoft.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("CriadoPorUtilizador");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Atribuicao", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.User", "Motorista")
+                        .WithMany()
+                        .HasForeignKey("MotoristaId");
+
+                    b.HasOne("Accusoft.Api.Models.RotaCatalogo", "Rota")
+                        .WithMany()
+                        .HasForeignKey("RotaId");
+
+                    b.HasOne("Accusoft.Api.Models.TransportadoraCatalogo", "Transportadora")
+                        .WithMany()
+                        .HasForeignKey("TransportadoraId");
+
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.Veiculo", "Veiculo")
+                        .WithMany()
+                        .HasForeignKey("VeiculoId");
+
+                    b.Navigation("Motorista");
+
+                    b.Navigation("Rota");
+
+                    b.Navigation("Transportadora");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("Veiculo");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.AtribuicaoAjudante", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.User", "Ajudante")
+                        .WithMany()
+                        .HasForeignKey("AjudanteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.Atribuicao", "Atribuicao")
+                        .WithMany("Ajudantes")
+                        .HasForeignKey("AtribuicaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ajudante");
+
+                    b.Navigation("Atribuicao");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.AtribuicaoEntrega", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Atribuicao", "Atribuicao")
+                        .WithMany("Entregas")
+                        .HasForeignKey("AtribuicaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Atribuicao");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.AuditLog", b =>
@@ -1315,6 +2102,25 @@ namespace Accusoft.Api.Migrations
                     b.Navigation("Produto");
                 });
 
+            modelBuilder.Entity("Accusoft.Api.Models.FechoViagem", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Atribuicao", "Atribuicao")
+                        .WithMany()
+                        .HasForeignKey("AtribuicaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Atribuicao");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Accusoft.Api.Models.FornecedorCatalogo", b =>
                 {
                     b.HasOne("Accusoft.Api.Models.User", "CriadoPorUtilizador")
@@ -1323,6 +2129,124 @@ namespace Accusoft.Api.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CriadoPorUtilizador");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.GestaoViagem", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.User", "Motorista")
+                        .WithMany()
+                        .HasForeignKey("MotoristaId");
+
+                    b.HasOne("Accusoft.Api.Models.RotaCatalogo", "Rota")
+                        .WithMany()
+                        .HasForeignKey("RotaId");
+
+                    b.HasOne("Accusoft.Api.Models.TransportadoraCatalogo", "Transportadora")
+                        .WithMany()
+                        .HasForeignKey("TransportadoraId");
+
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.Veiculo", "Veiculo")
+                        .WithMany()
+                        .HasForeignKey("VeiculoId");
+
+                    b.Navigation("Motorista");
+
+                    b.Navigation("Rota");
+
+                    b.Navigation("Transportadora");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("Veiculo");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Guia", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Atribuicao", "Atribuicao")
+                        .WithMany()
+                        .HasForeignKey("AtribuicaoId");
+
+                    b.HasOne("Accusoft.Api.Models.ClienteCatalogo", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId");
+
+                    b.HasOne("Accusoft.Api.Models.TransportadoraCatalogo", "Transportadora")
+                        .WithMany()
+                        .HasForeignKey("TransportadoraId");
+
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Atribuicao");
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("Transportadora");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.GuiaItem", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Guia", "Guia")
+                        .WithMany("Itens")
+                        .HasForeignKey("GuiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.Produto", "Produto")
+                        .WithMany()
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Guia");
+
+                    b.Navigation("Produto");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Incidente", b =>
+                {
+                    b.HasOne("Accusoft.Api.Models.Atribuicao", "Atribuicao")
+                        .WithMany()
+                        .HasForeignKey("AtribuicaoId");
+
+                    b.HasOne("Accusoft.Api.Models.ClienteCatalogo", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId");
+
+                    b.HasOne("Accusoft.Api.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accusoft.Api.Models.Veiculo", "Veiculo")
+                        .WithMany()
+                        .HasForeignKey("VeiculoId");
+
+                    b.HasOne("Accusoft.Api.Models.GestaoViagem", "Viagem")
+                        .WithMany()
+                        .HasForeignKey("ViagemId");
+
+                    b.Navigation("Atribuicao");
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("Veiculo");
+
+                    b.Navigation("Viagem");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.Invoice", b =>
@@ -1461,9 +2385,21 @@ namespace Accusoft.Api.Migrations
                     b.Navigation("Proprietario");
                 });
 
+            modelBuilder.Entity("Accusoft.Api.Models.Atribuicao", b =>
+                {
+                    b.Navigation("Ajudantes");
+
+                    b.Navigation("Entregas");
+                });
+
             modelBuilder.Entity("Accusoft.Api.Models.Estoque", b =>
                 {
                     b.Navigation("Movimentacoes");
+                });
+
+            modelBuilder.Entity("Accusoft.Api.Models.Guia", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Accusoft.Api.Models.Invoice", b =>

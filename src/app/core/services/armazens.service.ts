@@ -25,7 +25,6 @@ export interface Armazem {
 }
 
 export interface ArmazemCreateDto {
-  codigo: string;
   nome: string;
   tipo?: string;
   morada?: string;
@@ -39,7 +38,19 @@ export interface ArmazemCreateDto {
   observacoes?: string;
 }
 
-export interface ArmazemUpdateDto extends ArmazemCreateDto {
+export interface ArmazemUpdateDto {
+  codigo?: string;
+  nome: string;
+  tipo?: string;
+  morada?: string;
+  localidade?: string;
+  codigoPostal?: string;
+  pais?: string;
+  telefone?: string;
+  email?: string;
+  responsavelNome?: string;
+  responsavelTelefone?: string;
+  observacoes?: string;
   ativo: boolean;
 }
 
@@ -86,12 +97,14 @@ export class ArmazensService {
   }
 
   criar(dto: ArmazemCreateDto): Observable<Armazem> {
+    console.log('Enviando requisição para criar armazém:', dto);
     return this.http
       .post<Armazem>(this.api, dto)
       .pipe(catchError(this.handleError));
   }
 
   atualizar(id: number, dto: ArmazemUpdateDto): Observable<Armazem> {
+    console.log(`Enviando requisição para atualizar armazém ${id}:`, dto);
     return this.http
       .put<Armazem>(`${this.api}/${id}`, dto)
       .pipe(catchError(this.handleError));
@@ -110,18 +123,24 @@ export class ArmazensService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
+    console.error('Erro detalhado:', error);
+    
     let message = 'Ocorreu um erro inesperado.';
 
     if (error.status === 0) {
       message = 'Sem ligação ao servidor. Verifique a sua rede.';
+      console.error('Erro de conexão - verifique se o backend está rodando na porta correta');
     } else if (error.status === 400) {
       const body = error.error;
+      console.log('Erro 400 - detalhes:', body);
       if (body?.errors) {
         const msgs = Object.values(body.errors as Record<string, string[]>)
           .flat().join(' ');
         message = msgs || body.message || 'Dados inválidos.';
+      } else if (body?.message) {
+        message = body.message;
       } else {
-        message = body?.message || 'Pedido inválido.';
+        message = 'Dados inválidos. Verifique os campos do formulário.';
       }
     } else if (error.status === 401) {
       message = 'Sessão expirada. Por favor autentique-se novamente.';
@@ -135,6 +154,6 @@ export class ArmazensService {
       message = 'Erro interno do servidor. Tente novamente mais tarde.';
     }
 
-    return throwError(() => ({ status: error.status, message }));
+    return throwError(() => ({ status: error.status, message, details: error.error }));
   }
 }

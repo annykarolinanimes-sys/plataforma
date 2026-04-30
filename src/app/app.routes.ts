@@ -16,7 +16,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard.component/dashboard.component').then(m => m.DashboardComponent) },
       
-      // Processos
       { path: 'recepcao', loadComponent: () => import('./features/recepcao.component/recepcao.component').then(m => m.RecepcaoComponent) },
       { path: 'atribuicoes', loadComponent: () => import('./features/atribuicao.component/atribuicao.component').then(m => m.AtribuicaoComponent) },
       { path: 'fecho-viagem', loadComponent: () => import('./features/fecho-viagem.component/fecho-viagem.component').then(m => m.FechoViagemComponent) },
@@ -33,7 +32,6 @@ export const routes: Routes = [
       
       { path: 'impressao/etiquetas', loadComponent: () => import('./features/etiquetas.component/etiquetas.component').then(m => m.EtiquetasComponent) },
       { path: 'impressao/guias', loadComponent: () => import('./features/guias.component/guias.component').then(m => m.GuiasComponent) },
-      { path: 'impressao/documentos', loadComponent: () => import('./features/documentos.component/documentos.component').then(m => m.DocumentosComponent) },
       
       { path: 'faturas', loadComponent: () => import('./features/faturas.component/faturas.component').then(m => m.FaturasComponent) },
       { path: 'definicao', loadComponent: () => import('./features/definicao.component/definicao.component').then(m => m.DefinicaoComponent) },

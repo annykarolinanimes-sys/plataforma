@@ -1,8 +1,8 @@
 import {Component, OnInit, OnDestroy, inject, signal, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {ReactiveFormsModule, FormBuilder, FormGroup,Validators, AbstractControl} from '@angular/forms';
+import {ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl} from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
-import {ArmazensService, Armazem, ArmazemCreateDto,ArmazemUpdateDto, PagedResult} from '../../core/services/armazens.service';
+import {ArmazensService, Armazem, ArmazemCreateDto, ArmazemUpdateDto, PagedResult} from '../../core/services/armazens.service';
 
 type ModalTab    = 'identificacao' | 'morada' | 'contacto';
 type ConfirmType = 'desativar' | 'ativar';
@@ -40,6 +40,7 @@ export class ArmazensComponent implements OnInit, OnDestroy {
   showModal  = signal(false);
   isEditing  = signal(false);
   editingId  = signal<number | null>(null);
+  editingCodigo = signal<string | null>(null); // Novo signal para armazenar o código em edição
   activeTab  = signal<ModalTab>('identificacao');
   form!: FormGroup;
 
@@ -66,7 +67,7 @@ export class ArmazensComponent implements OnInit, OnDestroy {
 
   private initForm(): void {
     this.form = this.fb.group({
-      codigo: ['', [Validators.required, Validators.maxLength(50)]],
+      // REMOVIDO: campo codigo
       nome:   ['', [Validators.required, Validators.maxLength(200)]],
       tipo:   ['principal'],
       ativo:  [true],
@@ -129,6 +130,7 @@ export class ArmazensComponent implements OnInit, OnDestroy {
   abrirModalNovo(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
+    this.editingCodigo.set(null);
     this.activeTab.set('identificacao');
     this.form.reset({ pais: 'Portugal', tipo: 'principal', ativo: true });
     this.errorMsg.set(null);
@@ -138,9 +140,9 @@ export class ArmazensComponent implements OnInit, OnDestroy {
   abrirModalEditar(a: Armazem): void {
     this.isEditing.set(true);
     this.editingId.set(a.id);
+    this.editingCodigo.set(a.codigo); // Armazena o código original para exibição
     this.activeTab.set('identificacao');
     this.form.patchValue({
-      codigo:              a.codigo,
       nome:                a.nome,
       tipo:                a.tipo              ?? 'principal',
       ativo:               a.ativo,
@@ -171,10 +173,10 @@ export class ArmazensComponent implements OnInit, OnDestroy {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       // Navega para a aba com o primeiro erro
-      const idFields      = ['codigo','nome','tipo'];
+      const nameFields      = ['nome', 'tipo'];
       const moradaFields  = ['morada','localidade','codigoPostal','pais'];
       const contactFields = ['telefone','email','responsavelNome','responsavelTelefone'];
-      if (idFields.some(f => this.ctrl(f).invalid))      this.activeTab.set('identificacao');
+      if (nameFields.some(f => this.ctrl(f).invalid))      this.activeTab.set('identificacao');
       else if (moradaFields.some(f => this.ctrl(f).invalid)) this.activeTab.set('morada');
       else if (contactFields.some(f => this.ctrl(f).invalid)) this.activeTab.set('contacto');
       this.errorMsg.set('Corrija os erros antes de continuar.');
@@ -186,7 +188,6 @@ export class ArmazensComponent implements OnInit, OnDestroy {
     const v = this.form.getRawValue();
 
     const base: ArmazemCreateDto = {
-      codigo:               v.codigo.trim().toUpperCase(),
       nome:                 v.nome.trim(),
       tipo:                 v.tipo             || undefined,
       morada:               v.morada?.trim()   || undefined,
@@ -201,7 +202,11 @@ export class ArmazensComponent implements OnInit, OnDestroy {
     };
 
     const req$ = this.isEditing() && this.editingId()
-      ? this.svc.atualizar(this.editingId()!, { ...base, ativo: v.ativo } as ArmazemUpdateDto)
+      ? this.svc.atualizar(this.editingId()!, { 
+          ...base, 
+          codigo: this.editingCodigo() || undefined,
+          ativo: v.ativo 
+        } as ArmazemUpdateDto)
       : this.svc.criar(base);
 
     req$.subscribe({

@@ -8,13 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace Accusoft.Api.Controllers;
+
 public record ArmazemResponseDto(
     int     Id,
     string  Codigo,
     string  Nome,
     string? Tipo,
     string? Morada,
-    string? Localidade,
+    string? Localizacao,
     string? CodigoPostal,
     string? Pais,
     string? Telefone,
@@ -27,12 +28,9 @@ public record ArmazemResponseDto(
     DateTimeOffset AtualizadoEm
 );
 
+// IMPORTANTE: Removido completamente o campo Codigo deste DTO
 public class ArmazemCreateDto
 {
-    [Required(ErrorMessage = "Código do armazém é obrigatório.")]
-    [MaxLength(50, ErrorMessage = "Código não pode exceder 50 caracteres.")]
-    public string Codigo { get; set; } = string.Empty;
-
     [Required(ErrorMessage = "Nome do armazém é obrigatório.")]
     [MaxLength(200, ErrorMessage = "Nome não pode exceder 200 caracteres.")]
     public string Nome { get; set; } = string.Empty;
@@ -68,8 +66,45 @@ public class ArmazemCreateDto
     public string? Observacoes { get; set; }
 }
 
-public class ArmazemUpdateDto : ArmazemCreateDto
+public class ArmazemUpdateDto
 {
+    [MaxLength(50)]
+    public string? Codigo { get; set; }
+    
+    [Required(ErrorMessage = "Nome do armazém é obrigatório.")]
+    [MaxLength(200, ErrorMessage = "Nome não pode exceder 200 caracteres.")]
+    public string Nome { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    public string? Tipo { get; set; }
+
+    [MaxLength(300)]
+    public string? Morada { get; set; }
+
+    [MaxLength(100)]
+    public string? Localidade { get; set; }
+
+    [MaxLength(20)]
+    public string? CodigoPostal { get; set; }
+
+    [MaxLength(100)]
+    public string? Pais { get; set; }
+
+    [MaxLength(30)]
+    public string? Telefone { get; set; }
+
+    [MaxLength(200)]
+    [EmailAddress(ErrorMessage = "Email de contacto inválido.")]
+    public string? Email { get; set; }
+
+    [MaxLength(150)]
+    public string? ResponsavelNome { get; set; }
+
+    [MaxLength(30)]
+    public string? ResponsavelTelefone { get; set; }
+
+    public string? Observacoes { get; set; }
+    
     public bool Ativo { get; set; } = true;
 }
 
@@ -91,12 +126,6 @@ public class ArmazensController : ControllerBase
         [FromQuery] string  orderBy  = "nome",
         [FromQuery] string  orderDir = "asc")
     {
-        // ── Multitenancy note ─────────────────────────────────────────────
-        // Actualmente filtra por CriadoPor == uid (isolamento por utilizador).
-        // Para Shared Ownership (ex: todos da mesma organização vêem os mesmos
-        // armazéns), adicionar coluna OrganizacaoId à tabela armazens e filtrar:
-        //   .Where(a => a.OrganizacaoId == currentUser.OrganizacaoId)
-        // ─────────────────────────────────────────────────────────────────
         var uid = User.GetUserId();
 
         pageSize = Math.Clamp(pageSize, 1, 100);
@@ -106,14 +135,13 @@ public class ArmazensController : ControllerBase
             .AsNoTracking()
             .Where(a => a.CriadoPor == uid);
             
-
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = search.ToLower();
             query = query.Where(a =>
                 a.Nome.ToLower().Contains(s)   ||
                 a.Codigo.ToLower().Contains(s) ||
-                (a.Localidade != null && a.Localidade.ToLower().Contains(s)));
+                (a.Localizacao != null && a.Localizacao.ToLower().Contains(s)));
         }
 
         if (ativo.HasValue)
@@ -123,7 +151,7 @@ public class ArmazensController : ControllerBase
         query = orderBy.ToLower() switch
         {
             "codigo"     => desc ? query.OrderByDescending(a => a.Codigo)     : query.OrderBy(a => a.Codigo),
-            "localidade" => desc ? query.OrderByDescending(a => a.Localidade) : query.OrderBy(a => a.Localidade),
+            "localidade" => desc ? query.OrderByDescending(a => a.Localizacao) : query.OrderBy(a => a.Localizacao),
             "tipo"       => desc ? query.OrderByDescending(a => a.Tipo)       : query.OrderBy(a => a.Tipo),
             _            => desc ? query.OrderByDescending(a => a.Nome)       : query.OrderBy(a => a.Nome),
         };
@@ -159,24 +187,27 @@ public class ArmazensController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateArmazem([FromBody] ArmazemCreateDto dto)
     {
+        // Removida a validação do ModelState para debug
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return BadRequest(new { message = "Erro de validação", errors });
+        }
 
-        var uid      = User.GetUserId();
-        var codigoNorm = dto.Codigo.Trim().ToUpperInvariant();
-
-        if (await _db.ArmazensCatalogo.AnyAsync(a =>
-            a.Codigo == codigoNorm && a.CriadoPor == uid))
-            return Conflict(new { message = $"Já existe um armazém com o código '{codigoNorm}'." });
+        var uid = User.GetUserId();
+        
+        // Gerar código automático no formato ARM-00
+        var nextNumber = await GetNextArmazemNumber(uid);
+        var codigoGerado = $"ARM-{nextNumber:D2}";
 
         var now = DateTimeOffset.UtcNow;
         var armazem = new Armazem
         {
-            Codigo               = codigoNorm,
+            Codigo               = codigoGerado,
             Nome                 = dto.Nome.Trim(),
             Tipo                 = dto.Tipo?.Trim(),
             Morada               = dto.Morada?.Trim(),
-            Localidade           = dto.Localidade?.Trim(),
+            Localizacao           = dto.Localidade?.Trim(),
             CodigoPostal         = dto.CodigoPostal?.Trim(),
             Pais                 = dto.Pais?.Trim() ?? "Portugal",
             Telefone             = dto.Telefone?.Trim(),
@@ -190,10 +221,49 @@ public class ArmazensController : ControllerBase
             AtualizadoEm         = now,
         };
 
-        _db.ArmazensCatalogo.Add(armazem);
-        await _db.SaveChangesAsync();
+        try
+        {
+            _db.ArmazensCatalogo.Add(armazem);
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao salvar: {ex.Message}" });
+        }
 
         return CreatedAtAction(nameof(GetArmazem), new { id = armazem.Id }, MapToDto(armazem));
+    }
+
+    private async Task<int> GetNextArmazemNumber(int userId)
+    {
+        try
+        {
+            // Buscar todos os códigos do usuário no formato ARM-XX
+            var existingCodes = await _db.ArmazensCatalogo
+                .Where(a => a.CriadoPor == userId && a.Codigo != null && a.Codigo.StartsWith("ARM-"))
+                .Select(a => a.Codigo)
+                .ToListAsync();
+            
+            var maxNumber = 0;
+            foreach (var code in existingCodes)
+            {
+                if (!string.IsNullOrEmpty(code))
+                {
+                    var parts = code.Split('-');
+                    if (parts.Length == 2 && int.TryParse(parts[1], out var num))
+                    {
+                        if (num > maxNumber) maxNumber = num;
+                    }
+                }
+            }
+            
+            return maxNumber + 1;
+        }
+        catch
+        {
+            // Se houver erro, começar do 1
+            return 1;
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -209,18 +279,12 @@ public class ArmazensController : ControllerBase
         if (armazem is null)
             return NotFound(new { message = "Armazém não encontrado." });
 
-        var codigoNorm = dto.Codigo.Trim().ToUpperInvariant();
-
-        if (armazem.Codigo != codigoNorm &&
-            await _db.ArmazensCatalogo.AnyAsync(a =>
-                a.Codigo == codigoNorm && a.CriadoPor == uid && a.Id != id))
-            return Conflict(new { message = $"Já existe outro armazém com o código '{codigoNorm}'." });
-
-        armazem.Codigo               = codigoNorm;
+        // NÃO atualizar o código - mantém o original
+        
         armazem.Nome                 = dto.Nome.Trim();
         armazem.Tipo                 = dto.Tipo?.Trim();
         armazem.Morada               = dto.Morada?.Trim();
-        armazem.Localidade           = dto.Localidade?.Trim();
+        armazem.Localizacao           = dto.Localidade?.Trim();
         armazem.CodigoPostal         = dto.CodigoPostal?.Trim();
         armazem.Pais                 = dto.Pais?.Trim() ?? "Portugal";
         armazem.Telefone             = dto.Telefone?.Trim();
@@ -271,7 +335,7 @@ public class ArmazensController : ControllerBase
 
     private static ArmazemResponseDto MapToDto(Armazem a) => new(
         a.Id, a.Codigo, a.Nome, a.Tipo,
-        a.Morada, a.Localidade, a.CodigoPostal, a.Pais,
+        a.Morada, a.Localizacao, a.CodigoPostal, a.Pais,
         a.Telefone, a.Email,
         a.ResponsavelNome, a.ResponsavelTelefone,
         a.Observacoes, a.Ativo,

@@ -14,5 +14,6 @@
     "src/**/*.spec.ts",
     "src/app/features/armazem.component",
     "src/app/features/processos.component"
+    
   ]
 }

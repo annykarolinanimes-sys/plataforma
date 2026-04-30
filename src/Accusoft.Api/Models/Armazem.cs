@@ -21,8 +21,9 @@ public class Armazem
     [Column("morada"), MaxLength(300)]
     public string? Morada { get; set; }
 
-    [Column("localidade"), MaxLength(100)]
-    public string? Localidade { get; set; }
+    // CORRIGIDO: usar "localizacao" em vez de "localidade"
+    [Column("localizacao"), MaxLength(100)]
+    public string? Localizacao { get; set; }  // Mudado de Localidade para Localizacao
 
     [Column("codigo_postal"), MaxLength(20)]
     public string? CodigoPostal { get; set; }
