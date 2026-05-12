@@ -101,6 +101,9 @@ builder.Services.AddSwaggerGen(c => {
 
 var app = builder.Build();
 
+app.UseCors("AngularDev");
+app.UseRouting();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -131,7 +134,6 @@ else
     });
 }
 
-app.UseCors("AngularDev");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();

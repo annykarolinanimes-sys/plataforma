@@ -103,8 +103,8 @@ public class GestaoViagemController : ControllerBase
             Status             = "Planeada",
             Prioridade         = dto.Prioridade,
             DataCriacao        = DateTime.UtcNow,
-            DataInicioPlaneada = dto.DataInicioPlaneada,
-            DataFimPlaneada    = dto.DataFimPlaneada,
+            DataInicioPlaneada = EnsureUtc(dto.DataInicioPlaneada),
+            DataFimPlaneada    = EnsureUtc(dto.DataFimPlaneada),
             VeiculoId          = dto.VeiculoId,
             MotoristaId        = dto.MotoristaId,
             TransportadoraId   = dto.TransportadoraId,
@@ -160,8 +160,8 @@ public class GestaoViagemController : ControllerBase
         {
             if (!string.IsNullOrWhiteSpace(dto.Status))       viagem.Status             = dto.Status;
             if (!string.IsNullOrWhiteSpace(dto.Prioridade))   viagem.Prioridade         = dto.Prioridade;
-            if (dto.DataInicioPlaneada.HasValue) viagem.DataInicioPlaneada = dto.DataInicioPlaneada.Value;
-            if (dto.DataFimPlaneada.HasValue)    viagem.DataFimPlaneada    = dto.DataFimPlaneada.Value;
+            if (dto.DataInicioPlaneada.HasValue) viagem.DataInicioPlaneada = EnsureUtc(dto.DataInicioPlaneada.Value);
+            if (dto.DataFimPlaneada.HasValue)    viagem.DataFimPlaneada    = EnsureUtc(dto.DataFimPlaneada.Value);
             if (dto.VeiculoId.HasValue)          viagem.VeiculoId          = dto.VeiculoId.Value;
             if (dto.MotoristaId.HasValue)         viagem.MotoristaId        = dto.MotoristaId.Value;
             if (dto.TransportadoraId.HasValue)    viagem.TransportadoraId   = dto.TransportadoraId.Value;
@@ -180,8 +180,8 @@ public class GestaoViagemController : ControllerBase
         // Campos de execução real — editáveis apenas em EmCurso
         if (viagem.Status == "EmCurso")
         {
-            if (dto.DataInicioReal.HasValue)         viagem.DataInicioReal         = dto.DataInicioReal.Value;
-            if (dto.DataFimReal.HasValue)             viagem.DataFimReal             = dto.DataFimReal.Value;
+            if (dto.DataInicioReal.HasValue)         viagem.DataInicioReal         = EnsureUtc(dto.DataInicioReal.Value);
+            if (dto.DataFimReal.HasValue)             viagem.DataFimReal             = EnsureUtc(dto.DataFimReal.Value);
             if (dto.DistanciaPercorridaKm.HasValue)  viagem.DistanciaPercorridaKm  = dto.DistanciaPercorridaKm.Value;
         }
 
@@ -193,6 +193,32 @@ public class GestaoViagemController : ControllerBase
 
         var updated = await FindViagem(id, uid);
         return Ok(MapToDto(updated!));
+    }
+
+    private static DateTime? EnsureUtc(DateTime? date)
+    {
+        if (!date.HasValue)
+            return null;
+
+        var value = date.Value;
+        if (value.Kind == DateTimeKind.Utc)
+            return value;
+
+        if (value.Kind == DateTimeKind.Local)
+            return value.ToUniversalTime();
+
+        return DateTime.SpecifyKind(value, DateTimeKind.Local).ToUniversalTime();
+    }
+
+    private static DateTime EnsureUtc(DateTime date)
+    {
+        if (date.Kind == DateTimeKind.Utc)
+            return date;
+
+        if (date.Kind == DateTimeKind.Local)
+            return date.ToUniversalTime();
+
+        return DateTime.SpecifyKind(date, DateTimeKind.Local).ToUniversalTime();
     }
 
     // ── POST /api/user/gestao-viagens/{id}/iniciar ────────────────────────────

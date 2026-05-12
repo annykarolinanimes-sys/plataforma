@@ -2,11 +2,20 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
-import { MotoristasService, Motorista, MotoristaCreateDto, MotoristaUpdateDto, PagedResult } from '../../core/services/motoristas.service';
+import { UserService, MotoristaDto, CreateMotoristaRequest, UpdateMotoristaRequest } from '../../core/services/user.service';
 import { PdfService, PdfField } from '../../core/services/pdf.service';
 
 type ViewState = 'list' | 'create' | 'edit' | 'details';
 
+type Motorista = MotoristaDto & { ativo: boolean; criadoEm?: string; atualizadoEm?: string };
+
+interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 @Component({
   selector: 'app-motoristas',
   standalone: true,
@@ -15,7 +24,7 @@ type ViewState = 'list' | 'create' | 'edit' | 'details';
   styleUrls: ['./motoristas.component.css']
 })
 export class MotoristasComponent implements OnInit, OnDestroy {
-  private svc = inject(MotoristasService);
+  private svc = inject(UserService);
   private fb = inject(FormBuilder);
   private pdfService = inject(PdfService);
   private destroy$ = new Subject<void>();
@@ -80,7 +89,7 @@ export class MotoristasComponent implements OnInit, OnDestroy {
       telefone: ['', [Validators.required, Validators.maxLength(30)]],
       cartaConducao: ['', [Validators.required, Validators.maxLength(50)]],
       transportadoraId: ['', [Validators.required, Validators.maxLength(50)]],
-      ativo: [true],
+      status: [{ value: '', disabled: true }],
       criadoEm: [{ value: '', disabled: true }]
     });
   }
@@ -98,17 +107,12 @@ export class MotoristasComponent implements OnInit, OnDestroy {
     this.form.enable();
     const isView = this.isViewing();
 
-    // FIX prefixo: removemos TR- do transportadoraId para exibir apenas o código numérico
-    const transportadoraIdSemPrefixo = motorista.transportadoraId
-      ? motorista.transportadoraId.toString().replace(/^TR-?/, '')
-      : '';
-
     this.form.patchValue({
       nome: motorista.nome,
       telefone: motorista.telefone,
       cartaConducao: motorista.cartaConducao,
-      transportadoraId: transportadoraIdSemPrefixo,
-      ativo: motorista.ativo,
+      transportadoraId: motorista.transportadoraId?.toString() ?? '',
+      status: motorista.status ?? '',
       criadoEm: motorista.criadoEm ? new Date(motorista.criadoEm).toLocaleString() : ''
     });
 
@@ -120,15 +124,18 @@ export class MotoristasComponent implements OnInit, OnDestroy {
   // API Calls
   carregarMotoristas(): void {
     this.isLoading.set(true);
-    this.svc.listar({
-      search: this.filtroSearch || undefined,
-      ativo: this.mostrarInativos ? undefined : true,
-      page: this.currentPage,
-      pageSize: this.pageSize,
-      orderBy: 'nome',
-      orderDir: 'asc'
-    }).subscribe({
-      next: (res) => { this.pagedResult.set(res); this.isLoading.set(false); },
+    this.svc.listarMotoristas(undefined, this.filtroSearch || undefined, this.mostrarInativos ? undefined : true).subscribe({
+      next: (res) => {
+        const items = res.map(m => ({ ...m, ativo: m.status?.toLowerCase() === 'ativo' }));
+        this.pagedResult.set({
+          items,
+          total: items.length,
+          page: 1,
+          pageSize: items.length,
+          totalPages: 1
+        });
+        this.isLoading.set(false);
+      },
       error: (err) => { this.errorMsg.set(err.message); this.isLoading.set(false); }
     });
   }
@@ -193,29 +200,31 @@ export class MotoristasComponent implements OnInit, OnDestroy {
     const raw = this.form.getRawValue();
 
     if (this.isEditing() && this.editingId()) {
-      const dto: MotoristaUpdateDto = {
+      const dto: UpdateMotoristaRequest = {
         nome: raw.nome.trim(),
         telefone: raw.telefone.trim(),
         cartaConducao: raw.cartaConducao.trim().toUpperCase(),
-        ativo: raw.ativo
+        transportadoraId: raw.transportadoraId ? Number(raw.transportadoraId) : undefined
       };
-      this.svc.atualizar(this.editingId()!, dto).subscribe({
+      this.svc.atualizarMotorista(this.editingId()!, dto).subscribe({
         next: () => { this.onSaveSuccess('Motorista actualizado com sucesso'); },
         error: (err) => { this.onSaveError(err); }
       });
     } else {
-      const transportadoraIdNormalized = raw.transportadoraId
-        .trim()
-        .toUpperCase()
-        .replace(/^TR-?/, '');
+      const transportadoraId = Number(raw.transportadoraId);
+      if (!transportadoraId || Number.isNaN(transportadoraId)) {
+        this.errorMsg.set('Transportadora inválida. Introduza um ID numérico válido.');
+        this.isSaving.set(false);
+        return;
+      }
 
-      const dto: MotoristaCreateDto = {
+      const dto: CreateMotoristaRequest = {
         nome: raw.nome.trim(),
         telefone: raw.telefone.trim(),
         cartaConducao: raw.cartaConducao.trim().toUpperCase(),
-        transportadoraId: `TR${transportadoraIdNormalized}`
+        transportadoraId
       };
-      this.svc.criar(dto).subscribe({
+      this.svc.criarMotorista(dto).subscribe({
         next: () => { this.onSaveSuccess('Motorista criado com sucesso'); },
         error: (err) => { this.onSaveError(err); }
       });
@@ -248,7 +257,7 @@ export class MotoristasComponent implements OnInit, OnDestroy {
   executarDesativar(): void {
     const m = this.motoristaParaDelete();
     if (!m) return;
-    this.svc.deletar(m.id).subscribe({
+    this.svc.eliminarMotorista(m.id).subscribe({
       next: () => {
         this.cancelarDelete();
         this.carregarMotoristas();
@@ -260,7 +269,7 @@ export class MotoristasComponent implements OnInit, OnDestroy {
 
   ativarMotorista(motorista: Motorista): void {
     if (!confirm(`Activar o motorista ${motorista.nome}?`)) return;
-    this.svc.ativar(motorista.id).subscribe({
+    this.svc.ativarMotorista(motorista.id).subscribe({
       next: () => {
         this.carregarMotoristas();
         this.showToast('Motorista activado com sucesso');
@@ -277,9 +286,9 @@ export class MotoristasComponent implements OnInit, OnDestroy {
       { label: 'Nome', value: motorista.nome },
       { label: 'Telefone', value: motorista.telefone },
       { label: 'Carta de Condução', value: motorista.cartaConducao },
-      { label: 'ID Transportadora', value: motorista.transportadoraId.toString() },
-      { label: 'Estado', value: motorista.ativo ? 'Activo' : 'Inactivo' },
-      { label: 'Data de Registo', value: new Date(motorista.criadoEm).toLocaleString() }
+      { label: 'ID Transportadora', value: motorista.transportadoraId?.toString() ?? '—' },
+      { label: 'Estado', value: motorista.status ?? (motorista.ativo ? 'Activo' : 'Inactivo') },
+      { label: 'Data de Registo', value: motorista.criadoEm ? new Date(motorista.criadoEm).toLocaleString() : '—' }
     ];
     const blob = this.pdfService.generateEntityPdf(`Motorista ${motorista.nome}`, fields);
     this.pdfService.downloadPdf(blob, `Motorista_${motorista.nome.replace(/\s+/g, '_')}.pdf`);

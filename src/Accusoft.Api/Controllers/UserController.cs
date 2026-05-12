@@ -146,13 +146,17 @@ public class UserController(AppDbContext db, IFileStorageService fileStorage) : 
     [HttpGet("motoristas")]
     public async Task<IActionResult> GetMotoristas(
         [FromQuery] int? transportadoraId,
-        [FromQuery] string? search)
+        [FromQuery] string? search,
+        [FromQuery] bool? ativo)
     {
         var query = db.Users.AsNoTracking()
             .Where(u => u.Role == UserRole.User && u.Cargo == "Motorista");
 
         if (transportadoraId.HasValue)
             query = query.Where(u => u.TransportadoraId == transportadoraId.Value);
+
+        if (ativo.HasValue)
+            query = query.Where(u => u.Status == (ativo.Value ? UserStatus.Ativo : UserStatus.Inativo));
 
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(u => u.Nome.ToLower().Contains(search.ToLower()));
@@ -227,8 +231,43 @@ public class UserController(AppDbContext db, IFileStorageService fileStorage) : 
         motorista.Telefone      = request.Telefone.Trim();
         motorista.CartaConducao = request.CartaConducao.Trim();
 
+        if (request.TransportadoraId.HasValue)
+        {
+            var transportadora = await db.TransportadorasCatalogo.FindAsync(request.TransportadoraId.Value);
+            if (transportadora is null)
+                return BadRequest(new { message = "Transportadora associada ao motorista não foi encontrada." });
+
+            motorista.TransportadoraId = request.TransportadoraId.Value;
+        }
+
         await db.SaveChangesAsync();
         return Ok(MapMotoristaDto(motorista));
+    }
+
+    [HttpDelete("motoristas/{id:int}")]
+    public async Task<IActionResult> DeleteMotorista(int id)
+    {
+        var motorista = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.Role == UserRole.User && u.Cargo == "Motorista");
+        if (motorista is null)
+            return NotFound(new { message = "Motorista não encontrado." });
+
+        motorista.Status = UserStatus.Inativo;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Motorista desativado com sucesso." });
+    }
+
+    [HttpPost("motoristas/{id:int}/ativar")]
+    public async Task<IActionResult> ActivateMotorista(int id)
+    {
+        var motorista = await db.Users.FirstOrDefaultAsync(u => u.Id == id && u.Role == UserRole.User && u.Cargo == "Motorista");
+        if (motorista is null)
+            return NotFound(new { message = "Motorista não encontrado." });
+
+        motorista.Status = UserStatus.Ativo;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Motorista ativado com sucesso." });
     }
 
     private static MotoristaDto MapMotoristaDto(User u) => new(

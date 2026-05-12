@@ -55,7 +55,7 @@ export class DashboardService {
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
 
-    return this.http.get<PaginatedResponse<ViagemEmCurso>>(`${this.apiUrl}/gestao-viagens`, { params }).pipe(
+    return this.http.get<PaginatedResponse<ViagemEmCurso>>(`${this.apiUrl}/dashboard/gestao-viagens`, { params }).pipe(
       catchError(error => {
         console.error('Erro ao carregar viagens:', error);
         return of({ items: [], total: 0, page: 1, pageSize: 5 });

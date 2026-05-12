@@ -132,7 +132,8 @@ public record CreateMotoristaRequest(
 public record UpdateMotoristaRequest(
     string Nome,
     string Telefone,
-    string CartaConducao
+    string CartaConducao,
+    int? TransportadoraId = null
 );
 
 public record MotoristaDto(

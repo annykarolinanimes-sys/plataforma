@@ -51,6 +51,7 @@ export interface UpdateMotoristaRequest {
   nome: string;
   telefone: string;
   cartaConducao: string;
+  transportadoraId?: number;
 }
 
 export interface Alerta {
@@ -103,10 +104,11 @@ export class UserService {
     return this.http.patch<void>(url, {});
   }
 
-  listarMotoristas(transportadoraId?: number, search?: string): Observable<MotoristaDto[]> {
+  listarMotoristas(transportadoraId?: number, search?: string, ativo?: boolean): Observable<MotoristaDto[]> {
     let params = new URLSearchParams();
     if (transportadoraId !== undefined) params.set('transportadoraId', transportadoraId.toString());
     if (search) params.set('search', search);
+    if (ativo !== undefined) params.set('ativo', ativo.toString());
     const url = params.toString() ? `${this.api}/user/motoristas?${params}` : `${this.api}/user/motoristas`;
     return this.http.get<MotoristaDto[]>(url);
   }
@@ -126,5 +128,9 @@ export class UserService {
 
   eliminarMotorista(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/user/motoristas/${id}`);
+  }
+
+  ativarMotorista(id: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.api}/user/motoristas/${id}/ativar`, {});
   }
 }

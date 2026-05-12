@@ -277,15 +277,11 @@
               <i class="las la-info-circle"></i> Estado & Sistema
             </h4>
             <div class="form-row form-row--2">
-              @if (isEditing()) {
-                <div class="form-group form-group--inline">
-                  <label class="checkbox-label" for="ativo">
-                    <input id="ativo" type="checkbox" formControlName="ativo">
-                    <span class="checkbox-custom"></span>
-                    Motorista activo
-                  </label>
-                </div>
-              }
+              <div class="form-group">
+                <label for="status">Estado</label>
+                <input id="status" type="text" formControlName="status" class="input--system" readonly>
+                <span class="field-hint"><i class="las la-lock"></i> Estado do motorista.</span>
+              </div>
               <div class="form-group">
                 <label for="criadoEm">Data de Criação</label>
                 <input id="criadoEm" type="text" formControlName="criadoEm" class="input--system" readonly>

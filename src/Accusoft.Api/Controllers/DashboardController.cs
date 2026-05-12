@@ -46,7 +46,7 @@ namespace SeuNamespace.Controllers
 namespace SeuNamespace.Controllers
 {
     [ApiController]
-    [Route("api/user/gestao-viagens")]
+    [Route("api/user/dashboard/gestao-viagens")]
     [Authorize]
     public class GestaoViagensController : ControllerBase
     {
@@ -58,7 +58,7 @@ namespace SeuNamespace.Controllers
         }
 
         /// <summary>
-        /// GET /api/user/gestao-viagens?status=EmCurso&page=1&pageSize=5
+        /// GET /api/user/dashboard/gestao-viagens?status=EmCurso&page=1&pageSize=5
         /// Retorna viagens com paginação e filtros
         /// </summary>
         [HttpGet]
