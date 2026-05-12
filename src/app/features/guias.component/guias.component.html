@@ -1,0 +1,931 @@
+<div class="guias-container">
+
+  <!-- ════════════════════════════════════════════════════════════════════════════
+       MODO: LISTAGEM
+  ════════════════════════════════════════════════════════════════════════════════ -->
+  @if (currentState() === 'list') {
+
+    <!-- Header Padrão Accusoft -->
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-file-alt"></i>
+        </div>
+        <div>
+          <h1>Guias de Transporte</h1>
+          <p>Documentos operacionais para transporte, remessa e entrega</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Guia
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    @if (errorMsg()) {
+      <div class="alert alert--error" role="alert">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success" role="status">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--amber">
+          <i class="las la-clock"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ guiasPendentes() }}</span>
+          <span class="stat-card__label">Guias Pendentes</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue">
+          <i class="las la-weight-hanging"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ formatarPeso(pesoTotalTransito()) }}</span>
+          <span class="stat-card__label">Peso Total em Trânsito</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--purple">
+          <i class="las la-cube"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ formatarVolume(volumeTotalTransito()) }}</span>
+          <span class="stat-card__label">Volume Total em Trânsito</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green">
+          <i class="las la-calendar-check"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">
+            @if (proximaEntrega()) {
+              {{ formatarData(proximaEntrega()!.dataPrevistaEntrega!) }}
+            } @else {
+              —
+            }
+          </span>
+          <span class="stat-card__label">Próxima Entrega</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="search" 
+                 placeholder="Nº Guia, Cliente..."
+                 [value]="filtroSearch()"
+                 (input)="onSearchChange($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-tag"></i>
+          <select [value]="filtroTipo()" (change)="onTipoChange($any($event.target).value)">
+            <option value="">Todos os tipos</option>
+            @for (t of tipos; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-select-wrap">
+          <i class="las la-chart-line"></i>
+          <select [value]="filtroStatus()" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ totalGuias() }} guia{{ totalGuias() !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading Skeleton -->
+    @if (isLoading()) {
+      <div class="table-container" aria-busy="true">
+        <table class="data-table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th>Nº Guia</th>
+              <th>Tipo</th>
+              <th>Cliente</th>
+              <th>Transportadora</th>
+              <th>Data Emissão</th>
+              <th>Status</th>
+              <th>Peso</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--lg"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--actions"></span></td>
+              <tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de guias">
+          <thead>
+            <tr>
+              <th>Nº Guia</th>
+              <th>Tipo</th>
+              <th>Cliente</th>
+              <th>Transportadora</th>
+              <th>Data Emissão</th>
+              <th>Status</th>
+              <th>Peso</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (g of guias(); track g.id) {
+              <tr [class.row--cancelada]="g.status === 'Cancelada'"
+                  class="clickable-row" (click)="goToEdit(g)">
+                <td class="numero-cell">
+                  <code class="numero-tag">{{ g.numeroGuia }}</code>
+                </td>
+                <td>
+                  <span class="tipo-badge">{{ g.tipo }}</span>
+                </td>
+                <td>
+                  <strong>{{ g.clienteNome || '—' }}</strong>
+                </td>
+                <td>
+                  {{ g.transportadoraNome || '—' }}
+                </td>
+                <td class="date-cell">
+                  {{ formatarData(g.dataEmissao) }}
+                </td>
+                <td>
+                  <span class="status-badge" [class]="getStatusClass(g.status)">
+                    <span class="badge-dot"></span>
+                    {{ g.status }}
+                  </span>
+                </td>
+                <td>
+                  {{ formatarPeso(g.pesoTotalKg) }}
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-icon btn-icon--print" 
+                          (click)="imprimirGuia(g, $event)" 
+                          title="Imprimir PDF">
+                    <i class="las la-print"></i>
+                  </button>
+                  @if (g.status !== 'Cancelada' && g.status !== 'Enviada') {
+                    <button class="btn-icon btn-icon--edit" 
+                            (click)="goToEdit(g, $event)" 
+                            title="Editar">
+                      <i class="las la-edit"></i>
+                    </button>
+                    <button class="btn-icon btn-icon--danger" 
+                            (click)="confirmarDelete(g, $event)" 
+                            title="Cancelar">
+                      <i class="las la-ban"></i>
+                    </button>
+                  }
+                </td>
+              <tr>
+            }
+
+            @if (guias().length === 0) {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <div class="empty-state__icon">
+                      <i class="las la-file-alt"></i>
+                    </div>
+                    <p class="empty-state__title">Nenhuma guia encontrada</p>
+                    <small class="empty-state__sub">
+                      Altere os filtros ou crie uma nova guia.
+                    </small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Paginação de guias">
+          <button class="pagination__btn" 
+                  [disabled]="currentPage() === 1"
+                  (click)="goToPage(currentPage() - 1)" 
+                  aria-label="Anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage()"
+                    [attr.aria-current]="p === currentPage() ? 'page' : null"
+                    (click)="goToPage(p)">
+              {{ p }}
+            </button>
+          }
+          <button class="pagination__btn" 
+                  [disabled]="currentPage() === totalPages()"
+                  (click)="goToPage(currentPage() + 1)" 
+                  aria-label="Seguinte">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage() }} de {{ totalPages() }}
+            ({{ totalGuias() }} registos)
+          </span>
+        </nav>
+      }
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════════
+       MODO: CRIAR GUIA
+  ════════════════════════════════════════════════════════════════════════════════ -->
+  @if (currentState() === 'create') {
+
+    <!-- Header do Formulário -->
+    <div class="form-page">
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las la-file-alt"></i>
+          </div>
+          <div>
+            <h2>Nova Guia</h2>
+            <p class="panel-subtitle">Registe uma nova guia de transporte</p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            Cancelar
+          </button>
+          <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner spinner--sm"></span> A guardar…
+            } @else {
+              <i class="las la-save"></i> Guardar Guia
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Erro inline -->
+      @if (errorMsg()) {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isSaving()">
+
+          <!-- ── BLOCO 1: Dados Gerais ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-info-circle"></i> Dados Gerais
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group" [class.form-group--error]="hasError('tipo')">
+                <label for="tipo">Tipo de Guia <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-tag"></i>
+                  <select id="tipo" formControlName="tipo">
+                    @for (t of tipos; track t) {
+                      <option [value]="t">{{ t }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="atribuicaoId">Atribuição (opcional)</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-route"></i>
+                  <select id="atribuicaoId" formControlName="atribuicaoId">
+                    <option [value]="null">— Seleccione uma atribuição —</option>
+                    @for (a of atribuicoes(); track a.id) {
+                      <option [value]="a.id">{{ a.numeroAtribuicao }} - {{ a.clienteNome }}</option>
+                    }
+                  </select>
+                </div>
+                <span class="field-hint">Preenche automaticamente cliente/origem/destino</span>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('clienteId')">
+                <label for="clienteId">Cliente <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-user"></i>
+                  <select id="clienteId" formControlName="clienteId">
+                    <option [value]="null">— Seleccione um cliente —</option>
+                    @for (c of clientes(); track c.id) {
+                      <option [value]="c.id">{{ c.nome }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('clienteId', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Seleccione um cliente.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('transportadoraId')">
+                <label for="transportadoraId">Transportadora <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-truck"></i>
+                  <select id="transportadoraId" formControlName="transportadoraId">
+                    <option [value]="null">— Seleccione uma transportadora —</option>
+                    @for (t of transportadoras(); track t.id) {
+                      <option [value]="t.id">{{ t.nome }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('transportadoraId', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Seleccione uma transportadora.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="dataPrevistaEntrega">Data Prevista Entrega</label>
+                <div class="input-icon">
+                  <i class="las la-calendar"></i>
+                  <input id="dataPrevistaEntrega" type="date" formControlName="dataPrevistaEntrega" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 2: Endereços ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-map-marked-alt"></i> Endereços
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="enderecoOrigem">Endereço de Origem</label>
+                <div class="input-icon">
+                  <i class="las la-map-marker"></i>
+                  <input id="enderecoOrigem" type="text" formControlName="enderecoOrigem"
+                         placeholder="Local de partida" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="enderecoDestino">Endereço de Destino</label>
+                <div class="input-icon">
+                  <i class="las la-flag-checkered"></i>
+                  <input id="enderecoDestino" type="text" formControlName="enderecoDestino"
+                         placeholder="Local de chegada" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 3: Itens da Guia ── -->
+          <div class="form-section">
+            <div class="section-header">
+              <h4 class="form-section__title">
+                <i class="las la-list"></i> Itens / Produtos
+                <span class="item-count-badge">{{ totalItensCount() }}</span>
+              </h4>
+              <button type="button" class="btn-add-item" (click)="adicionarItem()">
+                <i class="las la-plus-circle"></i> Adicionar produto
+              </button>
+            </div>
+
+            <div class="itens-grid" formArrayName="itens">
+              @for (item of itensArray.controls; track $index; let i = $index) {
+                <div class="item-card" [formGroupName]="i">
+                  <div class="item-card__header">
+                    <div class="item-card__title">
+                      <span class="item-number">Item #{{ i + 1 }}</span>
+                      @if (item.get('produtoNome')?.value) {
+                        <span class="item-product-name">{{ item.get('produtoNome')?.value }}</span>
+                      }
+                    </div>
+                    <div class="item-card__badges">
+                      <span class="item-badge item-badge--peso">
+                        <i class="las la-weight-hanging"></i> {{ formatarPeso(getItemPesoTotal(i)) }}
+                      </span>
+                      <span class="item-badge item-badge--volume">
+                        <i class="las la-cube"></i> {{ formatarVolume(getItemVolumeTotal(i)) }}
+                      </span>
+                      @if (itensArray.length > 1) {
+                        <button type="button" class="btn-remove-item" (click)="removerItem(i)"
+                                [attr.aria-label]="'Remover item ' + (i+1)">
+                          <i class="las la-trash-alt"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="item-card__body">
+                    <div class="form-grid-2">
+                      <div class="form-group">
+                        <label for="produtoId_{{i}}">Produto <span class="required">*</span></label>
+                        <select id="produtoId_{{i}}" formControlName="produtoId"
+                                (change)="onProdutoChange(i)">
+                          <option [value]="null">— Seleccione um produto —</option>
+                          @for (p of produtos(); track p.id) {
+                            <option [value]="p.id">{{ p.sku }} - {{ p.nome }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="quantidade_{{i}}">Quantidade <span class="required">*</span></label>
+                        <input id="quantidade_{{i}}" type="number" 
+                               formControlName="quantidade" min="1"
+                               (change)="onQuantidadeChange(i)" />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="lote_{{i}}">Lote</label>
+                        <input id="lote_{{i}}" type="text" formControlName="lote"
+                               placeholder="Nº do lote" />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="pesoTotal_{{i}}">Peso Total (kg)</label>
+                        <div class="input-icon">
+                          <i class="las la-weight-hanging"></i>
+                          <input id="pesoTotal_{{i}}" type="text" formControlName="pesoTotal"
+                                 readonly [disabled]="true" />
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="volumeTotal_{{i}}">Volume Total (m³)</label>
+                        <div class="input-icon">
+                          <i class="las la-cube"></i>
+                          <input id="volumeTotal_{{i}}" type="text" formControlName="volumeTotal"
+                                 readonly [disabled]="true" />
+                        </div>
+                      </div>
+
+                      <div class="form-group full-width">
+                        <label for="observacoes_{{i}}">Observações do Item</label>
+                        <input id="observacoes_{{i}}" type="text" formControlName="observacoes"
+                               placeholder="Notas sobre este item" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Totais Resumo -->
+            <div class="totais-resumo">
+              <div class="total-item">
+                <span class="total-label">Total de Itens:</span>
+                <span class="total-value">{{ totalItensCount() }}</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Peso Total:</span>
+                <span class="total-value">{{ formatarPeso(totalPesoGeral()) }}</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Volume Total:</span>
+                <span class="total-value">{{ formatarVolume(totalVolumeGeral()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 4: Informações Complementares ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-comment-dots"></i> Informações Complementares
+            </h4>
+            <div class="form-group">
+              <label for="observacoes">Observações</label>
+              <textarea id="observacoes" rows="2" formControlName="observacoes"
+                        placeholder="Notas adicionais sobre o transporte..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="instrucoesEspeciais">Instruções Especiais</label>
+              <textarea id="instrucoesEspeciais" rows="2" formControlName="instrucoesEspeciais"
+                        placeholder="Instruções para o transportador..."></textarea>
+            </div>
+          </div>
+
+        </fieldset>
+      </div>
+
+      <!-- Footer do Formulário -->
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Guia
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════════
+       MODO: EDITAR GUIA
+  ════════════════════════════════════════════════════════════════════════════════ -->
+  @if (currentState() === 'edit') {
+
+    <!-- Header do Formulário -->
+    <div class="form-page">
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las la-edit"></i>
+          </div>
+          <div>
+            <h2>Editar Guia</h2>
+            <p class="panel-subtitle">Actualize os dados da guia</p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            Cancelar
+          </button>
+          <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner spinner--sm"></span> A guardar…
+            } @else {
+              <i class="las la-save"></i> Guardar Guia
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Erro inline -->
+      @if (errorMsg()) {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isSaving()">
+
+          <!-- ── BLOCO 1: Dados Gerais ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-info-circle"></i> Dados Gerais
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="tipo">Tipo de Guia</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-tag"></i>
+                  <select id="tipo" formControlName="tipo">
+                    @for (t of tipos; track t) {
+                      <option [value]="t">{{ t }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="atribuicaoId">Atribuição (opcional)</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-route"></i>
+                  <select id="atribuicaoId" formControlName="atribuicaoId">
+                    <option [value]="null">— Seleccione uma atribuição —</option>
+                    @for (a of atribuicoes(); track a.id) {
+                      <option [value]="a.id">{{ a.numeroAtribuicao }} - {{ a.clienteNome }}</option>
+                    }
+                  </select>
+                </div>
+                <span class="field-hint">Preenche automaticamente cliente/origem/destino</span>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('clienteId')">
+                <label for="clienteId">Cliente <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-user"></i>
+                  <select id="clienteId" formControlName="clienteId">
+                    <option [value]="null">— Seleccione um cliente —</option>
+                    @for (c of clientes(); track c.id) {
+                      <option [value]="c.id">{{ c.nome }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('clienteId', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Seleccione um cliente.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('transportadoraId')">
+                <label for="transportadoraId">Transportadora <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-truck"></i>
+                  <select id="transportadoraId" formControlName="transportadoraId">
+                    <option [value]="null">— Seleccione uma transportadora —</option>
+                    @for (t of transportadoras(); track t.id) {
+                      <option [value]="t.id">{{ t.nome }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('transportadoraId', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Seleccione uma transportadora.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="dataPrevistaEntrega">Data Prevista Entrega</label>
+                <div class="input-icon">
+                  <i class="las la-calendar"></i>
+                  <input id="dataPrevistaEntrega" type="date" formControlName="dataPrevistaEntrega" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 2: Endereços ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-map-marked-alt"></i> Endereços
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="enderecoOrigem">Endereço de Origem</label>
+                <div class="input-icon">
+                  <i class="las la-map-marker"></i>
+                  <input id="enderecoOrigem" type="text" formControlName="enderecoOrigem"
+                         placeholder="Local de partida" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="enderecoDestino">Endereço de Destino</label>
+                <div class="input-icon">
+                  <i class="las la-flag-checkered"></i>
+                  <input id="enderecoDestino" type="text" formControlName="enderecoDestino"
+                         placeholder="Local de chegada" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 3: Itens da Guia ── -->
+          <div class="form-section">
+            <div class="section-header">
+              <h4 class="form-section__title">
+                <i class="las la-list"></i> Itens / Produtos
+                <span class="item-count-badge">{{ totalItensCount() }}</span>
+              </h4>
+              <button type="button" class="btn-add-item" (click)="adicionarItem()">
+                <i class="las la-plus-circle"></i> Adicionar produto
+              </button>
+            </div>
+
+            <div class="itens-grid" formArrayName="itens">
+              @for (item of itensArray.controls; track $index; let i = $index) {
+                <div class="item-card" [formGroupName]="i">
+                  <div class="item-card__header">
+                    <div class="item-card__title">
+                      <span class="item-number">Item #{{ i + 1 }}</span>
+                      @if (item.get('produtoNome')?.value) {
+                        <span class="item-product-name">{{ item.get('produtoNome')?.value }}</span>
+                      }
+                    </div>
+                    <div class="item-card__badges">
+                      <span class="item-badge item-badge--peso">
+                        <i class="las la-weight-hanging"></i> {{ formatarPeso(getItemPesoTotal(i)) }}
+                      </span>
+                      <span class="item-badge item-badge--volume">
+                        <i class="las la-cube"></i> {{ formatarVolume(getItemVolumeTotal(i)) }}
+                      </span>
+                      @if (itensArray.length > 1) {
+                        <button type="button" class="btn-remove-item" (click)="removerItem(i)"
+                                [attr.aria-label]="'Remover item ' + (i+1)">
+                          <i class="las la-trash-alt"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="item-card__body">
+                    <div class="form-grid-2">
+                      <div class="form-group">
+                        <label for="produtoId_{{i}}">Produto <span class="required">*</span></label>
+                        <select id="produtoId_{{i}}" formControlName="produtoId"
+                                (change)="onProdutoChange(i)">
+                          <option [value]="null">— Seleccione um produto —</option>
+                          @for (p of produtos(); track p.id) {
+                            <option [value]="p.id">{{ p.sku }} - {{ p.nome }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="quantidade_{{i}}">Quantidade <span class="required">*</span></label>
+                        <input id="quantidade_{{i}}" type="number" 
+                               formControlName="quantidade" min="1"
+                               (change)="onQuantidadeChange(i)" />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="lote_{{i}}">Lote</label>
+                        <input id="lote_{{i}}" type="text" formControlName="lote"
+                               placeholder="Nº do lote" />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="pesoTotal_{{i}}">Peso Total (kg)</label>
+                        <div class="input-icon">
+                          <i class="las la-weight-hanging"></i>
+                          <input id="pesoTotal_{{i}}" type="text" formControlName="pesoTotal"
+                                 readonly [disabled]="true" />
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="volumeTotal_{{i}}">Volume Total (m³)</label>
+                        <div class="input-icon">
+                          <i class="las la-cube"></i>
+                          <input id="volumeTotal_{{i}}" type="text" formControlName="volumeTotal"
+                                 readonly [disabled]="true" />
+                        </div>
+                      </div>
+
+                      <div class="form-group full-width">
+                        <label for="observacoes_{{i}}">Observações do Item</label>
+                        <input id="observacoes_{{i}}" type="text" formControlName="observacoes"
+                               placeholder="Notas sobre este item" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Totais Resumo -->
+            <div class="totais-resumo">
+              <div class="total-item">
+                <span class="total-label">Total de Itens:</span>
+                <span class="total-value">{{ totalItensCount() }}</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Peso Total:</span>
+                <span class="total-value">{{ formatarPeso(totalPesoGeral()) }}</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Volume Total:</span>
+                <span class="total-value">{{ formatarVolume(totalVolumeGeral()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 4: Informações Complementares ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-comment-dots"></i> Informações Complementares
+            </h4>
+            <div class="form-group">
+              <label for="observacoes">Observações</label>
+              <textarea id="observacoes" rows="2" formControlName="observacoes"
+                        placeholder="Notas adicionais sobre o transporte..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="instrucoesEspeciais">Instruções Especiais</label>
+              <textarea id="instrucoesEspeciais" rows="2" formControlName="instrucoesEspeciais"
+                        placeholder="Instruções para o transportador..."></textarea>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 5: Status (apenas edição) ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-chart-line"></i> Status
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="status">Status da Guia</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-tachometer-alt"></i>
+                  <select id="status" formControlName="status">
+                    @for (s of statusList; track s) {
+                      <option [value]="s">{{ s }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              @if (form.get('status')?.value === 'Enviada') {
+                <div class="form-group">
+                  <label for="dataEntregaReal">Data de Entrega Real</label>
+                  <div class="input-icon">
+                    <i class="las la-calendar-check"></i>
+                    <input id="dataEntregaReal" type="date" formControlName="dataEntregaReal" />
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+        </fieldset>
+      </div>
+
+      <!-- Footer do Formulário -->
+      <div class="form-footer">
+        <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="salvarGuia()" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner spinner--sm"></span> A guardar…
+          } @else {
+            <i class="las la-save"></i> Guardar Guia
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     MODAL DE CONFIRMAÇÃO
+╔═══════════════════════════════════════════════════════════════════════════════ -->
+@if (showDeleteConfirm() && guiaParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()" role="alertdialog" aria-modal="true">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i class="las la-ban"></i> Cancelar Guia
+        </h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-icon confirm-icon--danger" aria-hidden="true">
+          <i class="las la-file-alt"></i>
+        </div>
+        <p class="confirm-text">
+          Tem a certeza que pretende <strong>cancelar</strong> a guia
+          <code>{{ guiaParaDelete()?.numeroGuia }}</code>?
+        </p>
+        <p class="confirm-sub">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Fechar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-ban"></i> Cancelar Guia
+        </button>
+      </div>
+    </div>
+  </div>
+}

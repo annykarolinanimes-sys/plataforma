@@ -1,0 +1,251 @@
+<!-- src/app/features/definicao.component/definicao.component.html -->
+<div class="definicao-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <h1><i class="las la-user-cog"></i> {{ 'settings.title' | translate }}</h1>
+      <p>{{ 'settings.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  @if (errorMsg()) {
+    <div class="alert-error">
+      <i class="las la-exclamation-circle"></i> {{ errorMsg() }}
+      <button class="alert-close" (click)="clearError()">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert-success">
+      <i class="las la-check-circle"></i> {{ successMsg() }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="las la-spinner la-spin"></i>
+      <span>{{ 'message.loading' | translate }}</span>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="settings-grid">
+      <!-- Perfil -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-user-circle"></i> {{ 'settings.profile' | translate }}</h3>
+          <button class="btn-edit" (click)="editarPerfil()">
+            <i class="las la-pen"></i> {{ 'settings.edit' | translate }}
+          </button>
+        </div>
+        <div class="profile-info">
+          <div class="avatar-section">
+            <div class="avatar-large">
+              <img [src]="user()?.avatarUrl || getAvatarUrl()" alt="Avatar" 
+                   onerror="this.src='https://ui-avatars.com/api/?background=2563eb&color=fff&bold=true'">
+              @if (isSaving()) {
+                <div class="avatar-overlay">
+                  <i class="las la-spinner la-spin"></i>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <label><i class="las la-user"></i> {{ 'settings.fullName' | translate }}</label>
+              <p>{{ user()?.nome || ('common.undefined' | translate) }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-envelope"></i> {{ 'settings.email' | translate }}</label>
+              <p>{{ user()?.email || ('common.undefined' | translate) }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-briefcase"></i> {{ 'settings.department' | translate }}</label>
+              <p>{{ user()?.departamento || ('common.notDefined' | translate) }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-id-card"></i> {{ 'settings.position' | translate }}</label>
+              <p>{{ user()?.cargo || ('common.notDefined' | translate) }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-phone"></i> {{ 'settings.phone' | translate }}</label>
+              <p>{{ user()?.telefone || ('common.notDefined' | translate) }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-shield-alt"></i> {{ 'settings.role' | translate }}</label>
+              <p><span class="badge" [class.badge-admin]="user()?.role === 'admin'">{{ user()?.role === 'admin' ? ('settings.admin' | translate) : ('settings.user' | translate) }}</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estatísticas -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-chart-line"></i> {{ 'settings.statistics' | translate }}</h3>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <i class="las la-file-alt"></i>
+            <div>
+              <span class="stat-value">{{ totalDocumentos() }}</span>
+              <span class="stat-label">{{ 'settings.documents' | translate }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-truck"></i>
+            <div>
+              <span class="stat-value">{{ totalEnvios() }}</span>
+              <span class="stat-label">{{ 'settings.shipments' | translate }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-bell"></i>
+            <div>
+              <span class="stat-value">{{ alertasNaoLidos() }}</span>
+              <span class="stat-label">{{ 'settings.unreadAlerts' | translate }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-calendar"></i>
+            <div>
+              <span class="stat-value">{{ diasRegistado() }}</span>
+              <span class="stat-label">{{ 'settings.daysRegistered' | translate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segurança -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-lock"></i> {{ 'settings.security' | translate }}</h3>
+        </div>
+        <div class="security-options">
+          <button class="btn-outline" (click)="abrirModalAlterarSenha()">
+            <i class="las la-key"></i> {{ 'settings.changePassword' | translate }}
+          </button>
+          <button class="btn-outline danger" (click)="logout()">
+            <i class="las la-sign-out-alt"></i> {{ 'settings.logout' | translate }}
+          </button>
+        </div>
+        <div class="session-info">
+          <p><i class="las la-clock"></i> {{ 'settings.lastLogin' | translate }}: {{ formatarData(user()?.ultimoLogin || '') }}</p>
+          <p><i class="las la-calendar-plus"></i> {{ 'settings.memberSince' | translate }}: {{ formatarData(user()?.dataCriacao || '') }}</p>
+        </div>
+      </div>
+
+      <!-- Preferências -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-sliders-h"></i> {{ 'settings.preferences' | translate }}</h3>
+        </div>
+        <div class="preferences">
+          <div class="pref-item">
+            <label class="switch-label">
+              <span>{{ 'settings.emailNotifications' | translate }}</span>
+              <div class="switch">
+                <input type="checkbox" [(ngModel)]="prefEmailNotifications" (change)="salvarPreferencias()">
+                <span class="slider round"></span>
+              </div>
+            </label>
+          </div>
+          <div class="pref-item">
+            <label class="switch-label">
+              <span>{{ 'settings.darkMode' | translate }}</span>
+              <div class="switch">
+                <input type="checkbox" [(ngModel)]="prefDarkMode" (change)="toggleDarkMode()">
+                <span class="slider round"></span>
+              </div>
+            </label>
+          </div>
+          <div class="pref-item">
+            <label class="select-label">
+              <span>{{ 'settings.language' | translate }}</span>
+              <select [(ngModel)]="prefLanguage" (change)="salvarPreferencias()">
+                <option value="pt">{{ 'settings.portuguese' | translate }}</option>
+                <option value="en">{{ 'settings.english' | translate }}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Modal Editar Perfil -->
+@if (showEditProfileModal()) {
+  <div class="modal-overlay" (click)="fecharModalPerfil()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-user-edit"></i> {{ 'modal.editProfile' | translate }}</h3>
+        <button class="modal-close" (click)="fecharModalPerfil()">{{ 'common.close' | translate }}</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ 'settings.fullName' | translate }}</label>
+          <input type="text" [(ngModel)]="editForm.nome" [placeholder]="'settings.fullName' | translate" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'settings.department' | translate }}</label>
+          <input type="text" [(ngModel)]="editForm.departamento" [placeholder]="'Ex: Logística, TI, RH...' | translate" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'settings.position' | translate }}</label>
+          <input type="text" [(ngModel)]="editForm.cargo" [placeholder]="'Ex: Gestor, Técnico, Analista...' | translate" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'settings.phone' | translate }}</label>
+          <input type="tel" [(ngModel)]="editForm.telefone" placeholder="+351 912 345 678" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModalPerfil()">{{ 'modal.cancel' | translate }}</button>
+        <button class="btn-primary" (click)="salvarPerfil()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? ('modal.saving' | translate) : ('modal.save' | translate) }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Alterar Senha -->
+@if (showChangePasswordModal()) {
+  <div class="modal-overlay" (click)="fecharModalSenha()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-key"></i> {{ 'modal.changePassword' | translate }}</h3>
+        <button class="modal-close" (click)="fecharModalSenha()">{{ 'common.close' | translate }}</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ 'modal.currentPassword' | translate }}</label>
+          <input type="password" [(ngModel)]="passwordForm.currentPassword" [placeholder]="'••••••••' | translate" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'modal.newPassword' | translate }}</label>
+          <input type="password" [(ngModel)]="passwordForm.newPassword" [placeholder]="'••••••••' | translate" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'modal.confirmPassword' | translate }}</label>
+          <input type="password" [(ngModel)]="passwordForm.confirmPassword" [placeholder]="'••••••••' | translate" />
+        </div>
+        @if (passwordError()) {
+          <div class="field-error">
+            <i class="las la-exclamation-circle"></i> {{ passwordError() }}
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharModalSenha()">{{ 'modal.cancel' | translate }}</button>
+        <button class="btn-primary" (click)="alterarSenha()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? ('modal.changing' | translate) : ('modal.changePassword' | translate) }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

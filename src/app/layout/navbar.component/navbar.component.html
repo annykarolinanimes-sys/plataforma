@@ -1,0 +1,173 @@
+<!-- navbar.component.html -->
+<header class="navbar">
+
+  <div class="navbar-left">
+    <button
+      class="menu-toggle-btn"
+      (click)="toggle()"
+      aria-label="Alternar sidebar"
+    >
+      <i class="las la-bars"></i>
+    </button>
+
+    <div class="search-box">
+      <i class="las la-search"></i>
+      <input
+        type="text"
+        placeholder="Pesquisar..."
+        [(ngModel)]="searchQuery"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </div>
+  </div>
+
+  <div class="navbar-right">
+
+    <!-- Botão do Chat -->
+    <button class="icon-btn chat-btn" (click)="toggleChat()" aria-label="Chat">
+      <i class="las la-comment-dots"></i>
+      @if (chatService.unreadCount() > 0) {
+        <span class="notif-badge">{{ chatService.unreadCount() }}</span>
+      }
+    </button>
+
+    <button class="icon-btn" aria-label="Notificações">
+      <i class="las la-bell"></i>
+      <span class="notif-dot"></span>
+    </button>
+
+    <div class="profile-area">
+      <div class="avatar">
+        <img
+          [src]="getAvatarUrl(auth.user())"
+          [alt]="auth.user()?.nome"
+          onerror="this.src='https://ui-avatars.com/api/?background=0D3B66&color=fff&name=User'"
+        />
+      </div>
+      <div class="profile-info">
+        <h4>{{ auth.user()?.nome || 'Utilizador' }}</h4>
+        <p>{{ auth.isAdmin() ? 'Administrador' : 'Utilizador' }}</p>
+      </div>
+      <i class="las la-chevron-down"></i>
+    </div>
+
+  </div>
+</header>
+
+@if (chatService.isOpen()) {
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-title">
+        <i class="las la-comments"></i>
+        <h3>Chat</h3>
+      </div>
+      <button class="chat-close" (click)="chatService.closeChat()">×</button>
+    </div>
+
+    <div class="chat-body">
+      @if (!chatService.currentChatWith()) {
+        <div class="chat-conversations">
+          <div class="chat-search">
+            <i class="las la-search"></i>
+            <input 
+              type="text" 
+              placeholder="Pesquisar utilizadores..."
+              (input)="chatService.loadAvailableUsers($any($event.target).value)"
+            />
+          </div>
+
+          <div class="conversations-list">
+            @for (conv of chatService.conversations(); track conv.userId) {
+              <div class="conversation-item" (click)="chatService.startChatWith({ id: conv.userId, nome: conv.userName, email: conv.userEmail, avatarUrl: conv.userAvatar })">
+                <div class="conv-avatar">
+                  <img [src]="getAvatarUrl(conv)" [alt]="conv.userName">
+                  @if (conv.unreadCount > 0) {
+                    <span class="unread-badge">{{ conv.unreadCount }}</span>
+                  }
+                </div>
+                <div class="conv-info">
+                  <div class="conv-name">{{ conv.userName }}</div>
+                  <div class="conv-last-message">{{ conv.lastMessage | slice:0:30 }}{{ conv.lastMessage.length > 30 ? '...' : '' }}</div>
+                </div>
+                <div class="conv-time">{{ formatTime(conv.lastMessageTime) }}</div>
+              </div>
+            }
+
+            @for (user of chatService.availableUsers(); track user.id) {
+              <div class="conversation-item available-user" (click)="chatService.startChatWith(user)">
+                <div class="conv-avatar">
+                  <img [src]="getAvatarUrl(user)" [alt]="user.nome">
+                </div>
+                <div class="conv-info">
+                  <div class="conv-name">{{ user.nome }}</div>
+                  <div class="conv-last-message">{{ user.departamento || user.cargo || 'Disponível para conversar' }}</div>
+                </div>
+                <div class="conv-time">
+                  <i class="las la-plus-circle"></i>
+                </div>
+              </div>
+            }
+
+            @if (chatService.conversations().length === 0 && chatService.availableUsers().length === 0) {
+              <div class="empty-chat">
+                <i class="las la-comment-slash"></i>
+                <p>Nenhuma conversa ativa</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Área de Conversa Ativa -->
+      @if (chatService.currentChatWith()) {
+        <div class="chat-active">
+          <div class="chat-active-header">
+            <button class="back-btn" (click)="chatService.startChatWith(null)">
+              <i class="las la-arrow-left"></i>
+            </button>
+            <div class="chat-user-info">
+              <img [src]="getAvatarUrl(chatService.currentChatWith())" [alt]="chatService.currentChatWith()?.nome">
+              <div>
+                <strong>{{ chatService.currentChatWith()?.nome }}</strong>
+                <small>{{ chatService.currentChatWith()?.departamento || chatService.currentChatWith()?.cargo || 'Utilizador' }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-messages" #chatMessages>
+            @if (chatService.isLoading()) {
+              <div class="chat-loading">
+                <i class="las la-spinner la-spin"></i> Carregando...
+              </div>
+            }
+            @for (msg of chatService.currentMessages(); track msg.id) {
+              <div class="message" [class.message-own]="msg.fromUserId === auth.user()?.userId" [class.message-other]="msg.fromUserId !== auth.user()?.userId">
+                <div class="message-bubble">
+                  <div class="message-text">{{ msg.message }}</div>
+                  <div class="message-time">
+                    {{ formatTime(msg.createdAt) }}
+                    @if (msg.fromUserId === auth.user()?.userId) {
+                      <i class="las" [class.la-check]="!msg.isRead" [class.la-check-double]="msg.isRead"></i>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="chat-input-area">
+            <input 
+              type="text" 
+              placeholder="Digite sua mensagem..."
+              [(ngModel)]="chatMessageInput"
+              (keyup.enter)="sendMessage()"
+            />
+            <button (click)="sendMessage()" [disabled]="!chatMessageInput().trim()">
+              <i class="las la-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

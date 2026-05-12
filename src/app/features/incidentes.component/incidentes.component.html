@@ -1,0 +1,789 @@
+<div class="incidentes-container" (click)="fecharDropdowns()">
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-exclamation-triangle"></i>
+      </div>
+      <div>
+        <h1>Incidentes</h1>
+        <p>Registo e gestão de ocorrências operacionais</p>
+      </div>
+    </div>
+    @if (isListView()) {
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Registar Incidente
+      </button>
+    }
+  </div>
+
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i><span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg() && isListView()) {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()">×</button>
+    </div>
+  }
+
+
+  @if (isListView()) {
+
+    @if (!isLoading()) {
+      <div class="stats-grid">
+
+        <div class="stat-card" [class.stat-card--alert]="countAbertos() > 0">
+          <div class="stat-card__icon"
+               [class.stat-card__icon--red]="countAbertos() > 0"
+               [class.stat-card__icon--slate]="countAbertos() === 0">
+            <i class="las la-exclamation-circle"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ countAbertos() }}</span>
+            <span class="stat-card__label">Em Aberto</span>
+          </div>
+        </div>
+
+        <div class="stat-card" [class.stat-card--alert]="countCriticos() > 0">
+          <div class="stat-card__icon"
+               [class.stat-card__icon--orange]="countCriticos() > 0"
+               [class.stat-card__icon--slate]="countCriticos() === 0">
+            <i class="las la-fire-alt"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ countCriticos() }}</span>
+            <span class="stat-card__label">Críticos</span>
+          </div>
+          @if (countCriticos() > 0) {
+            <div class="stat-card__badge stat-card__badge--red">Atenção</div>
+          }
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--green">
+            <i class="las la-chart-pie"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ taxaResolucao() }}%</span>
+            <span class="stat-card__label">Taxa Resolução</span>
+          </div>
+          <div class="stat-card__badge"
+               [class.stat-card__badge--green]="taxaResolucao() >= 80"
+               [class.stat-card__badge--amber]="taxaResolucao() < 80 && taxaResolucao() >= 50"
+               [class.stat-card__badge--red]="taxaResolucao() < 50">
+            {{ taxaResolucao() >= 80 ? 'Bom' : taxaResolucao() >= 50 ? 'Médio' : 'Baixo' }}
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--amber">
+            <i class="las la-euro-sign"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ formatarMoeda(custoTotal()) }}</span>
+            <span class="stat-card__label">Custo Total</span>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- Toolbar com filtros múltiplos -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="search" placeholder="Nº Incidente, título…"
+                 [value]="filtroSearch"
+                 (input)="onSearchChange($any($event.target).value)" />
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [(ngModel)]="filtroStatus" (change)="onFiltroChange()"
+                  [ngModelOptions]="{standalone: true}">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ getStatusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-tag"></i>
+          <select [(ngModel)]="filtroTipo" (change)="onFiltroChange()"
+                  [ngModelOptions]="{standalone: true}">
+            <option value="">Todos os tipos</option>
+            @for (t of tiposIncidente; track t) {
+              <option [value]="t">{{ getTipoLabel(t) }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-fire"></i>
+          <select [(ngModel)]="filtroGravidade" (change)="onFiltroChange()"
+                  [ngModelOptions]="{standalone: true}">
+            <option value="">Todas gravidades</option>
+            @for (g of gravidades; track g) {
+              <option [value]="g">{{ g }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ totalIncidentes() }} incidente{{ totalIncidentes() !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Skeleton Loading -->
+    @if (isLoading()) {
+      <div class="table-container" aria-busy="true">
+        <table class="data-table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th>Nº</th><th>Tipo</th><th>Gravidade</th><th>Título</th>
+              <th>Status</th><th>Associado</th><th>Custo</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--lg"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--actions"></span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de incidentes">
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Tipo</th>
+              <th>Gravidade</th>
+              <th>Título / Data</th>
+              <th>Status</th>
+              <th>Associado</th>
+              <th>Custo</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inc of incidentes(); track inc.id) {
+              <tr [class.row--resolvido]="inc.status === 'Resolvido' || inc.status === 'Fechado'"
+                  class="clickable-row" (click)="goToEdit(inc)">
+
+                <td>
+                  <code class="numero-tag">{{ inc.numeroIncidente }}</code>
+                </td>
+
+                <td>
+                  <span class="tipo-badge" [class]="'tipo-badge ' + getTipoClass(inc.tipo)">
+                    <i class="las la-tag"></i>
+                    {{ getTipoLabel(inc.tipo) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="gravidade-badge" [class]="'gravidade-badge ' + getGravidadeClass(inc.gravidade)">
+                    @if (inc.gravidade === 'Critica') { <i class="las la-fire-alt"></i> }
+                    {{ inc.gravidade }}
+                  </span>
+                </td>
+
+                <td>
+                  <strong class="incidente-titulo">{{ inc.titulo }}</strong>
+                  <span class="text-muted">{{ formatarData(inc.dataOcorrencia) }}</span>
+                </td>
+
+                <td>
+                  <span class="status-badge" [class]="'status-badge ' + getStatusClass(inc.status)">
+                    <span class="badge-dot"></span>
+                    {{ getStatusLabel(inc.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="assoc-stack">
+                    @if (inc.viagemNumero) {
+                      <span class="assoc-tag">
+                        <i class="las la-route"></i> {{ inc.viagemNumero }}
+                      </span>
+                    }
+                    @if (inc.veiculoMatricula) {
+                      <span class="assoc-tag">
+                        <i class="las la-car"></i> {{ inc.veiculoMatricula }}
+                      </span>
+                    }
+                    @if (inc.clienteNome) {
+                      <span class="assoc-tag">
+                        <i class="las la-user"></i> {{ inc.clienteNome }}
+                      </span>
+                    }
+                    @if (!inc.viagemNumero && !inc.veiculoMatricula && !inc.clienteNome) {
+                      <span class="text-muted">—</span>
+                    }
+                  </div>
+                </td>
+
+                <td>
+                  @if (inc.custoAssociado) {
+                    <span class="custo-valor">{{ formatarMoeda(inc.custoAssociado) }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (podeResolver(inc)) {
+                    <button class="btn-icon btn-icon--resolve"
+                            (click)="abrirModalResolver(inc, $event)" title="Resolver">
+                      <i class="las la-check-double"></i>
+                    </button>
+                  }
+                  @if (podeFerchar(inc)) {
+                    <button class="btn-icon btn-icon--close"
+                            (click)="fecharIncidente(inc, $event)" title="Fechar">
+                      <i class="las la-lock"></i>
+                    </button>
+                  }
+                  <button class="btn-icon btn-view"
+                          (click)="goToDetails(inc, $event)" title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download"
+                          (click)="imprimirPdf(inc, $event)" title="PDF">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  @if (inc.status !== 'Fechado') {
+                    <button class="btn-icon btn-icon--edit"
+                            (click)="goToEdit(inc, $event)" title="Editar">
+                      <i class="las la-edit"></i>
+                    </button>
+                  }
+                  <button class="btn-icon btn-icon--danger"
+                          (click)="confirmarDelete(inc, $event)" title="Eliminar">
+                    <i class="las la-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+
+            @if (incidentes().length === 0) {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <div class="empty-state__icon">
+                      <i class="las la-shield-alt"></i>
+                    </div>
+                    <p class="empty-state__title">Nenhum incidente encontrado</p>
+                    <small class="empty-state__sub">Altere os filtros ou registe um novo incidente.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <nav class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage - 1)" aria-label="Anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage"
+                    (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()"
+                  (click)="goToPage(currentPage + 1)" aria-label="Seguinte">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage }} de {{ totalPages() }} ({{ totalIncidentes() }} registos)
+          </span>
+        </nav>
+      }
+    }
+
+  }
+  <!-- /isListView() -->
+
+
+  <!-- ══════════════════════════════════════════════
+       VISTA: CRIAR / EDITAR / DETALHES
+       ══════════════════════════════════════════════ -->
+  @if (!isListView()) {
+    <div class="form-page">
+
+      <!-- Cabeçalho do painel -->
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las"
+               [class.la-eye]="isViewing()"
+               [class.la-exclamation-triangle]="isCreateView()"
+               [class.la-edit]="isEditView() && !isViewing()"></i>
+          </div>
+          <div>
+            <h2>
+              @if (isCreateView()) { Registar Incidente }
+              @else if (isViewing()) { Detalhes do Incidente }
+              @else { Editar Incidente }
+            </h2>
+            <p class="panel-subtitle">
+              @if (isCreateView()) { Documente a ocorrência operacional }
+              @else if (isViewing()) { Consulta de dados do incidente }
+              @else { Actualize as informações do incidente }
+            </p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            @if (isViewing()) { <i class="las la-arrow-left"></i> Voltar } @else { Cancelar }
+          </button>
+          @if (!isViewing()) {
+            <button class="btn-primary" (click)="salvarIncidente()" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner spinner--sm"></span> A guardar…
+              } @else {
+                <i class="las la-save"></i> Guardar Incidente
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Alertas inline -->
+      @if (errorMsg()) {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isViewing() || null">
+
+          <!-- ── SECÇÃO 1: Identificação ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-id-card"></i> Identificação
+            </h4>
+            <div class="form-grid-3">
+
+              <div class="form-group" [class.form-group--error]="hasError('tipo')">
+                <label>Tipo <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-tag"></i>
+                  <select formControlName="tipo">
+                    <option value="">— Selecionar tipo —</option>
+                    @for (t of tiposIncidente; track t) {
+                      <option [value]="t">{{ getTipoLabel(t) }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('tipo', 'required')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório.</span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('gravidade')">
+                <label>Gravidade <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-fire"></i>
+                  <select formControlName="gravidade">
+                    @for (g of gravidades; track g) {
+                      <option [value]="g">{{ g }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('dataOcorrencia')">
+                <label>Data de Ocorrência</label>
+                <input type="date" formControlName="dataOcorrencia" />
+                @if (hasError('dataOcorrencia', 'dataFutura')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Não pode ser no futuro.
+                  </span>
+                }
+              </div>
+
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('titulo')">
+              <label>Título <span class="required">*</span></label>
+              <input type="text" formControlName="titulo"
+                     placeholder="Breve descrição do incidente" />
+              @if (hasError('titulo', 'required')) {
+                <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório.</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Descrição Detalhada</label>
+              <textarea rows="3" formControlName="descricao"
+                        placeholder="Descreva detalhadamente o ocorrido…"></textarea>
+            </div>
+          </div>
+
+          <!-- ── SECÇÃO 2: Vínculos (Smart Selects) ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-link"></i> Vínculos
+              @if (hasFormError('vinculoObrigatorio')) {
+                <span class="vinculo-obrigatorio-warn">
+                  <i class="las la-exclamation-circle"></i> Seleccione pelo menos um vínculo
+                </span>
+              }
+            </h4>
+            <div class="form-grid-3" (click)="$event.stopPropagation()">
+
+              <!-- Smart Select: Viagem -->
+              <div class="form-group">
+                <label>Viagem</label>
+                <div class="smart-select-wrap">
+                  @if (viagemSelecionada()) {
+                    <div class="smart-selected">
+                      <i class="las la-route"></i>
+                      <span>{{ viagemSelecionada()!.numeroViagem }}</span>
+                      @if (!contextoViagemBloqueado()) {
+                        <button type="button" class="smart-clear" (click)="limparViagem()">
+                          <i class="las la-times"></i>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="smart-input-wrap">
+                      <i class="las la-search"></i>
+                      <input type="text" class="smart-input"
+                             placeholder="Pesquisar viagem…"
+                             [value]="searchViagem()"
+                             (input)="onViagemSearch($any($event.target).value)"
+                             [disabled]="contextoViagemBloqueado()" />
+                    </div>
+                    @if (dropdownViagem() && viagensFiltradas().length > 0) {
+                      <div class="smart-dropdown">
+                        @for (v of viagensFiltradas(); track v.id) {
+                          <button type="button" class="smart-option"
+                                  (click)="selecionarViagem(v)">
+                            <code class="smart-option__code">{{ v.numeroViagem }}</code>
+                            <span class="smart-option__label">{{ v.clienteNome ?? '—' }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+
+              <!-- Smart Select: Veículo -->
+              <div class="form-group">
+                <label>Veículo</label>
+                <div class="smart-select-wrap">
+                  @if (veiculoSelecionado()) {
+                    <div class="smart-selected">
+                      <i class="las la-car"></i>
+                      <span>{{ veiculoSelecionado()!.matricula }} — {{ veiculoSelecionado()!.marca }}</span>
+                      @if (!contextoVeiculoBloqueado()) {
+                        <button type="button" class="smart-clear" (click)="limparVeiculo()">
+                          <i class="las la-times"></i>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="smart-input-wrap">
+                      <i class="las la-search"></i>
+                      <input type="text" class="smart-input"
+                             placeholder="Pesquisar veículo…"
+                             [value]="searchVeiculo()"
+                             (input)="onVeiculoSearch($any($event.target).value)"
+                             [disabled]="contextoVeiculoBloqueado()" />
+                    </div>
+                    @if (dropdownVeiculo() && veiculosFiltrados().length > 0) {
+                      <div class="smart-dropdown">
+                        @for (v of veiculosFiltrados(); track v.id) {
+                          <button type="button" class="smart-option"
+                                  (click)="selecionarVeiculo(v)">
+                            <code class="smart-option__code">{{ v.matricula }}</code>
+                            <span class="smart-option__label">{{ v.marca }} {{ v.modelo }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+
+              <!-- Smart Select: Cliente -->
+              <div class="form-group">
+                <label>Cliente</label>
+                <div class="smart-select-wrap">
+                  @if (clienteSelecionado()) {
+                    <div class="smart-selected">
+                      <i class="las la-user"></i>
+                      <span>{{ clienteSelecionado()!.nome }}</span>
+                      @if (!contextoClienteBloqueado()) {
+                        <button type="button" class="smart-clear" (click)="limparCliente()">
+                          <i class="las la-times"></i>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="smart-input-wrap">
+                      <i class="las la-search"></i>
+                      <input type="text" class="smart-input"
+                             placeholder="Pesquisar cliente…"
+                             [value]="searchCliente()"
+                             (input)="onClienteSearch($any($event.target).value)"
+                             [disabled]="contextoClienteBloqueado()" />
+                    </div>
+                    @if (dropdownCliente() && clientesFiltrados().length > 0) {
+                      <div class="smart-dropdown">
+                        @for (c of clientesFiltrados(); track c.id) {
+                          <button type="button" class="smart-option"
+                                  (click)="selecionarCliente(c)">
+                            <code class="smart-option__code">{{ c.codigo }}</code>
+                            <span class="smart-option__label">{{ c.nome }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── SECÇÃO 3: Resolução ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-tools"></i> Análise & Resolução
+            </h4>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>Causa Raiz</label>
+                <textarea rows="2" formControlName="causa"
+                          placeholder="Identifique a causa do incidente…"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Ação Corretiva</label>
+                <textarea rows="2" formControlName="acaoCorretiva"
+                          placeholder="Medidas tomadas para resolução…"></textarea>
+              </div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label>Responsável Resolução</label>
+                <div class="input-icon">
+                  <i class="las la-user-check"></i>
+                  <input type="text" formControlName="responsavelResolucao"
+                         placeholder="Nome do responsável" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Custo Associado (€)</label>
+                <div class="input-icon">
+                  <i class="las la-euro-sign"></i>
+                  <input type="number" step="0.01" min="0"
+                         formControlName="custoAssociado" placeholder="0.00" />
+                </div>
+              </div>
+              <div class="form-group"
+                   [class.form-group--error]="hasFormError('dataResolucaoAnterior')">
+                <label>Data de Resolução</label>
+                <input type="date" formControlName="dataResolucao" />
+                @if (hasFormError('dataResolucaoAnterior')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i>
+                    Não pode ser anterior à data de ocorrência.
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Observações Finais</label>
+              <textarea rows="2" formControlName="observacoes"
+                        placeholder="Notas adicionais sobre o incidente…"></textarea>
+            </div>
+          </div>
+
+          <!-- ── SECÇÃO 4: Evidências (Mock Upload) ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-paperclip"></i> Evidências e Documentos
+            </h4>
+
+            @if (!isViewing()) {
+              <label class="upload-zone" for="upload-evidencias">
+                <i class="las la-cloud-upload-alt upload-zone__icon"></i>
+                <div class="upload-zone__text">
+                  <strong>Clique para adicionar ficheiros</strong>
+                  <span>ou arraste e largue aqui</span>
+                </div>
+                <small class="upload-zone__hint">Imagens, PDFs ou documentos (max. 10MB por ficheiro)</small>
+                <input id="upload-evidencias" type="file" multiple accept="image/*,.pdf,.doc,.docx"
+                       (change)="onFileSelect($event)" style="display:none" />
+              </label>
+            }
+
+            @if (evidencias().length > 0) {
+              <div class="evidencias-list">
+                @for (ev of evidencias(); track $index; let idx = $index) {
+                  <div class="evidencia-item">
+                    <i [class]="iconeTipoEvidencia(ev.tipo) + ' evidencia-icon'"></i>
+                    <div class="evidencia-info">
+                      <span class="evidencia-nome">{{ ev.nome }}</span>
+                      <span class="evidencia-tamanho">{{ ev.tamanho }}</span>
+                    </div>
+                    @if (!isViewing()) {
+                      <button type="button" class="evidencia-remove"
+                              (click)="removerEvidencia(idx)" title="Remover">
+                        <i class="las la-times"></i>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="upload-empty">Nenhuma evidência anexada.</p>
+            }
+          </div>
+
+        </fieldset>
+      </div>
+
+    </div>
+  }
+  <!-- /!isListView() -->
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: RESOLVER INCIDENTE
+     ══════════════════════════════════════════════ -->
+@if (showResolverModal() && incidenteParaResolver()) {
+  <div class="modal-overlay" (click)="fecharResolverModal()"
+       role="dialog" aria-modal="true" aria-labelledby="modal-resolver-title">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-resolver-title">
+          <i class="las la-check-double" style="color: var(--green)"></i>
+          Resolver Incidente
+        </h3>
+        <button class="btn-close" (click)="fecharResolverModal()" aria-label="Fechar">
+          <i class="las la-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-info">
+          <strong>{{ incidenteParaResolver()!.numeroIncidente }}</strong> —
+          {{ incidenteParaResolver()!.titulo }}
+        </div>
+
+        <form [formGroup]="resolverForm">
+          <div class="form-group">
+            <label>Ação Corretiva <span class="required">*</span></label>
+            <textarea rows="3" formControlName="acaoCorretiva"
+                      placeholder="Descreva as acções tomadas para resolver o incidente…"
+                      [class.input--error]="resolverForm.get('acaoCorretiva')?.invalid && resolverForm.get('acaoCorretiva')?.touched"></textarea>
+            @if (resolverForm.get('acaoCorretiva')?.invalid && resolverForm.get('acaoCorretiva')?.touched) {
+              <span class="field-error">
+                <i class="las la-exclamation-circle"></i> Ação corretiva é obrigatória.
+              </span>
+            }
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Responsável</label>
+              <input type="text" formControlName="responsavelResolucao"
+                     placeholder="Nome do responsável" />
+            </div>
+            <div class="form-group">
+              <label>Custo Associado (€)</label>
+              <div class="input-icon">
+                <i class="las la-euro-sign"></i>
+                <input type="number" step="0.01" min="0"
+                       formControlName="custoAssociado" placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea rows="2" formControlName="observacoes"
+                      placeholder="Notas adicionais…"></textarea>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fecharResolverModal()"
+                [disabled]="isResolvendo()">Cancelar</button>
+        <button class="btn-resolver" (click)="submeterResolucao()"
+                [disabled]="isResolvendo() || resolverForm.invalid">
+          @if (isResolvendo()) {
+            <span class="spinner spinner--sm"></span> A resolver…
+          } @else {
+            <i class="las la-check-double"></i> Confirmar Resolução
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: CONFIRMAR EXCLUSÃO
+     ══════════════════════════════════════════════ -->
+@if (showDeleteConfirm() && incidenteParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()"
+       role="alertdialog" aria-modal="true">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-trash-alt" style="color:var(--red)"></i> Eliminar Incidente</h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-icon confirm-icon--danger" aria-hidden="true">
+          <i class="las la-exclamation-triangle"></i>
+        </div>
+        <p class="confirm-text">
+          Tem a certeza que pretende <strong>eliminar definitivamente</strong> o incidente
+          <code>{{ incidenteParaDelete()!.numeroIncidente }}</code>?
+        </p>
+        <p class="confirm-sub">Esta ação é irreversível.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-trash-alt"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}

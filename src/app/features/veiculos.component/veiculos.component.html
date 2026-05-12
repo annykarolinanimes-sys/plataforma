@@ -1,0 +1,282 @@
+<div class="veiculos-container">
+  <!-- Cabeçalho Principal (igual clientes) -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-car"></i>
+      </div>
+      <div>
+        <h1>Veículos</h1>
+        <p>Catálogo de veículos da frota e de clientes</p>
+      </div>
+    </div>
+    @if (currentState() === 'list') {
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Novo Veículo
+      </button>
+    }
+  </div>
+
+  <!-- Alertas de Sucesso/Erro Globais -->
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg() && currentState() === 'list') {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()">×</button>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- MODO LISTAGEM (Mostra apenas se State === 'list') -->
+  <!-- ========================================== -->
+  @if (currentState() === 'list') {
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue">
+          <i class="las la-car"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ totalVeiculos }}</span>
+          <span class="stat-card__label">Total de Veículos</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green">
+          <i class="las la-check-circle"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ totalAtivos }}</span>
+          <span class="stat-card__label">Veículos Activos</span>
+        </div>
+        <div class="stat-card__badge stat-card__badge--green">
+          {{ (totalVeiculos > 0 ? (totalAtivos / totalVeiculos) * 100 : 0) | number:'1.0-0' }}%
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--amber">
+          <i class="las la-ban"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ totalInativos }}</span>
+          <span class="stat-card__label">Veículos Inactivos</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--teal">
+          <i class="las la-gas-pump"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ veiculosPorCombustivel }}</span>
+          <span class="stat-card__label">Tipos Combustível</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar (Filtros) -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Pesquisar por matrícula, marca ou modelo..."
+                 [value]="filtroSearch" (input)="onSearchChange($any($event.target).value)">
+        </div>
+        <label class="toggle-label">
+          <span class="toggle-switch">
+            <input type="checkbox" [checked]="mostrarInativos" (change)="toggleInativos()">
+            <span class="toggle-slider"></span>
+          </span>
+          Mostrar inactivos
+        </label>
+      </div>
+      @if (pagedResult()) {
+        <span class="results-count">{{ pagedResult()!.total }} veículo{{ pagedResult()!.total !== 1 ? 's' : '' }}</span>
+      }
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar veículos…</span>
+      </div>
+    }
+
+    <!-- Tabela de Dados -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de veículos">
+          <thead>
+            <tr>
+              <th>Matrícula</th><th>Marca/Modelo</th><th>Combustível</th>
+              <th>Ano</th><th>Proprietário</th><th>Estado</th><th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of veiculos(); track v.id) {
+              <tr [class.row--inactive]="!v.ativo">
+                <td><code class="codigo-tag">{{ v.matricula | uppercase }}</code></td>
+                <td><strong>{{ v.marca }}</strong><span class="text-muted">{{ v.modelo }}</span></td>
+                <td>@if(v.tipoCombustivel){<i class="las la-gas-pump"></i> {{ v.tipoCombustivel }} }@else{—}</td>
+                <td>{{ v.ano || '—' }}</td>
+                <td>@if(v.proprietario){ {{ v.proprietario.nome }} }@else{ Frota Própria }</td>
+                <td><span class="badge" [class.badge--active]="v.ativo" [class.badge--inactive]="!v.ativo"><span class="badge__dot"></span>{{ v.ativo ? 'Activo' : 'Inactivo' }}</span></td>
+                <td class="actions-cell">
+                  <button class="btn-icon btn-icon--view" (click)="goToDetails(v, $event)" title="Detalhes"><i class="las la-eye"></i></button>
+                  <button class="btn-icon btn-icon--download" (click)="imprimirPdf(v, $event)" title="PDF"><i class="las la-file-pdf"></i></button>
+                  <button class="btn-icon btn-icon--edit" (click)="goToEdit(v)" title="Editar"><i class="las la-edit"></i></button>
+                  @if (v.ativo) {
+                    <button class="btn-icon btn-icon--danger" (click)="desativarVeiculo(v)" title="Desactivar"><i class="las la-trash-alt"></i></button>
+                  } @else {
+                    <button class="btn-icon btn-icon--success" (click)="ativarVeiculo(v)" title="Activar"><i class="las la-undo-alt"></i></button>
+                  }
+                </td>
+              </tr>
+            }
+            @empty {
+              <tr><td colspan="7"><div class="empty-state"><i class="las la-car-crash"></i><p>Nenhum veículo encontrado</p><small>Altere os filtros ou adicione um novo veículo.</small></div></td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <!-- Paginação -->
+      @if (pagedResult() && pagedResult()!.totalPages > 1) {
+        <div class="pagination">
+          <button class="pagination__btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="las la-angle-left"></i></button>
+          @for (p of pages; track p) { <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button> }
+          <button class="pagination__btn" [disabled]="currentPage === pagedResult()!.totalPages" (click)="goToPage(currentPage + 1)"><i class="las la-angle-right"></i></button>
+          <span class="pagination__info">Página {{ currentPage }} de {{ pagedResult()!.totalPages }} ({{ pagedResult()!.total }} registos)</span>
+        </div>
+      }
+    }
+  }
+
+  <!-- ========================================== -->
+  <!-- MODO FORMULÁRIO (CREATE/EDIT/DETAILS)       -->
+  <!-- ========================================== -->
+  @if (currentState() !== 'list') {
+    <section class="panel panel--form">
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista"><i class="las la-arrow-left"></i></button>
+          <div class="panel-header__icon"><i class="las" [class.la-eye]="isViewing()" [class.la-plus]="currentState() === 'create'" [class.la-edit]="isEditing()"></i></div>
+          <div>
+            <h2>@if(currentState() === 'create'){ Novo Veículo }@else if(isViewing()){ Detalhes do Veículo }@else{ Editar Veículo }</h2>
+            <p class="panel-subtitle">@if(currentState() === 'create'){ Preencha os dados do novo veículo }@else if(isViewing()){ Consulta de dados do veículo }@else{ Actualizar informação do veículo }</p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">@if(isViewing()){ <i class="las la-arrow-left"></i> Voltar }@else{ Cancelar }</button>
+          @if (!isViewing()) {
+            <button class="btn-primary" (click)="salvarVeiculo()" [disabled]="isSaving()">
+              @if(isSaving()){ <span class="spinner spinner--sm"></span> A guardar… }@else{ <i class="las la-save"></i> Guardar Veículo }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (errorMsg() && currentState() !== 'list') {
+        <div class="alert alert--error alert--inline" role="alert"><i class="las la-exclamation-circle"></i><span>{{ errorMsg() }}</span><button class="alert__close" (click)="clearError()">×</button></div>
+      }
+
+      <div class="form-card" [formGroup]="form">
+        <!-- O campo `disabled` no HTML é removido. O estado readonly/disabled será controlado via TS, exceto o campo matrícula em edição -->
+        <fieldset>
+          <!-- Dados Gerais -->
+          <div class="form-section">
+            <h4 class="form-section__title">Identificação do Veículo</h4>
+            <div class="form-row form-row--2">
+              <div class="form-group" [class.form-group--error]="hasError('matricula')">
+                <label for="matricula">Matrícula <span class="required">*</span></label>
+                <input id="matricula" type="text" formControlName="matricula" placeholder="Ex: 00-AA-00" autocomplete="off" [readonly]="isEditing()">
+                @if (hasError('matricula')) { <span class="field-error" role="alert">{{ getMatriculaErrorMsg() }}</span> }
+              </div>
+              <div class="form-group" [class.form-group--error]="hasError('ano')">
+                <label for="ano">Ano</label>
+                <input id="ano" type="number" formControlName="ano" [min]="1900" [max]="currentYear + 1">
+                @if (hasError('ano', 'min') || hasError('ano', 'max')) { <span class="field-error">Ano entre 1900 e {{ currentYear + 1 }}</span> }
+              </div>
+            </div>
+            <div class="form-row form-row--2">
+              <div class="form-group" [class.form-group--error]="hasError('marca')">
+                <label for="marca">Marca <span class="required">*</span></label>
+                <input id="marca" type="text" formControlName="marca" placeholder="Ex: Toyota">
+                @if (hasError('marca', 'required')) { <span class="field-error">Campo obrigatório</span> }
+              </div>
+              <div class="form-group" [class.form-group--error]="hasError('modelo')">
+                <label for="modelo">Modelo <span class="required">*</span></label>
+                <input id="modelo" type="text" formControlName="modelo" placeholder="Ex: Corolla">
+                @if (hasError('modelo', 'required')) { <span class="field-error">Campo obrigatório</span> }
+              </div>
+            </div>
+            <div class="form-row form-row--2">
+              <div class="form-group"><label for="cor">Cor</label><input id="cor" type="text" formControlName="cor" placeholder="Branco"></div>
+              <div class="form-group"><label for="vin">VIN/Chassis</label><input id="vin" type="text" formControlName="vin" placeholder="17 caracteres" maxlength="17"></div>
+            </div>
+          </div>
+
+          <!-- Especificações Técnicas -->
+          <div class="form-section">
+            <h4 class="form-section__title">Especificações Técnicas</h4>
+            <div class="form-row form-row--3">
+              <div class="form-group">
+                <label for="tipoCombustivel">Combustível</label>
+                <select id="tipoCombustivel" formControlName="tipoCombustivel">
+                  <option value="">Seleccionar…</option> @for (c of combustivelOpcoes; track c) { <option [value]="c">{{ c }}</option> }
+                </select>
+              </div>
+              <div class="form-group"><label for="cilindrada">Cilindrada (cc)</label><input id="cilindrada" type="number" formControlName="cilindrada" min="0"></div>
+              <div class="form-group"><label for="potencia">Potência (cv)</label><input id="potencia" type="number" formControlName="potencia" min="0"></div>
+              <div class="form-group"><label for="lugares">Lugares</label><input id="lugares" type="number" formControlName="lugares" min="1" max="200"></div>
+              <div class="form-group"><label for="peso">Peso (kg)</label><input id="peso" type="number" formControlName="peso" min="0" placeholder="1500"></div>
+            </div>
+          </div>
+
+          <!-- Observações e Vínculo -->
+          <div class="form-section">
+            <h4 class="form-section__title">Observações e Vínculo</h4>
+            <div class="form-group"><label for="observacoes">Observações</label><textarea id="observacoes" rows="2" formControlName="observacoes" placeholder="Notas internas..."></textarea></div>
+            <div class="form-group"><label for="proprietarioId">ID do Proprietário (Opcional)</label><input id="proprietarioId" type="number" formControlName="proprietarioId" min="1" placeholder="Deixar vazio para frota própria"></div>
+          </div>
+
+          <!-- Estado e Informações de Sistema -->
+          <div class="form-section form-section--system">
+            <h4 class="form-section__title form-section__title--system"><i class="las la-info-circle"></i> Estado & Sistema</h4>
+            <div class="form-row form-row--2">
+              @if (isEditing()) {
+                <div class="form-group form-group--inline">
+                  <label class="checkbox-label" for="ativo"><input id="ativo" type="checkbox" formControlName="ativo"><span class="checkbox-custom"></span> Veículo activo</label>
+                </div>
+              }
+              <div class="form-group">
+                <label for="criadoEm">Data de Criação</label>
+                <input id="criadoEm" type="text" formControlName="criadoEm" class="input--system" readonly>
+                <span class="field-hint"><i class="las la-lock"></i> Campo apenas leitura.</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+  }
+
+  <!-- Confirmação de Desactivação -->
+  @if (showDeleteConfirm() && veiculoParaDelete()) {
+    <div class="modal-overlay modal-overlay--danger" (click)="cancelarDelete()" role="alertdialog" aria-modal="true">
+      <div class="modal-content modal-content--sm" (click)="$event.stopPropagation()">
+        <div class="modal-header"><h3><i class="las la-exclamation-triangle"></i> Confirmar desactivação</h3></div>
+        <div class="modal-body"><p>Tem a certeza que pretende desactivar o veículo <strong>{{ veiculoParaDelete()!.matricula }}</strong> ({{ veiculoParaDelete()!.marca }} {{ veiculoParaDelete()!.modelo }})?</p><p class="text-muted">O veículo ficará inactivo e poderá ser reactivado posteriormente.</p></div>
+        <div class="modal-footer"><button class="btn-secondary" (click)="cancelarDelete()">Cancelar</button><button class="btn-danger" (click)="executarDesativar()"><i class="las la-ban"></i> Desactivar</button></div>
+      </div>
+    </div>
+  }
+</div>

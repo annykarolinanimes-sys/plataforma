@@ -1,0 +1,597 @@
+<div class="recepcao-container">
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-boxes"></i>
+      </div>
+      <div>
+        <h1>Recepção de Mercadoria</h1>
+        <p>Gestão de entradas de produtos e materiais</p>
+      </div>
+    </div>
+    @if (isListView()) {
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Recepção
+      </button>
+    }
+  </div>
+
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i><span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg() && isListView()) {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()">×</button>
+    </div>
+  }
+
+  @if (isListView()) {
+
+    @if (!isLoading()) {
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--blue">
+            <i class="las la-clock"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ countPendentes() }}</span>
+            <span class="stat-card__label">Pendentes</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--amber">
+            <i class="las la-boxes"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ volumeHoje() }}</span>
+            <span class="stat-card__label">Unidades Hoje</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--green">
+            <i class="las la-chart-line"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ eficiencia() }}%</span>
+            <span class="stat-card__label">Eficiência</span>
+          </div>
+          <div class="stat-card__badge"
+               [class.stat-card__badge--green]="eficiencia() >= 90"
+               [class.stat-card__badge--amber]="eficiencia() >= 70 && eficiencia() < 90"
+               [class.stat-card__badge--red]="eficiencia() < 70">
+            {{ eficiencia() >= 90 ? 'Óptimo' : eficiencia() >= 70 ? 'Bom' : 'Alerta' }}
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--red">
+            <i class="las la-fire-alt"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ countUrgentes() }}</span>
+            <span class="stat-card__label">Urgentes</span>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="search" placeholder="Nº Recepção, Fornecedor…"
+                 [value]="filtroSearch"
+                 (input)="onSearchChange($any($event.target).value)" />
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ getStatusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ totalRecepcoes() }} recepção{{ totalRecepcoes() !== 1 ? 'ões' : '' }}
+        </span>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <div class="table-container" aria-busy="true">
+        <table class="data-table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th>Nº</th><th>Fornecedor</th><th>Data</th>
+              <th>Status</th><th>Prioridade</th><th>Itens</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--lg"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--actions"></span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de recepções">
+          <thead>
+            <tr>
+              <th>Nº Recepção</th>
+              <th>Fornecedor</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Prioridade</th>
+              <th>Itens / Unidades</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rececoes(); track r.id) {
+              <tr [class.row--cancelada]="r.status === 'Cancelada'"
+                  class="clickable-row" (click)="goToEdit(r)">
+
+                <td>
+                  <code class="numero-tag">{{ r.numeroRecepcao }}</code>
+                </td>
+
+                <td>
+                  <strong class="fornecedor-nome">{{ r.fornecedor }}</strong>
+                  <span class="tipo-label">{{ r.tipoEntrada }}</span>
+                </td>
+
+                <td class="date-cell">
+                  {{ formatarDataSimples(r.dataRecepcao) }}
+                </td>
+
+                <td>
+                  <span class="status-badge" [class]="'status-badge ' + getStatusClass(r.status)">
+                    <span class="badge-dot"></span>
+                    {{ getStatusLabel(r.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="prioridade-badge" [class]="'prioridade-badge ' + getPrioridadeClass(r.prioridade)">
+                    @if (r.prioridade === 'Alta') { <i class="las la-fire-alt"></i> }
+                    {{ r.prioridade }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="itens-summary">
+                    <span class="itens-count">
+                      <i class="las la-cubes"></i> {{ r.totalItens }} itens
+                    </span>
+                    <span class="unidades-count">
+                      <i class="las la-balance-scale"></i> {{ r.totalUnidades }} un.
+                    </span>
+                  </div>
+                </td>
+
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (r.status === 'Pendente' || r.status === 'EmConferencia') {
+                    <button class="btn-icon btn-icon--success"
+                            (click)="concluirRecepcao(r, $event)"
+                            title="Concluir recepção">
+                      <i class="las la-check-circle"></i>
+                    </button>
+                  }
+                  <button class="btn-icon btn-view"
+                          (click)="goToDetails(r, $event)" title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download"
+                          (click)="imprimirPdf(r, $event)" title="Imprimir guia">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  @if (r.status !== 'Concluida' && r.status !== 'Cancelada') {
+                    <button class="btn-icon btn-icon--edit"
+                            (click)="goToEdit(r, $event)" title="Editar">
+                      <i class="las la-edit"></i>
+                    </button>
+                    <button class="btn-icon btn-icon--danger"
+                            (click)="confirmarDelete(r, $event)" title="Cancelar">
+                      <i class="las la-ban"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+
+            @if (rececoes().length === 0) {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <div class="empty-state__icon"><i class="las la-box-open"></i></div>
+                    <p class="empty-state__title">Nenhuma recepção encontrada</p>
+                    <small class="empty-state__sub">Altere os filtros ou crie uma nova recepção.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Paginação">
+          <button class="pagination__btn" [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage - 1)" aria-label="Anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage"
+                    [attr.aria-current]="p === currentPage ? 'page' : null"
+                    (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()"
+                  (click)="goToPage(currentPage + 1)" aria-label="Seguinte">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage }} de {{ totalPages() }} ({{ totalRecepcoes() }} registos)
+          </span>
+        </nav>
+      }
+    }
+
+  }
+  @if (!isListView()) {
+
+    <div class="form-page">
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las"
+               [class.la-eye]="isViewing()"
+               [class.la-plus-circle]="isCreateView()"
+               [class.la-edit]="isEditView() && !isViewing()"></i>
+          </div>
+          <div>
+            <h2>
+              @if (isCreateView()) { Nova Recepção }
+              @else if (isViewing()) { Detalhes da Recepção }
+              @else { Editar Recepção }
+            </h2>
+            <p class="panel-subtitle">
+              @if (isCreateView()) { Registe a entrada de mercadoria }
+              @else if (isViewing()) { Consulta de dados da recepção }
+              @else { Actualize os dados da recepção }
+            </p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          @if (isViewing()) {
+            <button class="btn-secondary btn-print" (click)="imprimirPdf(rececoes()[0])">
+              <i class="las la-print"></i> Imprimir Guia
+            </button>
+          }
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            @if (isViewing()) { <i class="las la-arrow-left"></i> Voltar } @else { Cancelar }
+          </button>
+          @if (!isViewing()) {
+            <button class="btn-primary" (click)="salvarRecepcao()" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner spinner--sm"></span> A guardar…
+              } @else {
+                <i class="las la-save"></i> Guardar Recepção
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (alertaDuplicado()) {
+        <div class="alert alert--warning" role="alert">
+          <i class="las la-exclamation-triangle"></i>
+          <span>{{ alertaDuplicado() }}</span>
+          <button class="alert__close" (click)="alertaDuplicado.set(null)">×</button>
+        </div>
+      }
+
+      @if (errorMsg()) {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="totals-bar">
+        <div class="total-chip total-chip--gray">
+          <i class="las la-clipboard-list"></i>
+          <span class="chip-label">Esperado</span>
+          <span class="chip-value">{{ totalEsperado() }}</span>
+        </div>
+        <div class="total-chip total-chip--green">
+          <i class="las la-check"></i>
+          <span class="chip-label">Recebido</span>
+          <span class="chip-value">{{ totalRecebido() }}</span>
+        </div>
+        <div class="total-chip total-chip--red">
+          <i class="las la-times"></i>
+          <span class="chip-label">Rejeitado</span>
+          <span class="chip-value">{{ totalRejeitado() }}</span>
+        </div>
+        <div class="total-chip total-chip--amber">
+          <i class="las la-box-open"></i>
+          <span class="chip-label">Aceite</span>
+          <span class="chip-value">{{ totalAceite() }}</span>
+        </div>
+        @if (totalRecebido() > 0) {
+          <div class="total-chip total-chip--blue">
+            <i class="las la-chart-pie"></i>
+            <span class="chip-label">Conformidade</span>
+            <span class="chip-value">
+              {{ totalRejeitado() === 0 ? 100 : (((totalRecebido() - totalRejeitado()) / totalRecebido()) * 100) | number:'1.0-0' }}%
+            </span>
+          </div>
+        }
+      </div>
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isViewing() || null">
+
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-file-alt"></i> Dados Gerais
+            </h4>
+            <div class="form-grid-header">
+
+              <div class="form-group" [class.form-group--error]="hasError('fornecedorId')">
+                <label for="fornecedorId">Fornecedor <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-truck"></i>
+                  <select id="fornecedorId" formControlName="fornecedorId">
+                    <option value="">Selecionar fornecedor</option>
+                    @for (f of fornecedores(); track f.id) {
+                      <option [value]="f.id">{{ f.nome }}</option>
+                    }
+                  </select>
+                </div>
+                @if (hasError('fornecedorId', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Fornecedor é obrigatório.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="tipoEntrada">Tipo de Entrada</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-exchange-alt"></i>
+                  <select id="tipoEntrada" formControlName="tipoEntrada">
+                    @for (t of tiposEntrada; track t.value) {
+                      <option [value]="t.value">{{ t.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="prioridade">Prioridade</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-flag"></i>
+                  <select id="prioridade" formControlName="prioridade">
+                    @for (p of prioridades; track p) {
+                      <option [value]="p">{{ p }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="documentoReferencia">Doc. de Referência</label>
+                <div class="input-icon">
+                  <i class="las la-file-invoice"></i>
+                  <input id="documentoReferencia" type="text"
+                         formControlName="documentoReferencia"
+                         placeholder="Nota de encomenda, guia, fatura…" />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── BLOCO 2: Linhas de Itens ── -->
+          <div class="form-section form-section--itens">
+            <div class="section-header">
+              <h4 class="form-section__title">
+                <i class="las la-list-ul"></i> Linhas de Itens
+                <span class="item-count-badge">{{ itensArray.length }}</span>
+              </h4>
+              @if (!isViewing()) {
+                <button type="button" class="btn-add-item" (click)="adicionarItem()">
+                  <i class="las la-plus-circle"></i> Adicionar linha
+                </button>
+              }
+            </div>
+
+            <!-- Tabela de itens com scroll horizontal -->
+            <div class="itens-table-wrap" formArrayName="itens">
+              <table class="itens-table">
+                <thead>
+                  <tr>
+                    <th class="col-produto">Produto / SKU</th>
+                    <th class="col-qty">
+                      <i class="las la-clipboard-list qty-icon qty-icon--gray"></i>
+                      Esperada
+                    </th>
+                    <th class="col-qty">
+                      <i class="las la-check-circle qty-icon qty-icon--green"></i>
+                      Recebida
+                    </th>
+                    <th class="col-qty">
+                      <i class="las la-times-circle qty-icon qty-icon--red"></i>
+                      Rejeitada
+                    </th>
+                    <th class="col-lote">Lote</th>
+                    <th class="col-validade">Validade</th>
+                    <th class="col-loc">Localização</th>
+                    <th class="col-obs">Observações</th>
+                    @if (!isViewing()) { <th class="col-remove"></th> }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of itensArray.controls; track $index; let i = $index) {
+                    <tr class="item-row" [formGroupName]="i"
+                        [class.item-row--rejeitado]="itemCtrl(i,'quantidadeRejeitada').value > 0">
+
+                      <!-- Produto -->
+                      <td class="col-produto">
+                        @if (!isViewing()) {
+                          <select class="item-select"
+                                  formControlName="produtoId"
+                                  (change)="onProdutoChange(i, $any($event.target).value)"
+                                  [class.input--error]="hasItemError(i,'produtoId','required')">
+                            <option value="">— Produto —</option>
+                            @for (p of produtos(); track p.id) {
+                              <option [value]="p.id">{{ p.sku }} — {{ p.nome }}</option>
+                            }
+                          </select>
+                        } @else {
+                          <!-- Modo somente-leitura: SKU em destaque + nome abaixo -->
+                          <div class="produto-display">
+                            <code class="sku-tag">{{ getSkuProduto(itemCtrl(i,'produtoId').value) }}</code>
+                            <span class="produto-nome-sm">{{ getNomeProduto(itemCtrl(i,'produtoId').value) }}</span>
+                          </div>
+                        }
+                      </td>
+
+                      <!-- Qtd. Esperada -->
+                      <td class="col-qty">
+                        <input type="number" formControlName="quantidadeEsperada" min="1"
+                               class="qty-input"
+                               [class.input--error]="hasItemError(i,'quantidadeEsperada','min')" />
+                      </td>
+
+                      <!-- Qtd. Recebida -->
+                      <td class="col-qty">
+                        <input type="number" formControlName="quantidadeRecebida" min="0"
+                               class="qty-input qty-input--green" />
+                      </td>
+
+                      <!-- Qtd. Rejeitada -->
+                      <td class="col-qty">
+                        <input type="number" formControlName="quantidadeRejeitada" min="0"
+                               class="qty-input qty-input--red" />
+                      </td>
+
+                      <!-- Lote -->
+                      <td class="col-lote">
+                        <input type="text" formControlName="lote"
+                               class="item-input" placeholder="Nº lote" />
+                      </td>
+
+                      <!-- Validade -->
+                      <td class="col-validade">
+                        <input type="date" formControlName="validade" class="item-input" />
+                      </td>
+
+                      <!-- Localização -->
+                      <td class="col-loc">
+                        <input type="text" formControlName="localizacao"
+                               class="item-input" placeholder="Ex: A1-01" />
+                      </td>
+
+                      <!-- Observações (obrigatório se rejeitado > 0) -->
+                      <td class="col-obs">
+                        <input type="text" formControlName="observacoes"
+                               class="item-input"
+                               [class.input--error]="hasItemError(i,'observacoes','obsObrigatoria')"
+                               [placeholder]="itemCtrl(i,'quantidadeRejeitada').value > 0
+                                 ? 'Obrigatório (há rejeições)' : 'Notas…'" />
+                        @if (hasItemError(i, 'observacoes', 'obsObrigatoria')) {
+                          <span class="field-error-inline">
+                            <i class="las la-exclamation-circle"></i> Obrigatório quando há rejeições.
+                          </span>
+                        }
+                      </td>
+
+                      <!-- Remover -->
+                      @if (!isViewing()) {
+                        <td class="col-remove">
+                          <button type="button" class="btn-remove-row"
+                                  (click)="removerItem(i)"
+                                  title="Remover linha">
+                            <i class="las la-times"></i>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </fieldset>
+      </div>
+
+    </div>
+  }
+  <!-- /!isListView() -->
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL DE CONFIRMAÇÃO DE CANCELAMENTO
+     ══════════════════════════════════════════════ -->
+@if (showDeleteConfirm() && recepcaoParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()"
+       role="alertdialog" aria-modal="true">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i class="las la-ban"></i>
+          Cancelar Recepção
+        </h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-icon confirm-icon--danger" aria-hidden="true">
+          <i class="las la-ban"></i>
+        </div>
+        <p class="confirm-text">
+          Tem a certeza que pretende <strong>cancelar</strong> a recepção
+          <code>{{ recepcaoParaDelete()!.numeroRecepcao }}</code>?
+        </p>
+        <p class="confirm-sub">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Fechar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-ban"></i> Cancelar Recepção
+        </button>
+      </div>
+    </div>
+  </div>
+}

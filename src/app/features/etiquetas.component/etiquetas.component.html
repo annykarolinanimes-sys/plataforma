@@ -1,0 +1,255 @@
+<div class="etiquetas-container">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       HEADER PADRÃO ACCUSOFT
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-tags"></i>
+      </div>
+      <div>
+        <h1>Impressão de Etiquetas</h1>
+        <p>Gestão de fila e geração de códigos de barras para logística</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  <div *ngIf="errorMsg()" class="alert alert--error" role="alert">
+    <i class="las la-exclamation-circle"></i>
+    <span>{{ errorMsg() }}</span>
+    <button class="alert__close" type="button" (click)="errorMsg.set(null)">×</button>
+  </div>
+  <div *ngIf="successMsg()" class="alert alert--success" role="status">
+    <i class="las la-check-circle"></i>
+    <span>{{ successMsg() }}</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       STATS GRID - Dashboard
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card__icon stat-card__icon--blue">
+        <i class="las la-tags"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ etiquetasFilaCount() }}</span>
+        <span class="stat-card__label">Fila Atual</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__icon stat-card__icon--amber">
+        <i class="las la-print"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ ultimaImpressao() || '—' }}</span>
+        <span class="stat-card__label">Última Impressão</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__icon stat-card__icon--green">
+        <i class="las la-building"></i>
+      </div>
+      <div class="stat-card__body">
+        <span class="stat-card__value">{{ entidadeDisplayName() }}</span>
+        <span class="stat-card__label">Seleção Atual</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       FORMULÁRIO DE GERAÇÃO
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <h3><i class="las la-barcode"></i> Gerar Etiquetas</h3>
+    </div>
+    <div class="form-card-body" [formGroup]="form">
+
+      <!-- Tipo de Etiqueta -->
+      <div class="form-group">
+        <label>Tipo de Etiqueta <span class="required">*</span></label>
+        <div class="tipo-buttons">
+          <label class="tipo-option" *ngFor="let t of tipos" [class.active]="form.get('tipo')?.value === t.value">
+            <input type="radio" formControlName="tipo" [value]="t.value" />
+            <i [class]="'las ' + t.icon"></i>
+            <div class="tipo-info">
+              <span>{{ t.label }}</span>
+              <small>{{ t.description }}</small>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Busca com Autocomplete -->
+      <div class="form-group" [class.form-group--error]="hasError('entidadeInput')">
+        <label>
+          <ng-container *ngIf="form.get('tipo')?.value === 'produto'; else tipoRecepcaoEncomenda">Produto</ng-container>
+          <ng-template #tipoRecepcaoEncomenda>
+            <ng-container *ngIf="form.get('tipo')?.value === 'recepcao'; else tipoEncomenda">Recepção</ng-container>
+          </ng-template>
+          <ng-template #tipoEncomenda>Encomenda</ng-template>
+          <span class="required">*</span>
+        </label>
+
+        <div class="search-container" [class.search-container--open]="showSearchDropdown()">
+          <div class="search-box">
+            <i class="las la-search"></i>
+            <input
+              type="text"
+              formControlName="entidadeInput"
+              placeholder="Pesquisar por SKU, Nome ou Número do Documento..."
+              autocomplete="off"
+              (focus)="showSearchDropdown.set(resultadosBusca().length > 0)"
+            />
+            <input type="hidden" formControlName="entidadeId" />
+            <div *ngIf="isLoadingSearch()" class="spinner spinner--sm"></div>
+          </div>
+
+          <div *ngIf="showSearchDropdown()" class="search-dropdown">
+            <div *ngFor="let resultado of resultadosBusca()" class="search-option" (click)="selecionarEntidade(resultado)">
+              <div class="search-option__code">
+                <i class="las la-hashtag"></i>
+                <strong>{{ resultado.codigo }}</strong>
+              </div>
+              <div class="search-option__name">{{ resultado.nome }}</div>
+              <div *ngIf="resultado.quantidadeSugerida" class="search-option__badge">
+                {{ resultado.quantidadeSugerida }} itens
+              </div>
+            </div>
+
+            <div *ngIf="resultadosBusca().length === 0 && searchTerm().length >= 2 && !isLoadingSearch()" class="search-empty">
+              <i class="las la-search"></i>
+              <span>Nenhum resultado encontrado para "{{ searchTerm() }}"</span>
+            </div>
+          </div>
+        </div>
+
+        <span *ngIf="hasError('entidadeInput', 'required')" class="field-error">
+          <i class="las la-exclamation-circle"></i> Selecione uma entidade válida.
+        </span>
+      </div>
+
+      <!-- Quantidade com Sugestão -->
+      <div class="form-group">
+        <label>
+          Quantidade
+          <span *ngIf="quantidadeSugerida()" class="sugestao-badge">Sugestão: {{ quantidadeSugerida() }}</span>
+        </label>
+        <div class="quantity-input-wrapper">
+          <div class="quantity-input">
+            <button
+              type="button"
+              class="quantity-btn"
+              (click)="form.patchValue({ quantidade: Math.max(1, form.get('quantidade')?.value - 1) })"
+              [disabled]="form.get('quantidade')?.value <= 1"
+            >
+              <i class="las la-minus"></i>
+            </button>
+            <input
+              type="number"
+              formControlName="quantidade"
+              min="1"
+              [max]="quantidadeMaxima"
+              (change)="onQuantidadeChange($event)"
+            />
+            <button
+              type="button"
+              class="quantity-btn"
+              (click)="form.patchValue({ quantidade: Math.min(quantidadeMaxima, form.get('quantidade')?.value + 1) })"
+              [disabled]="form.get('quantidade')?.value >= quantidadeMaxima"
+            >
+              <i class="las la-plus"></i>
+            </button>
+          </div>
+          <span class="field-hint">Máximo de {{ quantidadeMaxima }} etiquetas por geração</span>
+        </div>
+      </div>
+
+      <!-- Template / Formato -->
+      <div class="form-group">
+        <label>Formato da Etiqueta</label>
+        <div class="formato-buttons">
+          <label class="formato-option" *ngFor="let t of templates" [class.active]="form.get('template')?.value === t.value">
+            <input type="radio" formControlName="template" [value]="t.value" />
+            <i class="las la-tag"></i>
+            <span>{{ t.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Opções de Conteúdo -->
+      <div class="opcoes-row">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="incluirTexto" />
+          <span class="checkbox-custom"></span>
+          <i class="las la-font"></i> Incluir texto descritivo
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="incluirCodigo" />
+          <span class="checkbox-custom"></span>
+          <i class="las la-code"></i> Incluir código legível
+        </label>
+      </div>
+
+      <!-- Ações -->
+      <div class="form-actions">
+        <button class="btn-secondary" type="button" (click)="limpar()">
+          <i class="las la-eraser"></i> Limpar
+        </button>
+        <button class="btn-primary" type="button" (click)="gerarEtiquetas()" [disabled]="!podeGerar()">
+          <span *ngIf="isGenerating(); else gerarTexto" class="spinner"></span>
+          <ng-template #gerarTexto>
+            <i class="las la-barcode"></i> Adicionar à Fila
+          </ng-template>
+          <span *ngIf="isGenerating()"> A gerar...</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       PRÉ-VISUALIZAÇÃO
+  ════════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showPreview() && etiquetasGeradas().length > 0" class="preview-card">
+    <div class="preview-header">
+      <h3>
+        <i class="las la-eye"></i>
+        Pré-visualização
+        <span class="badge-count">{{ etiquetasGeradas().length }}</span>
+      </h3>
+      <div class="preview-actions">
+        <button class="btn-secondary" type="button" (click)="limparFila()">
+          <i class="las la-trash-alt"></i> Limpar Fila
+        </button>
+        <button class="btn-secondary" type="button" (click)="fecharPreview()">
+          <i class="las la-times"></i> Fechar
+        </button>
+        <button class="btn-primary" type="button" (click)="imprimir()" [disabled]="isPrinting()">
+          <span *ngIf="isPrinting(); else imprimirTexto" class="spinner"></span>
+          <ng-template #imprimirTexto>
+            <i class="las la-print"></i> Imprimir
+          </ng-template>
+          <span *ngIf="isPrinting()"> A preparar...</span>
+        </button>
+      </div>
+    </div>
+    <div class="preview-body">
+      <div class="etiquetas-grid" [class]="'etiquetas-grid ' + getTemplateClass()">
+        <div *ngFor="let etiqueta of etiquetasGeradas()" class="etiqueta-card">
+          <div class="etiqueta-conteudo">
+            <canvas #barcodeCanvas class="barcode-canvas"></canvas>
+            <div *ngIf="form.get('incluirCodigo')?.value" class="etiqueta-codigo">{{ etiqueta.codigo }}</div>
+            <div *ngIf="form.get('incluirTexto')?.value" class="etiqueta-texto">{{ getTextoParaEtiqueta() }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

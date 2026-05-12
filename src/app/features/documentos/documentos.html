@@ -1,0 +1,102 @@
+<div class="documentos-container">
+
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon" aria-hidden="true">
+        <i class="las la-file-pdf"></i>
+      </div>
+      <div>
+        <h1>Documentos</h1>
+        <p>Armazenamento de faturas, CMR, manifestos, folhas de rota e ePOD</p>
+      </div>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert--error" role="alert" aria-live="assertive">
+      <i class="las la-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()" aria-label="Fechar">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status" aria-live="polite">
+      <i class="las la-check-circle" aria-hidden="true"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="filter-group" [class.focused]="filtroSearch.length > 0">
+        <i class="las la-search" aria-hidden="true"></i>
+        <input
+          type="search"
+          placeholder="Pesquisar por nome…"
+          [value]="filtroSearch"
+          (input)="filtroSearch = $any($event.target).value; carregarDocumentos()"
+          aria-label="Pesquisar documentos"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroTipo"><i class="las la-tag" aria-hidden="true"></i> Tipo</label>
+        <select id="filtroTipo" [(ngModel)]="filtroTipo" (ngModelChange)="carregarDocumentos()">
+          <option value="">Todos</option>
+          <option value="Fatura">Fatura</option>
+          <option value="CMR">CMR</option>
+          <option value="Manifesto">Manifesto</option>
+          <option value="FolhaRota">Folha de Rota</option>
+          <option value="ePOD">ePOD</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="las la-spinner la-spin" aria-hidden="true"></i>
+      <span>A carregar documentos...</span>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Nome</th>
+            <th>Tamanho</th>
+            <th>Data de Upload</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of documentos(); track doc.id) {
+            <tr>
+              <td><span class="badge" [class]="'badge-' + doc.tipo.toLowerCase()">{{ doc.tipo }}</span></td>
+              <td><strong>{{ doc.nome }}</strong></td>
+              <td>{{ doc.tamanhoFormatado }}</td>
+              <td>{{ doc.dataUpload | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="actions-cell">
+                <button class="btn-icon btn-icon--download" (click)="baixarDocumento(doc)" title="Baixar PDF">
+                  <i class="las la-download" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          }
+          @if (documentos().length === 0) {
+            <tr>
+              <td colspan="4" class="empty-state">
+                <i class="las la-file-pdf" aria-hidden="true"></i>
+                <span>Nenhum documento encontrado</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+

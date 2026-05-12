@@ -1,0 +1,546 @@
+
+@if (isListView()) {
+  <div class="produtos-container">
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-boxes"></i>
+        </div>
+        <div>
+          <h1>Produtos</h1>
+          <p>Gestão de peças, consumíveis e equipamentos</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="irParaNovo()">
+        <i class="las la-plus"></i> Novo Produto
+      </button>
+    </div>
+
+    <!-- Alertas globais -->
+    @if (errorMsg()) {
+      <div class="alert alert--error" role="alert">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()" aria-label="Fechar">×</button>
+      </div>
+    }
+    @if (successMsg()) {
+      <div class="alert alert--success" role="status">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    }
+
+    <!-- Barra de ferramentas -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input
+            type="text"
+            placeholder="Pesquisar SKU ou nome…"
+            [value]="filtroSearch"
+            (input)="onSearchChange($any($event.target).value)"
+          />
+        </div>
+        <div class="filter-group">
+          <i class="las la-tag"></i>
+          <input
+            type="text"
+            placeholder="Categoria"
+            [value]="filtroCategoria"
+            (input)="onCategoriaChange($any($event.target).value)"
+          />
+        </div>
+        <label class="toggle-label">
+          <span class="toggle-switch">
+            <input type="checkbox" [checked]="mostrarInativos" (change)="toggleInativos()" />
+            <span class="toggle-slider"></span>
+          </span>
+          Mostrar inactivos
+        </label>
+      </div>
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ pagedResult()!.total }} produto{{ pagedResult()!.total !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar produtos…</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de produtos">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Preço Venda</th>
+              <th>Stock</th>
+              <th>Localização</th>
+              <th>Estado</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of produtos(); track p.id) {
+              <tr [class.row--inactive]="!p.ativo">
+                <td>
+                  <code class="sku-code">{{ p.sku }}</code>
+                </td>
+
+                <td>
+                  <strong class="product-name">{{ p.nome }}</strong>
+                  @if (p.descricao) {
+                    <span class="text-muted">
+                      {{ p.descricao | slice:0:55 }}{{ p.descricao!.length > 55 ? '…' : '' }}
+                    </span>
+                  }
+                  @if (p.fornecedorNome) {
+                    <span class="supplier-tag">
+                      <i class="las la-truck"></i> {{ p.fornecedorNome }}
+                    </span>
+                  }
+                </td>
+
+                <td>
+                  @if (p.categoria) {
+                    <span class="category-pill">{{ p.categoria }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+
+                <!-- FIX NG0701: formatarPreco() usa Intl.NumberFormat pt-PT nativo -->
+                <td class="price-cell">
+                  {{ formatarPreco(p.precoVenda) }}
+                  <span class="iva-label">IVA {{ p.iva }}%</span>
+                </td>
+
+                <td>
+                  <div class="stock-cell" [class.stock-cell--low]="stockBaixo(p)">
+                    <span class="stock-qty">
+                      {{ p.stockAtual }} <small>{{ p.unidadeMedida }}</small>
+                    </span>
+                    @if (stockBaixo(p)) {
+                      <span class="stock-warning" [title]="'Stock abaixo do mínimo (' + p.stockMinimo + ')'">
+                        <i class="las la-exclamation-triangle"></i> Baixo
+                      </span>
+                    }
+                  </div>
+                </td>
+
+                <td>
+                  @if (p.localizacao) {
+                    <span class="location-tag">
+                      <i class="las la-map-marker"></i> {{ p.localizacao }}
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+
+                <td>
+                  <span class="badge"
+                        [class.badge--active]="p.ativo"
+                        [class.badge--inactive]="!p.ativo">
+                    <span class="badge__dot"></span>
+                    {{ p.ativo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+
+                <td class="actions-cell">
+                  <button class="btn-icon btn-view"
+                          (click)="irParaDetalhes(p, $event)"
+                          title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download"
+                          (click)="imprimirPdf(p, $event)"
+                          title="PDF">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--edit"
+                          (click)="irParaEditar(p)"
+                          title="Editar produto">
+                    <i class="las la-edit"></i>
+                  </button>
+                  @if (p.ativo) {
+                    <button class="btn-icon btn-icon--danger"
+                            (click)="desativarProduto(p)"
+                            title="Desactivar produto">
+                      <i class="las la-trash-alt"></i>
+                    </button>
+                  } @else {
+                    <button class="btn-icon btn-icon--success"
+                            (click)="ativarProduto(p)"
+                            title="Activar produto">
+                      <i class="las la-undo-alt"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+
+            @if (produtos().length === 0) {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <i class="las la-box-open"></i>
+                    <p>Nenhum produto encontrado</p>
+                    <small>Altere os filtros ou crie um novo produto.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (pagedResult() && pagedResult()!.totalPages > 1) {
+        <div class="pagination">
+          <button class="pagination__btn"
+                  [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage - 1)"
+                  aria-label="Página anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+
+          @for (p of pages; track p) {
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage"
+                    (click)="goToPage(p)">
+              {{ p }}
+            </button>
+          }
+
+          <button class="pagination__btn"
+                  [disabled]="currentPage === pagedResult()!.totalPages"
+                  (click)="goToPage(currentPage + 1)"
+                  aria-label="Próxima página">
+            <i class="las la-angle-right"></i>
+          </button>
+
+          <span class="pagination__info">
+            Página {{ currentPage }} de {{ pagedResult()!.totalPages }}
+            ({{ pagedResult()!.total }} registos)
+          </span>
+        </div>
+      }
+    }
+  </div>
+}
+
+
+@if (isCreateView() || isEditView() || isDetailsView()) {
+  <div class="produtos-container">
+
+    <!-- Cabeçalho da vista -->
+    <div class="page-header">
+      <div class="page-header__left">
+        <button class="btn-back" (click)="voltarParaLista()" aria-label="Voltar à lista">
+          <i class="las la-arrow-left"></i>
+        </button>
+        <div class="page-header__icon">
+          <i class="las"
+             [class.la-eye]="isDetailsView()"
+             [class.la-plus-circle]="isCreateView()"
+             [class.la-edit]="isEditView()"></i>
+        </div>
+        <div>
+          <h1>
+            @if (isDetailsView()) { Detalhes do Produto }
+            @else if (isEditView()) { Editar Produto }
+            @else { Novo Produto }
+          </h1>
+          <p>
+            @if (isDetailsView()) { Consulta de dados do produto }
+            @else if (isEditView()) { Actualizar informação do produto }
+            @else { Preencha os dados do novo produto }
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        @if (!isDetailsView()) {
+          <button class="btn-secondary" (click)="voltarParaLista()" [disabled]="isSaving()">
+            Cancelar
+          </button>
+          <button class="btn-primary" (click)="salvarProduto()" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner spinner--sm"></span> A guardar…
+            } @else {
+              <i class="las la-save"></i> Guardar Produto
+            }
+          </button>
+        } @else {
+          <button class="btn-secondary" (click)="voltarParaLista()">
+            <i class="las la-arrow-left"></i> Voltar
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Alertas inline -->
+    @if (errorMsg()) {
+      <div class="alert alert--error" role="alert">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()" aria-label="Fechar">×</button>
+      </div>
+    }
+
+    
+    <div class="form-card" [formGroup]="form">
+      <fieldset [disabled]="isDetailsView() || null">
+
+        <div class="form-section">
+          <h4 class="form-section__title">Identificação</h4>
+          <div class="form-row">
+
+            <div class="form-group">
+              <label for="sku">SKU</label>
+
+              <input id="sku" type="text" formControlName="sku"
+                     placeholder="Gerado automaticamente" autocomplete="off" />
+              <span class="field-hint">
+                <i class="las la-info-circle"></i> O SKU é atribuído automaticamente.
+              </span>
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('nome')">
+              <label for="nome">Nome <span class="required">*</span></label>
+              <input id="nome" type="text" formControlName="nome"
+                     placeholder="Designação do produto" />
+              @if (hasError('nome', 'required')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Nome é obrigatório.
+                </span>
+              }
+              @if (hasError('nome', 'maxlength')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Máximo 300 caracteres.
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" rows="2" formControlName="descricao"
+                      placeholder="Descrição detalhada do produto"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="categoria">Categoria</label>
+              <input id="categoria" type="text" formControlName="categoria"
+                     placeholder="Ex: Óleos, Filtros, Pastilhas" />
+            </div>
+
+            <!-- FIX Prefixo FOR-: input-prefix visual; o FormControl guarda só
+                 a parte numérica. A concatenação 'FOR-' é feita em salvarProduto(). -->
+            <div class="form-group" [class.form-group--error]="hasError('fornecedorCodigo')">
+              <label for="fornecedorCodigo">Fornecedor</label>
+              <div class="input-prefix">
+                <span class="prefix-badge">FOR-</span>
+                <input id="fornecedorCodigo" type="text" formControlName="fornecedorCodigo"
+                       placeholder="001" autocomplete="off" />
+              </div>
+              <span class="field-hint">
+                <i class="las la-info-circle"></i>
+                Introduza apenas o código numérico (ex: 001). O prefixo FOR- é adicionado automaticamente.
+              </span>
+              @if (hasError('fornecedorCodigo', 'maxlength')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Máximo 50 caracteres.
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- SECÇÃO: Preços & Fiscalidade -->
+        <div class="form-section">
+          <h4 class="form-section__title">Preços &amp; Fiscalidade</h4>
+          <div class="form-row form-row--3">
+
+            <!--
+              FIX NG01050: 'precoCompra' e 'precoVenda' estão dentro do
+              mesmo [formGroup]="form" — não há nenhum @if a envolvê-los
+              que possa criar uma hierarquia quebrada.
+            -->
+            <div class="form-group" [class.form-group--error]="hasError('precoCompra')">
+              <label for="precoCompra">Preço Compra (€)</label>
+              <div class="input-prefix">
+                <span>€</span>
+                <input id="precoCompra" type="number" formControlName="precoCompra"
+                       step="0.01" min="0" placeholder="0.00" />
+              </div>
+              @if (hasError('precoCompra', 'required')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Campo obrigatório.
+                </span>
+              }
+              @if (hasError('precoCompra', 'min')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Não pode ser negativo.
+                </span>
+              }
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('precoVenda')">
+              <label for="precoVenda">Preço Venda (€) <span class="required">*</span></label>
+              <div class="input-prefix">
+                <span>€</span>
+                <input id="precoVenda" type="number" formControlName="precoVenda"
+                       step="0.01" min="0" placeholder="0.00" />
+              </div>
+              @if (hasError('precoVenda', 'required')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Campo obrigatório.
+                </span>
+              }
+              @if (hasError('precoVenda', 'min')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Não pode ser negativo.
+                </span>
+              }
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('iva')">
+              <label for="iva">IVA (%)</label>
+              <select id="iva" formControlName="iva">
+                <option [value]="0">0% — Isento</option>
+                <option [value]="6">6% — Taxa reduzida</option>
+                <option [value]="13">13% — Taxa intermédia</option>
+                <option [value]="23">23% — Taxa normal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECÇÃO: Stock & Logística -->
+        <div class="form-section">
+          <h4 class="form-section__title">Stock &amp; Logística</h4>
+          <div class="form-row form-row--3">
+
+            <div class="form-group" [class.form-group--error]="hasError('stockInicial')">
+              <label for="stockInicial">
+                <!--
+                  @if de LABEL APENAS — não envolve nenhum formControlName.
+                  Isto é correcto e não gera NG01050.
+                -->
+                @if (isEditView()) { Stock Actual } @else { Stock Inicial <span class="required">*</span> }
+              </label>
+              <!--
+                FIX Acessibilidade: stockInicial é desactivado via
+                this.ctrl('stockInicial').disable() no método irParaEditar(),
+                NÃO via [disabled] no template.
+              -->
+              <input id="stockInicial" type="number" formControlName="stockInicial"
+                     min="0" placeholder="0" />
+              @if (isEditView()) {
+                <span class="field-hint">
+                  <i class="las la-info-circle"></i> Altere o stock via movimentações.
+                </span>
+              }
+              @if (hasError('stockInicial', 'min')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Não pode ser negativo.
+                </span>
+              }
+            </div>
+
+            <div class="form-group" [class.form-group--error]="hasError('stockMinimo')">
+              <label for="stockMinimo">Stock Mínimo</label>
+              <input id="stockMinimo" type="number" formControlName="stockMinimo"
+                     min="0" placeholder="0" />
+              @if (hasError('stockMinimo', 'min')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Não pode ser negativo.
+                </span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="unidadeMedida">Unidade</label>
+              <select id="unidadeMedida" formControlName="unidadeMedida">
+                <option value="un">un — Unidade</option>
+                <option value="kg">kg — Quilograma</option>
+                <option value="l">l — Litro</option>
+                <option value="m">m — Metro</option>
+                <option value="cx">cx — Caixa</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+
+            <!-- FIX Prefixo ARM-: igual ao FOR- acima. -->
+            <div class="form-group" [class.form-group--error]="hasError('localizacao')">
+              <label for="localizacao">Localização (armazém)</label>
+              <div class="input-prefix">
+                <span class="prefix-badge">ARM-</span>
+                <input id="localizacao" type="text" formControlName="localizacao"
+                       placeholder="A1-01" autocomplete="off" />
+              </div>
+              <span class="field-hint">
+                <i class="las la-info-circle"></i>
+                Introduza apenas o código da localização (ex: A1-01). O prefixo ARM- é adicionado automaticamente.
+              </span>
+              @if (hasError('localizacao', 'maxlength')) {
+                <span class="field-error">
+                  <i class="las la-exclamation-circle"></i> Máximo 50 caracteres.
+                </span>
+              }
+            </div>
+
+            <div class="form-group form-group--checkboxes">
+              <label>Opções de rastreio</label>
+              <div class="checkbox-row">
+                <label class="checkbox-label" for="loteObrigatorio">
+                  <input id="loteObrigatorio" type="checkbox" formControlName="loteObrigatorio" />
+                  <span class="checkbox-custom"></span>
+                  Lote obrigatório
+                </label>
+                <label class="checkbox-label" for="validadeObrigatoria">
+                  <input id="validadeObrigatoria" type="checkbox" formControlName="validadeObrigatoria" />
+                  <span class="checkbox-custom"></span>
+                  Validade obrigatória
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!--
+            @if de BLOCO DE CONTEÚDO — mas o formControlName="ativo" está
+            SEMPRE dentro do [formGroup]="form". Angular não tem problema
+            com @if a mostrar/esconder um control que já está registado.
+          -->
+          @if (isEditView()) {
+            <div class="form-group form-group--inline">
+              <label class="checkbox-label" for="ativo">
+                <input id="ativo" type="checkbox" formControlName="ativo" />
+                <span class="checkbox-custom"></span>
+                Produto activo
+              </label>
+            </div>
+          }
+        </div>
+
+      </fieldset>
+    </div>
+  </div>
+}

@@ -1,0 +1,168 @@
+<!-- src/app/features/dashboard.component/dashboard.component.html -->
+<div class="dashboard-container">
+  
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    @for (card of statCards(); track card.label) {
+      <div class="stat-card" [ngClass]="card.color">
+        <div class="stat-icon">
+          <i class="las {{ card.icon }}"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ card.value }}</h3>
+          <p>{{ card.label }}</p>
+        </div>
+        <div class="stat-trend" *ngIf="card.trend">
+          <i class="las la-arrow-{{ card.trendDirection }}"></i>
+          <span>{{ card.trend }}%</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Dashboard Grid -->
+  <div class="dashboard-grid">
+    
+    <!-- Atividades Recentes -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="las la-history"></i> Atividades Recentes</h3>
+        <a [routerLink]="['/admin/audit']" class="see-link">Ver todos →</a>
+      </div>
+      <div class="card-body">
+        @if (isLoadingAtividades()) {
+          <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div>
+        } @else {
+          <div class="activity-list">
+            @for (atividade of atividadesRecentes(); track atividade.id) {
+              <div class="activity-item">
+                <div class="activity-icon" [ngClass]="getActivityIconClass(atividade.tipo)">
+                  <i [class]="'las ' + getActivityIcon(atividade.tipo)"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">{{ atividade.titulo }}</div>
+                  <div class="activity-meta">
+                    <span class="activity-date">{{ formatRelativeTime(atividade.data) }}</span>
+                    <span class="activity-user">{{ atividade.usuario }}</span>
+                  </div>
+                </div>
+                <div class="activity-status" [ngClass]="'status-' + atividade.status">
+                  {{ atividade.status || 'Concluído' }}
+                </div>
+              </div>
+            }
+            @if (atividadesRecentes().length === 0) {
+              <div class="empty-state">
+                <i class="las la-inbox"></i>
+                <p>Nenhuma atividade recente</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Viagens em Curso -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="las la-truck"></i> Viagens em Curso</h3>
+        <a [routerLink]="['/gestao-viagens']" class="see-link">Ver todas →</a>
+      </div>
+      <div class="card-body">
+        @if (isLoadingViagens()) {
+          <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div>
+        } @else {
+          <div class="trips-list">
+            @for (viagem of viagensEmCurso(); track viagem.id) {
+              <div class="trip-item" (click)="goToViagem(viagem.id)">
+                <div class="trip-info">
+                  <div class="trip-title">{{ viagem.numeroViagem }}</div>
+                  <div class="trip-route">
+                    <i class="las la-map-marker"></i> {{ viagem.origem || '—' }} → {{ viagem.destino || '—' }}
+                  </div>
+                </div>
+                <div class="trip-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="viagem.progresso"></div>
+                  </div>
+                  <span class="progress-value">{{ viagem.progresso }}%</span>
+                </div>
+              </div>
+            }
+            @if (viagensEmCurso().length === 0) {
+              <div class="empty-state">
+                <i class="las la-truck-moving"></i>
+                <p>Nenhuma viagem em curso</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Incidentes Pendentes -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="las la-exclamation-triangle"></i> Incidentes Pendentes</h3>
+        <a [routerLink]="['/incidentes']" class="see-link">Ver todos →</a>
+      </div>
+      <div class="card-body">
+        @if (isLoadingIncidentes()) {
+          <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div>
+        } @else {
+          <div class="incidents-list">
+            @for (incidente of incidentesPendentes(); track incidente.id) {
+              <div class="incident-item" [ngClass]="'gravidade-' + incidente.gravidade.toLowerCase()">
+                <div class="incident-icon">
+                  <i class="las la-exclamation-circle"></i>
+                </div>
+                <div class="incident-content">
+                  <div class="incident-title">{{ incidente.titulo }}</div>
+                  <div class="incident-meta">
+                    <span class="incident-type">{{ incidente.tipo }}</span>
+                    <span class="incident-date">{{ formatDate(incidente.dataOcorrencia) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+            @if (incidentesPendentes().length === 0) {
+              <div class="empty-state">
+                <i class="las la-check-circle"></i>
+                <p>Nenhum incidente pendente</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Faturas Mensais -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="las la-file-invoice-dollar"></i> Faturas do Mês</h3>
+        <a [routerLink]="['/faturas']" class="see-link">Ver todas →</a>
+      </div>
+      <div class="card-body">
+        @if (isLoadingFaturas()) {
+          <div class="loading-state"><i class="las la-spinner la-spin"></i> A carregar...</div>
+        } @else {
+          <div class="invoices-summary">
+            <div class="total-invoices">
+              <span class="total-value">{{ faturasMes() | currency:'EUR' }}</span>
+              <span class="total-label">Total faturado este mês</span>
+            </div>
+            <div class="invoices-list">
+              @for (fatura of faturasRecentes(); track fatura.id) {
+                <div class="invoice-item" (click)="goToFatura(fatura.id)">
+                  <span class="invoice-number">{{ fatura.numeroFatura }}</span>
+                  <span class="invoice-client">{{ fatura.clienteNome }}</span>
+                  <span class="invoice-value">{{ fatura.valorTotal | currency:'EUR' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

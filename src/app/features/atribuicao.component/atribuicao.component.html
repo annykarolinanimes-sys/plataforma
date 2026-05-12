@@ -1,0 +1,692 @@
+<div class="atribuicao-container">
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-route"></i>
+      </div>
+      <div>
+        <h1>Atribuições</h1>
+        <p>Gestão de recursos, viagens e operações logísticas</p>
+      </div>
+    </div>
+    @if (isListView()) {
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Atribuição
+      </button>
+    }
+  </div>
+
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i><span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg() && isListView()) {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()">×</button>
+    </div>
+  }
+
+  @if (isListView()) {
+
+«    @if (!isLoading()) {
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--blue">
+            <i class="las la-truck-moving"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ countEmRota() }}</span>
+            <span class="stat-card__label">Em Rota</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--amber">
+            <i class="las la-car-side"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ frotaEmUso() }}</span>
+            <span class="stat-card__label">Frota em Uso</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--green">
+            <i class="las la-box"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ entregasHoje() }}</span>
+            <span class="stat-card__label">Entregas Hoje</span>
+          </div>
+        </div>
+
+        <div class="stat-card" [class.stat-card--alert]="alertasAtraso() > 0">
+          <div class="stat-card__icon"
+               [class.stat-card__icon--red]="alertasAtraso() > 0"
+               [class.stat-card__icon--slate]="alertasAtraso() === 0">
+            <i class="las la-exclamation-triangle"></i>
+          </div>
+          <div class="stat-card__body">
+            <span class="stat-card__value">{{ alertasAtraso() }}</span>
+            <span class="stat-card__label">Alertas de Atraso</span>
+          </div>
+          @if (alertasAtraso() > 0) {
+            <div class="stat-card__badge stat-card__badge--red">Atenção</div>
+          }
+        </div>
+
+      </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="search" placeholder="Nº Atribuição, Cliente, Motorista…"
+                 [value]="filtroSearch"
+                 (input)="onSearchChange($any($event.target).value)" />
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus"
+                  (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            @for (s of statusList; track s) {
+              <option [value]="s">{{ getStatusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (pagedResult()) {
+        <span class="results-count">
+          {{ totalAtribuicoes() }}
+          atribuiç{{ totalAtribuicoes() !== 1 ? 'ões' : 'ão' }}
+        </span>
+      }
+    </div>
+
+    <!-- Skeleton Loading -->
+    @if (isLoading()) {
+      <div class="table-container" aria-busy="true">
+        <table class="data-table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th>Nº</th><th>Cliente</th><th>Data</th><th>Status</th>
+              <th>Prioridade</th><th>Motorista</th><th>Progresso</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--lg"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--progress"></span></td>
+                <td><span class="skeleton skeleton--actions"></span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de atribuições">
+          <thead>
+            <tr>
+              <th>Nº Atribuição</th>
+              <th>Cliente / Destino</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Prioridade</th>
+              <th>Motorista / Veículo</th>
+              <th>Progresso</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of atribuicoes(); track a.id) {
+              <tr [class.row--cancelada]="a.status === 'Cancelada'"
+                  class="clickable-row" (click)="goToEdit(a)">
+
+                <td>
+                  <code class="numero-tag">{{ a.numeroAtribuicao }}</code>
+                </td>
+
+                <td>
+                  <strong class="cliente-nome">{{ a.clienteNome || '—' }}</strong>
+                  @if (a.enderecoDestino) {
+                    <span class="destino-label">
+                      <i class="las la-map-marker-alt"></i>
+                      {{ a.enderecoDestino | slice:0:40 }}{{ a.enderecoDestino!.length > 40 ? '…' : '' }}
+                    </span>
+                  }
+                </td>
+
+                <td class="date-cell">
+                  {{ formatarDataSimples(a.dataAtribuicao) }}
+                  @if (a.dataPrevistaInicio) {
+                    <span class="date-hint">
+                      <i class="las la-clock"></i>
+                      {{ formatarDataSimples(a.dataPrevistaInicio) }}
+                    </span>
+                  }
+                </td>
+
+                <td>
+                  <span class="status-badge" [class]="'status-badge ' + getStatusClass(a.status)">
+                    <span class="badge-dot"></span>
+                    {{ getStatusLabel(a.status) }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="prioridade-badge" [class]="'prioridade-badge ' + getPrioridadeClass(a.prioridade)">
+                    @if (a.prioridade === 'Urgente') { <i class="las la-fire-alt"></i> }
+                    @else if (a.prioridade === 'Alta') { <i class="las la-arrow-up"></i> }
+                    {{ a.prioridade }}
+                  </span>
+                </td>
+
+                <td>
+                  @if (a.motoristaNome) {
+                    <div class="motorista-stack">
+                      <span class="motorista-nome">
+                        <i class="las la-user-tie"></i> {{ a.motoristaNome }}
+                      </span>
+                      @if (a.veiculoMatricula) {
+                        <span class="veiculo-tag">
+                          <i class="las la-car"></i>
+                          {{ a.veiculoMatricula }} {{ a.veiculoMarca }}
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="text-muted">— Não atribuído —</span>
+                  }
+                </td>
+
+                <!-- Mini barra de progresso de entregas -->
+                <td>
+                  @if (a.totalEntregas > 0) {
+                    <div class="progress-wrap">
+                      <div class="progress-bar">
+                        <div class="progress-fill"
+                             [style.width.%]="progressoEntregas(a)"
+                             [class.progress-fill--done]="progressoEntregas(a) === 100">
+                        </div>
+                      </div>
+                      <span class="progress-label">
+                        {{ a.entregasRealizadas }}/{{ a.totalEntregas }}
+                      </span>
+                    </div>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (a.status === 'Pendente') {
+                    <button class="btn-icon btn-icon--start"
+                            (click)="iniciarAtribuicao(a, $event)" title="Iniciar">
+                      <i class="las la-play-circle"></i>
+                    </button>
+                  }
+                  @if (a.status === 'EmProgresso') {
+                    <button class="btn-icon btn-icon--success"
+                            (click)="concluirAtribuicao(a, $event)" title="Concluir">
+                      <i class="las la-check-circle"></i>
+                    </button>
+                  }
+                  <button class="btn-icon btn-view"
+                          (click)="goToDetails(a, $event)" title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download"
+                          (click)="imprimirPdf(a, $event)" title="Imprimir">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  @if (!isAtribuicaoFinalizada(a)) {
+                    <button class="btn-icon btn-icon--edit"
+                            (click)="goToEdit(a, $event)" title="Editar">
+                      <i class="las la-edit"></i>
+                    </button>
+                    <button class="btn-icon btn-icon--danger"
+                            (click)="confirmarDelete(a, $event)" title="Cancelar">
+                      <i class="las la-ban"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+
+            @if (atribuicoes().length === 0) {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <div class="empty-state__icon">
+                      <i class="las la-route"></i>
+                    </div>
+                    <p class="empty-state__title">Nenhuma atribuição encontrada</p>
+                    <small class="empty-state__sub">
+                      Altere os filtros ou crie uma nova atribuição de viagem.
+                    </small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Paginação de atribuições">
+          <button class="pagination__btn" [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage - 1)" aria-label="Anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage"
+                    [attr.aria-current]="p === currentPage ? 'page' : null"
+                    (click)="goToPage(p)">{{ p }}</button>
+          }
+          <button class="pagination__btn" [disabled]="currentPage === totalPages()"
+                  (click)="goToPage(currentPage + 1)" aria-label="Seguinte">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage }} de {{ totalPages() }}
+            ({{ totalAtribuicoes() }} registos)
+          </span>
+        </nav>
+      }
+    }
+
+  }
+  <!-- /isListView() -->
+
+
+  <!-- ══════════════════════════════════════════════
+       VISTA: CRIAR / EDITAR / DETALHES
+       [formGroup] envolve TODOS os formControlName
+       Validação cruzada de datas no grupo raiz
+       ══════════════════════════════════════════════ -->
+  @if (!isListView()) {
+    <div class="form-page">
+
+      <!-- Cabeçalho do painel -->
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las"
+               [class.la-eye]="isViewing()"
+               [class.la-route]="isCreateView()"
+               [class.la-edit]="isEditView() && !isViewing()"></i>
+          </div>
+          <div>
+            <h2>
+              @if (isCreateView()) { Nova Atribuição }
+              @else if (isViewing()) { Detalhes da Atribuição }
+              @else { Editar Atribuição }
+            </h2>
+            <p class="panel-subtitle">
+              @if (isCreateView()) { Registe uma nova operação logística }
+              @else if (isViewing()) { Consulta de dados da atribuição }
+              @else { Actualizar dados da atribuição }
+            </p>
+          </div>
+        </div>
+        <div class="panel-header__actions">
+          @if (isViewing()) {
+            <button class="btn-secondary btn-print"
+                    (click)="imprimirPdf(atribuicoes()[0])">
+              <i class="las la-print"></i> Imprimir
+            </button>
+          }
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            @if (isViewing()) { <i class="las la-arrow-left"></i> Voltar }
+            @else { Cancelar }
+          </button>
+          @if (!isViewing()) {
+            <button class="btn-primary" (click)="salvarAtribuicao()" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner spinner--sm"></span> A guardar…
+              } @else {
+                <i class="las la-save"></i> Guardar Atribuição
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Erro inline -->
+      @if (errorMsg()) {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isViewing() || null">
+
+          <!-- ── BLOCO 1: Dados da Viagem ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-map-marked-alt"></i> Dados da Viagem
+            </h4>
+            <div class="form-grid-2">
+
+              <div class="form-group" [class.form-group--error]="hasError('clienteNome')">
+                <label for="clienteNome">Cliente <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-user"></i>
+                  <input id="clienteNome" type="text" formControlName="clienteNome"
+                         placeholder="Nome do cliente" />
+                </div>
+                @if (hasError('clienteNome', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Campo obrigatório.
+                  </span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="clienteContacto">Contacto do Cliente</label>
+                <div class="input-icon">
+                  <i class="las la-phone"></i>
+                  <input id="clienteContacto" type="text" formControlName="clienteContacto"
+                         placeholder="Telefone ou email" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="enderecoOrigem">Endereço de Origem</label>
+                <div class="input-icon">
+                  <i class="las la-map-marker"></i>
+                  <input id="enderecoOrigem" type="text" formControlName="enderecoOrigem"
+                         placeholder="Local de partida" />
+                </div>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('enderecoDestino')">
+                <label for="enderecoDestino">Endereço de Destino <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-map-marker-alt"></i>
+                  <input id="enderecoDestino" type="text" formControlName="enderecoDestino"
+                         placeholder="Local de chegada" />
+                </div>
+                @if (hasError('enderecoDestino', 'required')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i> Campo obrigatório.
+                  </span>
+                }
+              </div>
+
+              <!-- FIX: validação cruzada de datas -->
+              <div class="form-group"
+                   [class.form-group--error]="hasFormError('dataFimAnterior')">
+                <label for="dataPrevistaInicio">Data / Hora de Início</label>
+                <input id="dataPrevistaInicio" type="datetime-local"
+                       formControlName="dataPrevistaInicio" />
+              </div>
+
+              <div class="form-group"
+                   [class.form-group--error]="hasFormError('dataFimAnterior')">
+                <label for="dataPrevistaFim">Data / Hora de Fim</label>
+                <input id="dataPrevistaFim" type="datetime-local"
+                       formControlName="dataPrevistaFim" />
+                @if (hasFormError('dataFimAnterior')) {
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i>
+                    A data de fim não pode ser anterior à data de início.
+                  </span>
+                }
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── BLOCO 2: Recursos ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-users-cog"></i> Recursos Atribuídos
+            </h4>
+            <div class="form-grid-3">
+
+              <div class="form-group">
+                <label for="motoristaId">Motorista</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-user-tie"></i>
+                  <select id="motoristaId" formControlName="motoristaId">
+                    <option [value]="null">— Selecionar motorista —</option>
+                    @for (m of motoristas(); track m.id) {
+                      <option [value]="m.id">{{ m.nome }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="veiculoId">Veículo</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-car"></i>
+                  <select id="veiculoId" formControlName="veiculoId">
+                    <option [value]="null">— Selecionar veículo —</option>
+                    @for (v of veiculos(); track v.id) {
+                      <option [value]="v.id">
+                        {{ v.matricula }} — {{ v.marca }} {{ v.modelo }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="transportadoraId">Transportadora</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-truck"></i>
+                  <select id="transportadoraId" formControlName="transportadoraId">
+                    <option [value]="null">— Selecionar transportadora —</option>
+                    @for (t of transportadoras(); track t.id) {
+                      <option [value]="t.id">{{ t.nome }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── BLOCO 3: Dados Operacionais ── -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-tachometer-alt"></i> Dados Operacionais
+            </h4>
+            <div class="form-grid-3">
+
+              <div class="form-group">
+                <label for="distanciaTotalKm">Distância Total (km)</label>
+                <div class="input-icon">
+                  <i class="las la-road"></i>
+                  <input id="distanciaTotalKm" type="number" step="0.1" min="0"
+                         formControlName="distanciaTotalKm" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="tempoEstimadoHoras">Tempo Estimado (h)</label>
+                <div class="input-icon">
+                  <i class="las la-clock"></i>
+                  <input id="tempoEstimadoHoras" type="number" step="0.5" min="0"
+                         formControlName="tempoEstimadoHoras" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="prioridade">Prioridade</label>
+                <div class="select-icon-wrap">
+                  <i class="las la-flag"></i>
+                  <select id="prioridade" formControlName="prioridade">
+                    @for (p of prioridades; track p) {
+                      <option [value]="p">{{ p }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-group">
+              <label for="observacoes">Observações</label>
+              <textarea id="observacoes" rows="2" formControlName="observacoes"
+                        placeholder="Notas adicionais sobre a viagem…"></textarea>
+            </div>
+          </div>
+
+          <!-- ── BLOCO 4: Pontos de Entrega ── -->
+          <div class="form-section">
+            <div class="section-header">
+              <h4 class="form-section__title">
+                <i class="las la-map-pin"></i> Pontos de Entrega
+                <span class="item-count-badge">{{ entregasArray.length }}</span>
+              </h4>
+              @if (!isViewing()) {
+                <button type="button" class="btn-add-item" (click)="adicionarEntrega()">
+                  <i class="las la-plus-circle"></i> Adicionar ponto
+                </button>
+              }
+            </div>
+
+            <div class="entregas-list" formArrayName="entregas">
+              @for (entrega of entregasArray.controls; track $index; let i = $index) {
+                <div class="entrega-card" [formGroupName]="i"
+                     [class.entrega-card--realizada]="entregaCtrl(i,'realizada').value">
+
+                  <div class="entrega-card__header">
+                    <div class="entrega-ordem">
+                      <span class="ordem-number">{{ i + 1 }}</span>
+                    </div>
+                    <div class="entrega-card__title">
+                      @if (entregaCtrl(i,'destinatario').value) {
+                        {{ entregaCtrl(i,'destinatario').value }}
+                      } @else {
+                        <span class="text-muted">Ponto de entrega {{ i + 1 }}</span>
+                      }
+                    </div>
+
+                    <!-- Checkbox realizada -->
+                    <label class="checkbox-label realizada-toggle" [for]="'realizada_' + i">
+                      <input [id]="'realizada_' + i" type="checkbox"
+                             formControlName="realizada" />
+                      <span class="checkbox-custom"></span>
+                      Realizada
+                    </label>
+
+                    @if (!isViewing() && entregasArray.length > 1) {
+                      <button type="button" class="btn-remove-entrega"
+                              (click)="removerEntrega(i)"
+                              [attr.aria-label]="'Remover entrega ' + (i+1)">
+                        <i class="las la-times"></i>
+                      </button>
+                    }
+                  </div>
+
+                  <div class="entrega-card__body">
+                    <div class="form-grid-2">
+
+                      <div class="form-group">
+                        <label>Destinatário</label>
+                        <input type="text" formControlName="destinatario"
+                               placeholder="Nome do destinatário" />
+                      </div>
+
+                      <div class="form-group">
+                        <label>Contacto</label>
+                        <div class="input-icon">
+                          <i class="las la-phone"></i>
+                          <input type="tel" formControlName="contacto"
+                                 placeholder="Telefone" />
+                        </div>
+                      </div>
+
+                      <div class="form-group" style="grid-column: 1 / -1">
+                        <label>Endereço</label>
+                        <div class="input-icon">
+                          <i class="las la-map-marker-alt"></i>
+                          <input type="text" formControlName="endereco"
+                                 placeholder="Rua, número, cidade" />
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label>Ordem de entrega</label>
+                        <input type="number" formControlName="ordem" min="1" />
+                      </div>
+
+                      <div class="form-group">
+                        <label>Observações</label>
+                        <input type="text" formControlName="observacoes"
+                               placeholder="Notas sobre esta entrega" />
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              }
+            </div>
+          </div>
+
+        </fieldset>
+      </div>
+
+    </div>
+  }
+
+</div>
+
+@if (showDeleteConfirm() && atribuicaoParaDelete()) {
+  <div class="modal-overlay" (click)="cancelarDelete()"
+       role="alertdialog" aria-modal="true">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i class="las la-ban"></i> Cancelar Atribuição
+        </h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-icon confirm-icon--danger" aria-hidden="true">
+          <i class="las la-route"></i>
+        </div>
+        <p class="confirm-text">
+          Tem a certeza que pretende <strong>cancelar</strong> a atribuição
+          <code>{{ atribuicaoParaDelete()!.numeroAtribuicao }}</code>?
+        </p>
+        <p class="confirm-sub">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Fechar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-ban"></i> Cancelar Atribuição
+        </button>
+      </div>
+    </div>
+  </div>
+}
