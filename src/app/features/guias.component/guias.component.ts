@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, FormArray } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil, finalize } from 'rxjs';
 import { GuiasService, Guia, PagedResult, GuiaCreateDto, GuiaUpdateDto } from '../../core/services/guias.service';
+import { PdfService, PdfField } from '../../core/services/pdf.service';
 import { UiStateService } from '../../core/services/ui-state.service';
 
 interface ProdutoOption {
@@ -47,6 +48,7 @@ interface AtribuicaoOption {
 export class GuiasComponent implements OnInit, OnDestroy {
   private readonly svc = inject(GuiasService);
   private readonly fb = inject(FormBuilder);
+  private readonly pdfService = inject(PdfService);
   private readonly uiState = inject(UiStateService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchInput$ = new Subject<string>();
@@ -558,6 +560,45 @@ export class GuiasComponent implements OnInit, OnDestroy {
         this.showToast('PDF gerado com sucesso!');
       },
       error: (err) => this.errorMsg.set(err.message)
+    });
+  }
+
+  /**
+   * Novo método: Gera PDF localmente e persiste automaticamente no ECM.
+   * Permite download imediato + registra documento no sistema.
+   */
+  imprimirEPersistitirGuia(guia: Guia, event?: Event): void {
+    if (event) event.stopPropagation();
+
+    // Simular construção de dados para PDF (conforme geração local)
+    const fields = [
+      { label: 'Número Guia', value: guia.numeroGuia },
+      { label: 'Data', value: guia.dataEmissao },
+      { label: 'Status', value: guia.status }
+      // ... mais campos
+    ];
+
+    // Chamar pdf.service.generateAndPersistPdf() para gerar + persistir
+    this.pdfService.generateAndPersistPdf(
+      `Guia ${guia.numeroGuia}`,
+      fields,
+      `Guia_${guia.numeroGuia}.pdf`,
+      'Relatorio',
+      'Interno',
+      `Guia de remessa ${guia.numeroGuia}`
+    ).then((result) => {
+      // Download imediato
+      this.pdfService.downloadPdf(result.blob, result.fileName);
+      this.showToast('PDF gerado e persistido com sucesso!');
+
+      // Log para referência
+      console.log('PDF persistido:', {
+        documentoId: result.documentoId,
+        url: result.url,
+        hashSHA256: result.hashSHA256
+      });
+    }).catch((err) => {
+      this.errorMsg.set(`Erro ao processar PDF: ${err.message}`);
     });
   }
 

@@ -1,0 +1,149 @@
+<div class="timeline-wrapper">
+
+  <div class="timeline-header">
+    <div class="timeline-header__left">
+      <div class="timeline-header__icon">
+        <i class="las la-history"></i>
+      </div>
+      <div>
+        <h4 class="timeline-header__title">Trilha de Auditoria</h4>
+        <p class="timeline-header__sub">
+          {{ nomeDocumento() }}
+          @if (!isLoading()) {
+            · <strong>{{ totalEventos() }}</strong> evento{{ totalEventos() !== 1 ? 's' : '' }}
+          }
+        </p>
+      </div>
+    </div>
+    @if (!isLoading() && ultimoEvento()) {
+      <div class="timeline-header__last">
+        <span class="last-event-label">Último evento</span>
+        <span class="last-event-time">
+          <i class="las la-clock"></i>
+          {{ ultimoEvento()!.ocorridoEm | date:'dd/MM/yyyy HH:mm' }}
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="timeline-loading">
+      <div class="spinner"></div>
+      <span>A carregar histórico…</span>
+    </div>
+  }
+
+  <!-- Erro -->
+  @if (errorMsg()) {
+    <div class="alert alert--error">
+      <i class="las la-exclamation-circle"></i>
+      {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- Linha do tempo -->
+  @if (!isLoading() && !errorMsg()) {
+
+    @if (totalEventos() === 0) {
+      <div class="timeline-empty">
+        <i class="las la-stream"></i>
+        <p>Sem registos de auditoria para este documento.</p>
+      </div>
+    }
+
+    @if (totalEventos() > 0) {
+      <div class="timeline">
+
+        @for (grupo of historicoAgrupado(); track grupo.data) {
+
+          <!-- Separador de data -->
+          <div class="timeline-date-separator">
+            <span>{{ grupo.data }}</span>
+          </div>
+
+          @for (item of grupo.items; track item.id; let last = $last) {
+
+            <div class="timeline-item" [class.timeline-item--last]="last">
+
+              <!-- Linha vertical -->
+              <div class="timeline-line">
+                <div class="timeline-dot" [ngClass]="item.cor">
+                  <i class="las" [class]="item.icone"></i>
+                </div>
+                @if (!last) { <div class="timeline-connector"></div> }
+              </div>
+
+              <!-- Conteúdo do evento -->
+              <div class="timeline-content">
+
+                <!-- Header do evento -->
+                <div class="timeline-event-header">
+                  <div class="timeline-event-meta">
+                    <span class="event-badge" [ngClass]="item.cor + '-badge'">
+                      {{ item.labelTipo }}
+                    </span>
+                    <span class="event-time">
+                      {{ item.ocorridoEm | date:'HH:mm:ss' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Descrição -->
+                <p class="timeline-description">{{ item.descricao }}</p>
+
+                <!-- Transição de Estado (→) -->
+                @if (temEstadoTransicao(item)) {
+                  <div class="estado-transicao">
+                    <span class="estado-tag estado-tag--anterior">
+                      {{ item.estadoAnterior }}
+                    </span>
+                    <i class="las la-arrow-right"></i>
+                    <span class="estado-tag estado-tag--posterior">
+                      {{ item.estadoPosterior }}
+                    </span>
+                  </div>
+                }
+
+                <!-- Footer: actor + IP + correlationId -->
+                <div class="timeline-event-footer">
+
+                  <div class="event-actor">
+                    <span class="actor-avatar">{{ inicialAvatar(item.executadoPor) }}</span>
+                    <span class="actor-nome">{{ item.executadoPor }}</span>
+                  </div>
+
+                  @if (item.ipOrigem) {
+                    <span class="event-ip" title="IP de origem">
+                      <i class="las la-network-wired"></i>
+                      {{ item.ipOrigem }}
+                    </span>
+                  }
+
+                  <span class="event-correlation" title="CorrelationId (rastreabilidade distribuída)">
+                    <i class="las la-link"></i>
+                    {{ item.correlationId | slice:0:8 }}…
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          }
+        }
+
+        <!-- Nó final: origem do documento -->
+        <div class="timeline-origin">
+          <div class="timeline-origin__dot">
+            <i class="las la-circle"></i>
+          </div>
+          <span class="timeline-origin__label">Origem do documento</span>
+        </div>
+
+      </div>
+    }
+  }
+
+</div>

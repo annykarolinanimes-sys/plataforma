@@ -363,3 +363,6 @@ c:\Users\anny\Desktop\plataforma\temp_buildDebug\net8.0\Accusoft.Api.deps.json
 c:\Users\anny\Desktop\plataforma\temp_buildDebug\net8.0\Accusoft.Api.runtimeconfig.json
 c:\Users\anny\Desktop\plataforma\temp_buildDebug\net8.0\Accusoft.Api.dll
 c:\Users\anny\Desktop\plataforma\temp_buildDebug\net8.0\Accusoft.Api.pdb
+C:\Users\anny\Desktop\plataforma\src\Accusoft.Api\bin\Debug\net8.0\temp_build_verify\Accusoft.Api.deps.json
+C:\Users\anny\Desktop\plataforma\src\Accusoft.Api\bin\Debug\net8.0\temp_build_verify\Accusoft.Api.runtimeconfig.json
+C:\Users\anny\Desktop\plataforma\src\Accusoft.Api\bin\Debug\net8.0\temp_build_verify\appsettings.json

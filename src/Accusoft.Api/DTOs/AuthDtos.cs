@@ -177,7 +177,7 @@ public record DocumentoDto(
     int     Id,
     string  Nome,
     string  PathUrl,
-    string  Tipo,             
+    string  Tipo,
     long    TamanhoBytes,
     string  TamanhoFormatado,
     int     UsuarioId,

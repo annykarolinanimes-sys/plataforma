@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Accusoft.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6555403c01667d780aace6d032d7e43e15bd32f2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+810456ffba7def9842f2c066dead1ff7418d8be5")]
 [assembly: System.Reflection.AssemblyProductAttribute("Accusoft.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Accusoft.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

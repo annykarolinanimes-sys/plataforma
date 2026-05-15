@@ -1,0 +1,244 @@
+:host {
+  --orange:      #ea7c1e; --orange-light:  #fff7ed; --orange-mid: #fed7aa;
+  --green:       #16a34a; --green-light:   #dcfce7;
+  --red:         #dc2626; --red-light:     #fee2e2;
+  --amber:       #d97706; --amber-light:   #fef3c7;
+  --teal:        #0d9488; --teal-light:    #ccfbf1;
+  --blue:        #2563eb; --blue-light:    #eff6ff;
+  --purple:      #7c3aed; --purple-light:  #ede9fe;
+  --slate-900: #0f172a; --slate-700: #334155; --slate-600: #475569;
+  --slate-500: #64748b; --slate-400: #94a3b8; --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0; --slate-100: #f1f5f9; --slate-50:  #f8fafc;
+  --white: #ffffff;
+  --font:      'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+  display: block;
+}
+
+/* ─── Wrapper ──── */
+.timeline-wrapper {
+  font-family: var(--font);
+  padding: 8px 0 4px;
+}
+
+/* ─── Header ──── */
+.timeline-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px 14px;
+  border-bottom: 1px solid var(--orange-mid);
+  gap: 12px; flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.timeline-header__left { display: flex; align-items: center; gap: 10px; }
+.timeline-header__icon {
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  background: var(--orange); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.timeline-header__title {
+  margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--slate-900);
+}
+.timeline-header__sub {
+  margin: 2px 0 0; font-size: 0.75rem; color: var(--slate-500);
+}
+.timeline-header__last { text-align: right; }
+.last-event-label { display: block; font-size: 0.7rem; color: var(--slate-400); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.last-event-time  { font-size: 0.8rem; color: var(--slate-600); display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+/* ─── Loading / Error / Empty ──── */
+.timeline-loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 24px 16px; color: var(--slate-500); font-size: 0.875rem;
+}
+.spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--orange-mid); border-top-color: var(--orange);
+  animation: spin .7s linear infinite;
+}
+.alert {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: var(--radius-sm);
+  margin: 12px 16px; font-size: 0.875rem;
+}
+.alert--error { background: var(--red-light); color: #991b1b; border: 1px solid #fecaca; }
+.timeline-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 32px 16px; color: var(--slate-400);
+}
+.timeline-empty i { font-size: 2rem; }
+.timeline-empty p { margin: 0; font-size: 0.875rem; }
+
+/* ─── Timeline principal ──── */
+.timeline {
+  padding: 8px 16px 8px 20px;
+  position: relative;
+}
+
+/* ─── Separador de data ──── */
+.timeline-date-separator {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 0 12px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--slate-400);
+}
+.timeline-date-separator::before,
+.timeline-date-separator::after {
+  content: ''; flex: 1; height: 1px; background: var(--slate-200);
+}
+.timeline-date-separator span { white-space: nowrap; }
+
+/* ─── Item da timeline ──── */
+.timeline-item {
+  display: flex; gap: 14px;
+  position: relative; margin-bottom: 0;
+}
+.timeline-item--last { margin-bottom: 8px; }
+
+/* ─── Linha vertical + Dot ──── */
+.timeline-line {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0; width: 36px;
+}
+.timeline-dot {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem; flex-shrink: 0; z-index: 1;
+  border: 2px solid transparent;
+}
+.timeline-connector {
+  flex: 1; width: 2px; background: var(--slate-200);
+  min-height: 16px; margin: 4px 0;
+}
+
+/* ─── Cores dos dots por tipo ──── */
+.timeline--upload     { background: var(--blue-light);   color: var(--blue);   border-color: var(--blue); }
+.timeline--download   { background: var(--teal-light);   color: var(--teal);   border-color: var(--teal); }
+.timeline--view       { background: var(--slate-100);    color: var(--slate-500); border-color: var(--slate-300); }
+.timeline--validate   { background: var(--green-light);  color: var(--green);  border-color: var(--green); }
+.timeline--delete     { background: var(--red-light);    color: var(--red);    border-color: var(--red); }
+.timeline--restore    { background: var(--amber-light);  color: var(--amber);  border-color: var(--amber); }
+.timeline--scan       { background: var(--purple-light); color: var(--purple); border-color: var(--purple); }
+.timeline--integrity  { background: var(--green-light);  color: var(--green);  border-color: var(--green); }
+.timeline--transition { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+.timeline--quarantine { background: var(--red-light);    color: var(--red);    border-color: var(--red); }
+.timeline--encrypt    { background: var(--purple-light); color: var(--purple); border-color: var(--purple); }
+.timeline--legal      { background: var(--blue-light);   color: var(--blue);   border-color: var(--blue); }
+.timeline--archive    { background: var(--slate-100);    color: var(--slate-600); border-color: var(--slate-400); }
+.timeline--meta       { background: var(--amber-light);  color: var(--amber);  border-color: var(--amber); }
+.timeline--denied     { background: var(--red-light);    color: var(--red);    border-color: var(--red); }
+.timeline--generic    { background: var(--slate-100);    color: var(--slate-500); border-color: var(--slate-300); }
+
+/* ─── Conteúdo do evento ──── */
+.timeline-content {
+  flex: 1; padding: 10px 14px;
+  background: var(--white); border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  transition: box-shadow .15s;
+}
+.timeline-content:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+/* Header do evento */
+.timeline-event-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.timeline-event-meta { display: flex; align-items: center; gap: 8px; }
+
+/* Badge do tipo */
+.event-badge {
+  display: inline-flex; padding: 2px 9px; border-radius: 20px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; white-space: nowrap;
+}
+/* Badges de cor — seguem o mesmo padrão dos dots */
+.timeline--upload-badge     { background: var(--blue-light);   color: var(--blue); }
+.timeline--download-badge   { background: var(--teal-light);   color: var(--teal); }
+.timeline--view-badge       { background: var(--slate-100);    color: var(--slate-500); }
+.timeline--validate-badge   { background: var(--green-light);  color: var(--green); }
+.timeline--delete-badge     { background: var(--red-light);    color: var(--red); }
+.timeline--restore-badge    { background: var(--amber-light);  color: var(--amber); }
+.timeline--scan-badge       { background: var(--purple-light); color: var(--purple); }
+.timeline--integrity-badge  { background: var(--green-light);  color: var(--green); }
+.timeline--transition-badge { background: var(--orange-light); color: var(--orange); }
+.timeline--quarantine-badge { background: var(--red-light);    color: var(--red); }
+.timeline--encrypt-badge    { background: var(--purple-light); color: var(--purple); }
+.timeline--legal-badge      { background: var(--blue-light);   color: var(--blue); }
+.timeline--archive-badge    { background: var(--slate-100);    color: var(--slate-600); }
+.timeline--meta-badge       { background: var(--amber-light);  color: var(--amber); }
+.timeline--denied-badge     { background: var(--red-light);    color: var(--red); }
+.timeline--generic-badge    { background: var(--slate-100);    color: var(--slate-500); }
+
+.event-time {
+  font-size: 0.72rem; color: var(--slate-400);
+  font-family: var(--font-mono);
+}
+
+/* Descrição */
+.timeline-description {
+  margin: 0 0 8px; font-size: 0.85rem;
+  color: var(--slate-700); line-height: 1.5;
+}
+
+/* Transição de estado */
+.estado-transicao {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.estado-tag {
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 0.72rem; font-weight: 600; font-family: var(--font-mono);
+}
+.estado-tag--anterior  { background: var(--red-light);   color: var(--red);   text-decoration: line-through; }
+.estado-tag--posterior { background: var(--green-light); color: var(--green); }
+.estado-transicao i    { color: var(--slate-400); font-size: 0.8rem; }
+
+/* Footer */
+.timeline-event-footer {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; padding-top: 8px;
+  border-top: 1px solid var(--slate-100);
+}
+.event-actor { display: flex; align-items: center; gap: 6px; }
+.actor-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--orange-light); color: var(--orange);
+  font-size: 0.65rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.actor-nome { font-size: 0.78rem; color: var(--slate-600); font-weight: 600; }
+
+.event-ip {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.72rem; color: var(--slate-400);
+  font-family: var(--font-mono);
+}
+.event-correlation {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.72rem; color: var(--slate-400);
+  font-family: var(--font-mono); margin-left: auto;
+  cursor: help; opacity: .7;
+}
+.event-correlation:hover { opacity: 1; color: var(--orange); }
+
+/* ─── Nó de origem ──── */
+.timeline-origin {
+  display: flex; align-items: center; gap: 10px;
+  padding-left: 8px; margin-top: 4px;
+}
+.timeline-origin__dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--slate-200); color: var(--slate-400);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; flex-shrink: 0;
+}
+.timeline-origin__label {
+  font-size: 0.72rem; color: var(--slate-400);
+  font-style: italic;
+}
+
+/* ─── Animações ──── */
+@keyframes spin { to { transform: rotate(360deg); } }

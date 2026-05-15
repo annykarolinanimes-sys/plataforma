@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Invoice, InvoiceItem } from './invoice.service';
+import { DocumentosService } from './documentos.service';
 
 export interface TripReportData {
   id: number;
@@ -12,26 +13,45 @@ export interface TripReportData {
   dataFim?: string;
   distanciaKm: number;
   status: string;
-  tempoEstimado?: string;
-  tempoReal?: string;
-  incidentes?: { tipo: string; descricao: string; dataOcorrencia: string; resolvido: boolean }[];
   observacoes?: string;
+  incidentes?: Array<{
+    tipo: string;
+    descricao: string;
+    dataOcorrencia: string;
+    resolvido: boolean;
+  }>;
 }
 
 export interface PdfField {
   label: string;
-  value: string | number | undefined | null;
+  value: string | number | null;
 }
 
-@Injectable({ providedIn: 'root' })
+export interface PersistPdfResult {
+  blob: Blob;
+  fileName: string;
+  mimeType: string;
+  documentoId: string;
+  hashSHA256: string;
+  url: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
 export class PdfService {
+  private documentosService = inject(DocumentosService);
+
   private createDocument(title: string): jsPDF {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFontSize(18);
+    doc.setFontSize(20);
     doc.text(title, 14, 20);
+
     doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('ACCUSOFT Logística', 14, 30);
     doc.text(`Gerado em ${new Date().toLocaleString()}`, pageWidth - 14, 20, { align: 'right' });
 
     return doc;
@@ -68,6 +88,81 @@ export class PdfService {
     a.download = filename;
     a.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Gera PDF e persiste automaticamente no ECM.
+   * Retorna {blob, documentoId, hashSHA256, url} — permite download imediato
+   * enquanto documento é armazenado no backend.
+   */
+  async generateAndPersistPdf(
+    title: string,
+    fields: PdfField[],
+    fileName: string,
+    categoria: string = 'Relatorio',
+    contexto: string = 'Interno',
+    footer?: string
+  ): Promise<PersistPdfResult> {
+    // 1. Gerar blob em memória
+    const doc = this.createDocument(title);
+
+    const tableBody = fields.map((field) => [field.label, field.value ?? '']);
+    autoTable(doc, {
+      startY: 35,
+      head: [['Campo', 'Valor']],
+      body: tableBody,
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: { fillColor: [243, 184, 91], textColor: [15, 23, 42], fontStyle: 'bold' },
+      margin: { left: 14, right: 14 },
+      columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 'auto' } }
+    });
+
+    if (footer) {
+      const finalY = (doc as any).lastAutoTable?.finalY || doc.internal.pageSize.getHeight() - 30;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(footer, 14, finalY + 15);
+    }
+
+    const blob = doc.output('blob');
+
+    // 2. Calcular SHA-256 do blob em memória (para resposta imediata)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashSHA256 = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // 3. Persistir no ECM (async, sem bloquear retorno ao cliente)
+    let persistedDocId = '(pending)';
+    let persistedUrl = '';
+    let persistedHash = hashSHA256;
+
+    this.documentosService.uploadPdfBlob(blob, fileName, categoria, contexto, undefined)
+      .subscribe({
+        next: (response) => {
+          persistedDocId = response.documentoId;
+          persistedUrl = response.url;
+          persistedHash = response.hashSHA256;
+          console.log('[PdfService] PDF persistido no ECM:', {
+            documentoId: persistedDocId,
+            url: persistedUrl,
+            hash: persistedHash
+          });
+        },
+        error: (err) => {
+          console.error('[PdfService] Erro ao persistir PDF no ECM:', err);
+        }
+      });
+
+    // 4. Retornar imediatamente com blob disponível para download
+    // (documentoId será atualizado após persistência completar no backend)
+    return {
+      blob,
+      fileName,
+      mimeType: 'application/pdf',
+      documentoId: persistedDocId,
+      hashSHA256: persistedHash,
+      url: persistedUrl
+    };
   }
 
   generateInvoicePdf(invoice: Invoice): Blob {
@@ -153,14 +248,13 @@ export class PdfService {
     doc.text(`Cliente: ${report.clienteNome}`, margin, 36);
     doc.text(`Origem: ${report.origem}`, margin, 42);
     doc.text(`Destino: ${report.destino}`, margin, 48);
-    doc.text(`Data de início: ${report.dataInicio}`, margin, 54);
-    if (report.dataFim) doc.text(`Data de fim: ${report.dataFim}`, margin, 60);
-    doc.text(`Distância: ${report.distanciaKm.toFixed(2)} km`, margin, 66);
-    doc.text(`Estado: ${report.status}`, margin, 72);
-    if (report.tempoEstimado) doc.text(`Tempo estimado: ${report.tempoEstimado}`, margin, 78);
-    if (report.tempoReal) doc.text(`Tempo real: ${report.tempoReal}`, margin, 84);
+    doc.text(`Data início: ${report.dataInicio}`, margin, 54);
+    if (report.dataFim) doc.text(`Data fim: ${report.dataFim}`, margin, 60);
+    doc.text(`Distância: ${report.distanciaKm} km`, margin, 66);
+    doc.text(`Status: ${report.status}`, margin, 72);
 
-    let incidentTableFinalY = 110;
+    let incidentTableFinalY = 78;
+
     if (report.incidentes && report.incidentes.length) {
       doc.setFontSize(12);
       doc.text('Incidentes associados', margin, 96);

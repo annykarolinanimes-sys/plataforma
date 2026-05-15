@@ -1,10 +1,64 @@
 <div class="admin-container">
-  <div class="admin-header">
-    <div class="header-title">
-      <h1><i class="las la-user-shield"></i> Administração</h1>
-      <p>Visão centralizada de atividades, auditoria e gestão de utilizadores para administradores.</p>
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-user-shield"></i>
+      </div>
+      <div>
+        <h1>Administração</h1>
+        <p>Visão centralizada de atividades, auditoria e gestão de utilizadores</p>
+      </div>
     </div>
+    @if (activeAdminTab() === 'users') {
+      <button class="btn-primary" (click)="openUserModal()">
+        <i class="las la-plus"></i> Novo Utilizador
+      </button>
+    }
   </div>
+
+  @if (stats()) {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue">
+          <i class="las la-users"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ stats()!.totalUsers }}</span>
+          <span class="stat-card__label">Total Utilizadores</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green">
+          <i class="las la-user-check"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ stats()!.totalAtivos }}</span>
+          <span class="stat-card__label">Utilizadores Ativos</span>
+        </div>
+        <div class="stat-card__badge stat-card__badge--green">
+          {{ stats()!.totalUsers > 0 ? ((stats()!.totalAtivos / stats()!.totalUsers) * 100 | number:'1.0-0') : 0 }}%
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--orange">
+          <i class="las la-bell"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ stats()!.alertasNaoLidos }}</span>
+          <span class="stat-card__label">Alertas Não Lidos</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--teal">
+          <i class="las la-desktop"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ stats()!.sessoesAtivas }}</span>
+          <span class="stat-card__label">Sessões Ativas</span>
+        </div>
+      </div>
+    </div>
+  }
 
   <div class="admin-tabs">
     <button class="tab-btn" [class.active]="activeAdminTab() === 'atividades'" (click)="setAdminTab('atividades')">
@@ -27,47 +81,73 @@
 
   @if (activeAdminTab() === 'atividades') {
     <div class="atividades-section">
+
       @if (isLoadingAtividades()) {
-        <div class="loading-spinner"><i class="las la-spinner la-spin"></i> A carregar atividades...</div>
+        <div class="loading-state"><div class="spinner spinner--dark"></div><span>A carregar atividades…</span></div>
       } @else {
+
         <div class="card">
           <div class="card-header">
             <h3><i class="las la-sign-in-alt"></i> Logins Recentes</h3>
+            <button class="btn-refresh" (click)="loadAtividades()" title="Atualizar">
+              <i class="las la-sync-alt"></i>
+            </button>
           </div>
           <div class="table-responsive">
             <table class="data-table">
               <thead>
-                <tr><th>Utilizador</th><th>Email</th><th>Data/Hora</th><th>IP</th></tr>
+                <tr>
+                  <th>Utilizador</th>
+                  <th>Email</th>
+                  <th>Data/Hora</th>
+                  <th>IP</th>
+                </tr>
               </thead>
               <tbody>
                 @for (login of loginsRecentes(); track login.id) {
-                  <tr><td>{{ login.usuarioNome }}</td><td>{{ login.usuarioEmail }}</td><td>{{ formatDateTime(login.timestamp) }}</td><td>{{ login.ip }}</td></tr>
+                  <tr>
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm">{{ login.usuarioNome.charAt(0).toUpperCase() }}</div>
+                        <strong>{{ login.usuarioNome }}</strong>
+                      </div>
+                    </td>
+                    <td class="text-muted">{{ login.usuarioEmail }}</td>
+                    <td>{{ formatDateTime(login.timestamp) }}</td>
+                    <td><code class="ip-tag">{{ login.ip }}</code></td>
+                  </tr>
                 }
                 @if (loginsRecentes().length === 0) {
-                  <tr><td colspan="4" class="empty-state">Nenhum login recente registado</td></tr>
+                  <tr><td colspan="4" class="empty-state-cell">Nenhum login registado</td></tr>
                 }
               </tbody>
             </table>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <h3><i class="las la-chart-pie"></i> Ações Mais Frequentes</h3>
+
+        @if (acoesFrequentes().length > 0) {
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="las la-chart-pie"></i> Ações Mais Frequentes</h3>
+            </div>
+            <div class="actions-freq-grid">
+              @for (acao of acoesFrequentes(); track acao.acao) {
+                <div class="action-freq-card">
+                  <div class="action-icon"><i class="las la-history"></i></div>
+                  <div class="action-body">
+                    <span class="action-value">{{ acao.quantidade }}</span>
+                    <span class="action-label">{{ acao.acao }}</span>
+                  </div>
+                  <div class="action-bar-wrap">
+                    <div class="action-bar" [style.width.%]="acao.percentagem"></div>
+                  </div>
+                  <span class="action-pct">{{ acao.percentagem }}%</span>
+                </div>
+              }
+            </div>
           </div>
-          <div class="stats-grid">
-            @for (acao of acoesFrequentes(); track acao.acao) {
-              <div class="stat-card">
-                <div class="stat-value">{{ acao.quantidade }}</div>
-                <div class="stat-label">{{ acao.acao }}</div>
-                <div class="stat-percent">{{ acao.percentagem }}%</div>
-              </div>
-            }
-            @if (acoesFrequentes().length === 0) {
-              <div class="empty-state">Sem dados suficientes</div>
-            }
-          </div>
-        </div>
-   
+        }
+
         <div class="card">
           <div class="card-header">
             <h3><i class="las la-history"></i> Atividade Recente</h3>
@@ -76,7 +156,7 @@
             @for (atividade of atividadesRecentes(); track atividade.id) {
               <div class="activity-item">
                 <div class="activity-icon">
-                  <i class="las la-user-circle"></i>
+                  <i class="las" [class]="'las ' + actionIcon(atividade.acao)"></i>
                 </div>
                 <div class="activity-content">
                   <div class="activity-header">
@@ -84,59 +164,109 @@
                     <span class="activity-time">{{ formatRelativeTime(atividade.timestamp) }}</span>
                   </div>
                   <div class="activity-action">
-                    <span class="badge">{{ atividade.acao }}</span>
-                    <span>em <strong>{{ atividade.entidade }}</strong></span>
+                    <span class="badge badge--action">{{ atividade.acao }}</span>
+                    <span class="activity-entity">em <strong>{{ atividade.entidade }}</strong></span>
                   </div>
-                  <div class="activity-detail">{{ atividade.detalhe }}</div>
+                  @if (atividade.detalhe) {
+                    <div class="activity-detail">{{ atividade.detalhe }}</div>
+                  }
                 </div>
               </div>
             }
             @if (atividadesRecentes().length === 0) {
-              <div class="empty-state">Nenhuma atividade recente</div>
+              <div class="empty-state-cell">Nenhuma atividade recente</div>
             }
           </div>
         </div>
+
       }
     </div>
   }
 
   @if (activeAdminTab() === 'audit') {
     <div class="audit-section">
+
+      <div class="toolbar">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input
+            type="text"
+            placeholder="Pesquisar ação, admin ou IP…"
+            [value]="auditSearch()"
+            (input)="onAuditSearch($any($event.target).value)"
+          />
+        </div>
+        @if (auditTotal() > 0) {
+          <span class="results-count">{{ auditTotal() }} registos</span>
+        }
+      </div>
+
       @if (isLoadingAudit()) {
-        <div class="loading-spinner"><i class="las la-spinner la-spin"></i> A carregar logs...</div>
+        <div class="loading-state"><div class="spinner spinner--dark"></div><span>A carregar logs…</span></div>
       } @else {
         <div class="card">
           <div class="table-responsive">
             <table class="data-table">
               <thead>
-                <tr><th>Data/Hora</th><th>Admin</th><th>Ação</th><th>Detalhe</th><th>IP</th></tr>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>Administrador</th>
+                  <th>Ação</th>
+                  <th>IP</th>
+                  <th class="col-actions">Detalhes</th>
+                </tr>
               </thead>
               <tbody>
                 @for (log of auditLogs(); track log.id) {
-                  <tr>
-                    <td>{{ formatDateTime(log.timestamp) }}</td>
-                    <td>{{ log.nomeAdmin }}</td>
-                    <td><code>{{ log.acao }}</code></td>
-                    <td>{{ log.detalhe || '—' }}</td>
-                    <td>{{ log.ipAddress || '—' }}</td>
+                  <tr class="clickable-row" (click)="openLogDetail(log)">
+                    <td class="text-muted">{{ formatDateTime(log.timestamp) }}</td>
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm">{{ log.nomeAdmin.charAt(0).toUpperCase() }}</div>
+                        {{ log.nomeAdmin }}
+                      </div>
+                    </td>
+                    <td>
+                      <code class="acao-tag">{{ log.acao }}</code>
+                    </td>
+                    <td><code class="ip-tag">{{ log.ipAddress || '—' }}</code></td>
+                    <td class="actions-cell">
+                      <button class="btn-icon btn-icon--view" title="Ver detalhes" (click)="$event.stopPropagation(); openLogDetail(log)">
+                        <i class="las la-eye"></i>
+                      </button>
+                    </td>
                   </tr>
                 }
                 @if (auditLogs().length === 0) {
-                  <tr><td colspan="5" class="empty-state">Nenhum registo encontrado</td></tr>
+                  <tr><td colspan="5" class="empty-state-cell">Nenhum registo encontrado</td></tr>
                 }
               </tbody>
             </table>
           </div>
+
+          <!-- Paginação -->
           @if (auditTotalPages() > 1) {
             <div class="pagination">
-              <span>Página {{ auditPage() }} de {{ auditTotalPages() }}</span>
-              <div class="pagination-buttons">
-                <button [disabled]="auditPage() === 1" (click)="loadAudit(auditPage() - 1)">←</button>
-                @for (p of [auditPage()]; track p) {
-                  <button class="active">{{ p }}</button>
-                }
-                <button [disabled]="auditPage() === auditTotalPages()" (click)="loadAudit(auditPage() + 1)">→</button>
-              </div>
+              <button class="pagination__btn"
+                      [disabled]="auditPage() === 1"
+                      (click)="loadAudit(auditPage() - 1)">
+                <i class="las la-angle-left"></i>
+              </button>
+              @for (p of [].constructor(auditTotalPages()); track $index) {
+                <button class="pagination__btn"
+                        [class.pagination__btn--active]="auditPage() === $index + 1"
+                        (click)="loadAudit($index + 1)">
+                  {{ $index + 1 }}
+                </button>
+              }
+              <button class="pagination__btn"
+                      [disabled]="auditPage() === auditTotalPages()"
+                      (click)="loadAudit(auditPage() + 1)">
+                <i class="las la-angle-right"></i>
+              </button>
+              <span class="pagination__info">
+                Página {{ auditPage() }} de {{ auditTotalPages() }} ({{ auditTotal() }} registos)
+              </span>
             </div>
           }
         </div>
@@ -144,50 +274,137 @@
     </div>
   }
 
+
   @if (activeAdminTab() === 'users') {
     <div class="users-section">
-      <div class="users-toolbar">
-        <div class="filters">
-          <input type="text" placeholder="Buscar utilizador..." [value]="searchQuery()" (input)="setSearchQuery($any($event.target).value)" />
-          <select [value]="roleFilter()" (change)="setRoleFilter($any($event.target).value)">
-            <option value="all">Todos os perfis</option>
-            <option value="admin">Administradores</option>
-            <option value="user">Utilizadores</option>
-          </select>
+
+      <div class="user-mini-stats">
+        <div class="mini-stat">
+          <i class="las la-users"></i>
+          <span>{{ users().length }} total</span>
         </div>
-        <button class="btn-primary" (click)="openUserModal()">
-          <i class="las la-plus"></i> Novo Utilizador
-        </button>
+        <div class="mini-stat mini-stat--green">
+          <i class="las la-user-check"></i>
+          <span>{{ usersAtivos() }} ativos</span>
+        </div>
+        <div class="mini-stat mini-stat--slate">
+          <i class="las la-user-slash"></i>
+          <span>{{ usersInativos() }} inativos</span>
+        </div>
+        <div class="mini-stat mini-stat--red">
+          <i class="las la-user-shield"></i>
+          <span>{{ usersAdmin() }} admins</span>
+        </div>
       </div>
 
-   
+      <div class="toolbar">
+        <div class="filters">
+          <div class="filter-group">
+            <i class="las la-search"></i>
+            <input
+              type="text"
+              placeholder="Pesquisar por nome, email ou departamento…"
+              [value]="searchQuery()"
+              (input)="onSearchChange($any($event.target).value)"
+            />
+          </div>
+          <div class="filter-select-wrap">
+            <i class="las la-filter"></i>
+            <select [value]="roleFilter()" (change)="setRoleFilter($any($event.target).value)">
+              <option value="all">Todos os perfis</option>
+              <option value="admin">Administradores</option>
+              <option value="user">Utilizadores</option>
+            </select>
+          </div>
+        </div>
+        <span class="results-count">{{ filteredUsers().length }} utilizadores</span>
+      </div>
+
       <div class="card">
         <div class="card-header">
-          <h3><i class="las la-users"></i> Utilizadores ({{ filteredUsers().length }})</h3>
+          <h3><i class="las la-users"></i> Utilizadores</h3>
+          <button class="btn-refresh" (click)="loadUsers()" title="Atualizar">
+            <i class="las la-sync-alt"></i>
+          </button>
         </div>
         @if (isLoadingUsers()) {
-          <div class="loading-spinner"><i class="las la-spinner la-spin"></i> A carregar...</div>
+          <div class="loading-state"><div class="spinner spinner--dark"></div><span>A carregar…</span></div>
         } @else {
           <div class="table-responsive">
             <table class="data-table">
               <thead>
-                <tr><th>Utilizador</th><th>Email</th><th>Perfil</th><th>Status</th><th>Último Login</th><th>Ações</th></tr>
+                <tr>
+                  <th>Utilizador</th>
+                  <th>Email</th>
+                  <th>Departamento</th>
+                  <th>Perfil</th>
+                  <th>Estado</th>
+                  <th>Último Login</th>
+                  <th class="col-actions">Ações</th>
+                </tr>
               </thead>
               <tbody>
                 @for (user of filteredUsers(); track user.id) {
-                  <tr>
-                    <td><strong>{{ user.nome }}</strong><br><small>{{ user.cargo || 'Sem cargo' }}</small></td>
-                    <td>{{ user.email }}</td>
-                    <td><span class="badge" [class.badge-admin]="user.role === 'admin'">{{ user.role === 'admin' ? 'Admin' : 'User' }}</span></td>
-                    <td><span class="status-badge" [class.status-active]="user.status === 'ativo'" [class.status-inactive]="user.status === 'inativo'">{{ user.status === 'ativo' ? 'Ativo' : 'Inativo' }}</span></td>
-                    <td>{{ formatDate(user.ultimoLogin) }}</td>
-                    <td class="actions">
-                      <button class="btn-icon" [disabled]="user.id === auth.user()?.userId" [title]="user.id === auth.user()?.userId ? 'Não pode alterar sua própria conta' : (user.status === 'ativo' ? 'Desativar' : 'Ativar')" (click)="toggleUser(user)">
-                        <i class="las" [class.la-user-slash]="user.status === 'ativo'" [class.la-user-check]="user.status === 'inativo'"></i>
+                  <tr [class.row--inactive]="user.status === 'inativo'">
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm"
+                             [class.user-avatar-sm--admin]="user.role === 'admin'">
+                          {{ user.nome.charAt(0).toUpperCase() }}
+                        </div>
+                        <div>
+                          <strong>{{ user.nome }}</strong>
+                          <span class="text-muted-block">{{ user.cargo || '—' }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-muted">{{ user.email }}</td>
+                    <td class="text-muted">{{ user.departamento || '—' }}</td>
+                    <td>
+                      <span class="badge" [class.badge--admin]="user.role === 'admin'" [class.badge--user]="user.role !== 'admin'">
+                        <i class="las" [class.la-user-shield]="user.role === 'admin'" [class.la-user]="user.role !== 'admin'"></i>
+                        {{ user.role === 'admin' ? 'Admin' : 'User' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="status-badge"
+                            [class.status-active]="user.status === 'ativo'"
+                            [class.status-inactive]="user.status === 'inativo'">
+                        <span class="status-dot"></span>
+                        {{ user.status === 'ativo' ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </td>
+                    <td class="text-muted">{{ formatDate(user.ultimoLogin) }}</td>
+                    <td class="actions-cell" (click)="$event.stopPropagation()">
+                      <button
+                        class="btn-icon"
+                        [class.btn-icon--success]="user.status === 'inativo'"
+                        [class.btn-icon--warning]="user.status === 'ativo'"
+                        [disabled]="user.id === auth.user()?.userId"
+                        [title]="user.id === auth.user()?.userId ? 'Não pode alterar a sua conta' : (user.status === 'ativo' ? 'Desativar' : 'Ativar')"
+                        (click)="toggleUser(user)">
+                        <i class="las"
+                           [class.la-user-slash]="user.status === 'ativo'"
+                           [class.la-user-check]="user.status === 'inativo'"></i>
                       </button>
-                      <button class="btn-icon danger" [disabled]="user.id === auth.user()?.userId" (click)="confirmDelete(user)">
+                      <button
+                        class="btn-icon btn-icon--danger"
+                        [disabled]="user.id === auth.user()?.userId || user.role === 'admin'"
+                        title="Eliminar utilizador"
+                        (click)="confirmDelete(user)">
                         <i class="las la-trash-alt"></i>
                       </button>
+                    </td>
+                  </tr>
+                }
+                @if (filteredUsers().length === 0) {
+                  <tr>
+                    <td colspan="7">
+                      <div class="empty-state">
+                        <i class="las la-users-slash"></i>
+                        <p>Nenhum utilizador encontrado</p>
+                        <small>Altere os filtros ou adicione um novo utilizador.</small>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -197,72 +414,192 @@
         }
       </div>
 
+      <!-- Sessões Ativas -->
       <div class="card">
         <div class="card-header">
-          <h3><i class="las la-desktop"></i> Sessões Ativas</h3>
-          <button class="btn-refresh" (click)="loadSessoes()"><i class="las la-sync-alt"></i></button>
+          <h3><i class="las la-desktop"></i> Sessões Ativas
+            @if (sessoesAtivas().length > 0) {
+              <span class="card-header-count">{{ sessoesAtivas().length }}</span>
+            }
+          </h3>
+          <button class="btn-refresh" (click)="loadSessoes()" title="Atualizar">
+            <i class="las la-sync-alt"></i>
+          </button>
         </div>
         @if (isLoadingSessoes()) {
-          <div class="loading-spinner"><i class="las la-spinner la-spin"></i></div>
+          <div class="loading-state"><div class="spinner spinner--dark"></div></div>
         } @else {
           <div class="table-responsive">
             <table class="data-table">
               <thead>
-                <tr><th>Utilizador</th><th>IP</th><th>Dispositivo</th><th>Última Atividade</th><th>Ações</th></tr>
+                <tr>
+                  <th>Utilizador</th>
+                  <th>IP</th>
+                  <th>Dispositivo</th>
+                  <th>Iniciada em</th>
+                  <th>Última atividade</th>
+                  <th class="col-actions">Ações</th>
+                </tr>
               </thead>
               <tbody>
                 @for (sessao of sessoesAtivas(); track sessao.id) {
                   <tr>
-                    <td><strong>{{ sessao.usuarioNome }}</strong></td>
-                    <td>{{ sessao.ip }}</td>
-                    <td>{{ sessao.userAgent | slice:0:50 }}...</td>
-                    <td>{{ formatRelativeTime(sessao.ultimaAtividade) }}</td>
-                    <td><button class="btn-icon danger" (click)="terminateSession(sessao.id, sessao.usuarioNome)"><i class="las la-power-off"></i></button></td>
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm user-avatar-sm--online"></div>
+                        <div>
+                          <strong>{{ sessao.usuarioNome }}</strong>
+                          <span class="text-muted-block">{{ sessao.usuarioEmail }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td><code class="ip-tag">{{ sessao.ip || '—' }}</code></td>
+                    <td class="text-muted device-cell">{{ sessao.userAgent | slice:0:45 }}…</td>
+                    <td class="text-muted">{{ formatDateTime(sessao.dataCriacao) }}</td>
+                    <td class="text-muted">{{ formatRelativeTime(sessao.ultimaAtividade) }}</td>
+                    <td class="actions-cell">
+                      <button
+                        class="btn-icon btn-icon--danger"
+                        title="Terminar sessão"
+                        (click)="terminateSession(sessao.id, sessao.usuarioNome)">
+                        <i class="las la-power-off"></i>
+                      </button>
+                    </td>
                   </tr>
                 }
                 @if (sessoesAtivas().length === 0) {
-                  <tr><td colspan="5" class="empty-state">Nenhuma sessão ativa</td></tr>
+                  <tr><td colspan="6" class="empty-state-cell">Nenhuma sessão ativa</td></tr>
                 }
               </tbody>
             </table>
           </div>
         }
       </div>
+
     </div>
   }
+
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: Novo Utilizador
+     ═══════════════════════════════════════════════════════════════════════ -->
 @if (showUserModal()) {
-  <div class="modal-backdrop" (click)="showUserModal.set(false)">
+  <div class="modal-overlay" (click)="showUserModal.set(false)" role="dialog" aria-modal="true">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3><i class="las la-user-plus"></i> Novo Utilizador</h3>
         <button class="modal-close" (click)="showUserModal.set(false)">×</button>
       </div>
       <div class="modal-body">
-        <div class="form-group"><label>Nome *</label><input type="text" [(ngModel)]="modalForm().nome" placeholder="Nome completo" /></div>
-        <div class="form-group"><label>Email *</label><input type="email" [(ngModel)]="modalForm().email" placeholder="email@exemplo.com" /></div>
-        <div class="form-group"><label>Senha *</label><input type="password" [(ngModel)]="modalForm().senha" placeholder="Mínimo 6 caracteres" /></div>
-        <div class="form-row"><div class="form-group"><label>Departamento</label><input type="text" [(ngModel)]="modalForm().departamento" /></div>
-        <div class="form-group"><label>Cargo</label><input type="text" [(ngModel)]="modalForm().cargo" /></div></div>
-        <div class="form-group"><label>Telefone</label><input type="tel" [(ngModel)]="modalForm().telefone" /></div>
+        @if (errorMessage()) {
+          <div class="alert alert--error alert--inline">
+            <i class="las la-exclamation-circle"></i> {{ errorMessage() }}
+          </div>
+        }
+        <div class="form-row form-row--1">
+          <div class="form-group">
+            <label>Nome *</label>
+            <input type="text" [(ngModel)]="modalForm().nome" placeholder="Nome completo" />
+          </div>
+        </div>
+        <div class="form-row form-row--2">
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" [(ngModel)]="modalForm().email" placeholder="email@exemplo.com" />
+          </div>
+          <div class="form-group">
+            <label>Senha *</label>
+            <input type="password" [(ngModel)]="modalForm().senha" placeholder="Mínimo 6 caracteres" />
+          </div>
+        </div>
+        <div class="form-row form-row--2">
+          <div class="form-group">
+            <label>Departamento</label>
+            <input type="text" [(ngModel)]="modalForm().departamento" placeholder="ex: TI" />
+          </div>
+          <div class="form-group">
+            <label>Cargo</label>
+            <input type="text" [(ngModel)]="modalForm().cargo" placeholder="ex: Analista" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="tel" [(ngModel)]="modalForm().telefone" placeholder="+351 900 000 000" />
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="showUserModal.set(false)">Cancelar</button>
-        <button class="btn-primary" (click)="criarUtilizador()" [disabled]="isSaving()">Criar Utilizador</button>
+        <button class="btn-primary" (click)="criarUtilizador()" [disabled]="isSaving()">
+          @if (isSaving()) { <span class="spinner spinner--sm"></span> A criar… }
+          @else { <i class="las la-user-plus"></i> Criar Utilizador }
+        </button>
       </div>
     </div>
   </div>
 }
 
-@if (showDeleteModal()) {
-  <div class="modal-backdrop" (click)="cancelDelete()">
-    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header"><h3><i class="las la-exclamation-triangle"></i> Confirmar</h3></div>
-      <div class="modal-body"><p>Tem certeza que deseja remover <strong>{{ userToDelete()?.nome }}</strong>? Esta ação é irreversível.</p></div>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: Confirmar Eliminação
+     ═══════════════════════════════════════════════════════════════════════ -->
+@if (showDeleteModal() && userToDelete()) {
+  <div class="modal-overlay" (click)="cancelDelete()" role="alertdialog" aria-modal="true">
+    <div class="modal-content modal-content--sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-exclamation-triangle"></i> Confirmar Eliminação</h3>
+      </div>
+      <div class="modal-body">
+        <p>
+          Tem a certeza que pretende eliminar
+          <strong>{{ userToDelete()!.nome }}</strong>?
+        </p>
+        <p class="modal-note">Esta ação é irreversível e todos os dados do utilizador serão removidos.</p>
+      </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
-        <button class="btn-danger" (click)="executeDelete()">Remover</button>
+        <button class="btn-danger" (click)="executeDelete()" [disabled]="isSaving()">
+          <i class="las la-trash-alt"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showLogModal() && selectedLog()) {
+  <div class="modal-overlay" (click)="showLogModal.set(false)" role="dialog" aria-modal="true">
+    <div class="modal-content modal-content--lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-clipboard-list"></i> Detalhe do Log #{{ selectedLog()!.id }}</h3>
+        <button class="modal-close" (click)="showLogModal.set(false)">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="log-detail-grid">
+          <div class="log-field">
+            <span class="log-field__label">Administrador</span>
+            <span class="log-field__value">{{ selectedLog()!.nomeAdmin }}</span>
+          </div>
+          <div class="log-field">
+            <span class="log-field__label">Data/Hora</span>
+            <span class="log-field__value">{{ formatDateTime(selectedLog()!.timestamp) }}</span>
+          </div>
+          <div class="log-field">
+            <span class="log-field__label">Ação</span>
+            <code class="acao-tag">{{ selectedLog()!.acao }}</code>
+          </div>
+          <div class="log-field">
+            <span class="log-field__label">IP</span>
+            <code class="ip-tag">{{ selectedLog()!.ipAddress || '—' }}</code>
+          </div>
+        </div>
+        @if (selectedLog()!.detalhe) {
+          <div class="log-detail-section">
+            <span class="log-field__label">Detalhe (JSON)</span>
+            <pre class="log-json">{{ formattedLogDetail(selectedLog()!) }}</pre>
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="showLogModal.set(false)">Fechar</button>
       </div>
     </div>
   </div>

@@ -85,7 +85,7 @@ export class LoginComponent {
         console.error('[Login] Erro na requisição:', err);
         this.isLoading.set(false);
         const msg =
-          err.status === 0 ? 'Não foi possível ligar ao servidor. Verifique se o backend está a correr em http://localhost:5000.' :
+          err.status === 0 ? 'Não foi possível ligar ao servidor. Verifique a configuração do backend.' :
           err.status === 401 ? 'Email ou senha inválidos.' :
           err.status === 403 ? 'Conta desativada. Contacte o administrador.' :
           err.error?.message ?? 'Erro ao ligar ao servidor.';
@@ -125,7 +125,7 @@ export class LoginComponent {
         console.error('[Signup] Erro na requisição:', err);
         this.isLoading.set(false);
         const msg =
-          err.status === 0 ? 'Não foi possível ligar ao servidor. Verifique se o backend está a correr em http://localhost:5000.' :
+          err.status === 0 ? 'Não foi possível ligar ao servidor. Verifique a configuração do backend.' :
           err.status === 409 ? 'E-mail já registado.' :
           err.error?.message ?? 'Erro ao criar conta.';
         this.showMessage(msg, 'error');

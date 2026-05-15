@@ -1,0 +1,276 @@
+<div class="modal-overlay" (click)="fecharModal()" role="dialog" aria-modal="true">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-header__left">
+        <div class="modal-header__icon"
+             [class.modal-header__icon--version]="isNovaVersao()">
+          <i class="las"
+             [class.la-cloud-upload-alt]="!isNovaVersao()"
+             [class.la-code-branch]="isNovaVersao()"></i>
+        </div>
+        <div>
+          <h3>{{ tituloModal() }}</h3>
+          @if (isNovaVersao()) {
+            <p class="modal-subtitle">
+              Versão atual: <strong>v{{ novaVersaoDocumento()!.versao }}</strong>
+              · Nova versão será <strong>v{{ novaVersaoDocumento()!.versao + 1 }}</strong>
+            </p>
+          } @else {
+            <p class="modal-subtitle">
+              Pipeline: MIME sniffing → SHA-256 → Análise antivírus
+            </p>
+          }
+        </div>
+      </div>
+      <button class="btn-icon-close" (click)="fecharModal()"
+              [disabled]="enviando()" title="Fechar">
+        <i class="las la-times"></i>
+      </button>
+    </div>
+
+
+    <div class="modal-body">
+
+      @if (errorMsg()) {
+        <div class="alert alert--error" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+        </div>
+      }
+
+      @if (!ficheiroSel()) {
+        <div class="dropzone"
+             [class.dropzone--dragover]="dragOver()"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)">
+
+          <div class="dropzone__inner">
+            <div class="dropzone__icon">
+              <i class="las la-cloud-upload-alt"></i>
+            </div>
+            <div class="dropzone__text">
+              <p class="dropzone__title">Arraste o ficheiro aqui</p>
+              <p class="dropzone__sub">ou</p>
+              <label class="btn-choose" for="file-input">
+                <i class="las la-folder-open"></i> Escolher ficheiro
+              </label>
+              <input id="file-input" type="file"
+                     class="file-input--hidden"
+                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff,.txt,.csv"
+                     (change)="onFileInputChange($event)" />
+            </div>
+            <p class="dropzone__hint">
+              <i class="las la-shield-alt"></i>
+              PDF, Word, Excel, PowerPoint, Imagens, TXT, CSV · Máx. 50 MB
+            </p>
+          </div>
+
+        </div>
+      }
+
+      <!-- ─── Ficheiro selecionado ─── -->
+      @if (ficheiroSel() && ficheiroFormatado()) {
+        <div class="ficheiro-preview"
+             [class.ficheiro-preview--erro]="!ficheiroValido()"
+             [class.ficheiro-preview--ok]="ficheiroValido()">
+
+          <div class="ficheiro-preview__icon">
+            <i class="las la-file-alt"></i>
+          </div>
+
+          <div class="ficheiro-preview__info">
+            <span class="ficheiro-nome">{{ ficheiroFormatado()!.nome }}</span>
+            <span class="ficheiro-meta">
+              {{ ficheiroFormatado()!.tamanho }}
+              · <code>{{ ficheiroFormatado()!.tipo }}</code>
+            </span>
+
+            @if (ficheiroFormatado()!.erroMime) {
+              <span class="ficheiro-erro">
+                <i class="las la-exclamation-triangle"></i>
+                Tipo de ficheiro não permitido (MIME: {{ ficheiroFormatado()!.tipo }})
+              </span>
+            }
+            @if (ficheiroFormatado()!.erroTamanho) {
+              <span class="ficheiro-erro">
+                <i class="las la-exclamation-triangle"></i>
+                Ficheiro excede o limite de 50 MB
+              </span>
+            }
+          </div>
+
+          <div class="ficheiro-preview__status">
+            @if (ficheiroValido()) {
+              <span class="status-ok"><i class="las la-check-circle"></i></span>
+            } @else {
+              <span class="status-erro"><i class="las la-times-circle"></i></span>
+            }
+          </div>
+
+          @if (!enviando()) {
+            <button class="btn-remove" (click)="removerFicheiro()" title="Remover">
+              <i class="las la-times"></i>
+            </button>
+          }
+
+        </div>
+      }
+
+      <!-- ─── Barra de Progresso ─── -->
+      @if (progresso()) {
+        <div class="upload-progress"
+             [class.upload-progress--success]="progresso()!.estado === 'concluido'"
+             [class.upload-progress--error]="progresso()!.estado === 'erro'">
+
+          <div class="upload-progress__header">
+            <div class="upload-progress__icon">
+              <i class="las" [class]="iconeEstadoUpload()"></i>
+            </div>
+            <div class="upload-progress__info">
+              <span class="upload-progress__label">
+                @if (progresso()!.estado === 'a-carregar') { A enviar… }
+                @if (progresso()!.estado === 'concluido')  { Enviado com sucesso! }
+                @if (progresso()!.estado === 'erro')       { Erro no envio }
+              </span>
+              @if (progresso()!.mensagem) {
+                <span class="upload-progress__msg">{{ progresso()!.mensagem }}</span>
+              }
+            </div>
+            <span class="upload-progress__percent">
+              {{ progresso()!.progresso }}%
+            </span>
+          </div>
+
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill"
+                 [style.width.%]="progresso()!.progresso"
+                 [class.progress-bar-fill--success]="progresso()!.estado === 'concluido'"
+                 [class.progress-bar-fill--error]="progresso()!.estado === 'erro'">
+            </div>
+          </div>
+
+          @if (progresso()!.estado === 'concluido') {
+            <div class="upload-success-info">
+              <i class="las la-shield-alt"></i>
+              Documento em análise. O scan antivírus será executado automaticamente.
+            </div>
+          }
+
+        </div>
+      }
+
+      <!-- ─── Campos do Formulário (apenas em novo upload) ─── -->
+      @if (!isNovaVersao() && ficheiroValido()) {
+        <div class="upload-form">
+
+          <h4 class="form-section-title">
+            <i class="las la-tag"></i> Classificação
+          </h4>
+
+          <div class="form-row form-row--2">
+
+            <div class="form-group">
+              <label for="upload-categoria">
+                Categoria <span class="required">*</span>
+              </label>
+              <div class="select-wrapper">
+                <i class="las la-layer-group select-icon"></i>
+                <select id="upload-categoria"
+                        [value]="categoria()"
+                        (change)="categoria.set($any($event.target).value)">
+                  @for (c of categoriaOpcoes; track c) {
+                    <option [value]="c" [selected]="c === categoria()">
+                      {{ labelCategoria(c) }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="upload-contexto">
+                Contexto <span class="required">*</span>
+              </label>
+              <div class="select-wrapper">
+                <i class="las la-sitemap select-icon"></i>
+                <select id="upload-contexto"
+                        [value]="contexto()"
+                        (change)="contexto.set($any($event.target).value)">
+                  @for (c of contextoOpcoes; track c) {
+                    <option [value]="c" [selected]="c === contexto()">
+                      {{ labelContexto(c) }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="form-group">
+            <label for="upload-descricao">Descrição</label>
+            <textarea id="upload-descricao"
+                      rows="2"
+                      placeholder="Descrição opcional do documento…"
+                      [value]="descricao()"
+                      (input)="descricao.set($any($event.target).value)">
+            </textarea>
+          </div>
+
+        </div>
+      }
+
+      <!-- Descrição para nova versão -->
+      @if (isNovaVersao() && ficheiroValido()) {
+        <div class="upload-form">
+          <div class="form-group" style="margin-top:4px">
+            <label for="upload-desc-versao">Descrição da alteração</label>
+            <textarea id="upload-desc-versao"
+                      rows="2"
+                      placeholder="O que foi alterado nesta versão? (opcional)…"
+                      [value]="descricao()"
+                      (input)="descricao.set($any($event.target).value)">
+            </textarea>
+          </div>
+        </div>
+      }
+
+      <!-- ─── Nota de segurança ─── -->
+      <div class="security-note">
+        <i class="las la-shield-alt"></i>
+        <span>
+          O ficheiro será analisado via <strong>MIME sniffing</strong> (Magic Numbers) e
+          o hash <strong>SHA-256</strong> calculado para integridade documental.
+          O upload é autenticado via <strong>JWT</strong>.
+        </span>
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+      <button class="btn-secondary"
+              (click)="fecharModal()"
+              [disabled]="enviando()">
+        {{ progresso()?.estado === 'concluido' ? 'Fechar' : 'Cancelar' }}
+      </button>
+
+      @if (progresso()?.estado !== 'concluido') {
+        <button class="btn-primary"
+                [disabled]="!podeSometer()"
+                (click)="submeter()">
+          @if (enviando()) {
+            <span class="spinner spinner--sm"></span>
+            A enviar…
+          } @else {
+            <i class="las la-cloud-upload-alt"></i>
+            {{ isNovaVersao() ? 'Submeter Nova Versão' : 'Submeter Documento' }}
+          }
+        </button>
+      }
+    </div>
+
+  </div>
+</div>

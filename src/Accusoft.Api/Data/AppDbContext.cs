@@ -1,3 +1,6 @@
+using Accusoft.Api.Domain.Entities;
+using Accusoft.Api.Domain.Enums;
+using Accusoft.Api.Infrastructure.Persistence.Configurations;
 using Accusoft.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +31,9 @@ public class AppDbContext : DbContext
     public DbSet<Incidente> Incidentes => Set<Incidente>();
     public DbSet<Guia> Guias => Set<Guia>();
     public DbSet<GuiaItem> GuiaItens => Set<GuiaItem>();
-    public DbSet<Documento>             Documentos             => Set<Documento>();
+    public DbSet<Domain.Entities.Documento>             Documentos             => Set<Domain.Entities.Documento>();
+    public DbSet<Domain.Entities.DocumentoHistorico>     DocumentosHistorico    => Set<Domain.Entities.DocumentoHistorico>();
+    public DbSet<Domain.Entities.DocumentoAuditoria>     DocumentosAuditoria    => Set<Domain.Entities.DocumentoAuditoria>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Sessao> Sessoes => Set<Sessao>();
     public DbSet<Motorista> Motoristas { get; internal set; }
@@ -187,5 +192,8 @@ public class AppDbContext : DbContext
                   .HasForeignKey(a => a.UsuarioId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Configuração do Documento (Domain Entity)
+        modelBuilder.ApplyConfiguration(new DocumentoVersioningConfiguration());
     }
 }
