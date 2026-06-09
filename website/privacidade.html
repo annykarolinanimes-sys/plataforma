@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <meta name="description" content="CortexLog — Política de Privacidade. Saiba como recolhemos, utilizamos e protegemos os seus dados pessoais.">
+  <meta name="robots" content="noindex, follow">
+  
+  <meta property="og:title" content="CortexLog | Política de Privacidade">
+  <meta property="og:description" content="Consulte a nossa política de privacidade e saiba como protegemos os seus dados.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_PT">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>">
+  
+  <title>CortexLog | Política de Privacidade</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --amber: #f3b85b;
+      --amber-dark: #e09e3a;
+      --amber-hover: #c98a2a;
+      --amber-light: #fef9ef;
+      --amber-mid: #fdefc4;
+      --white: #ffffff;
+      --text-dark: #2d2d2d;
+      --gray-light: #f5f7fa;
+      --gray-text: #4a5568;
+      --shadow-card: 0 20px 30px -12px rgba(0, 0, 0, 0.06), 0 8px 14px -6px rgba(0, 0, 0, 0.02);
+      --transition: 0.3s ease;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fafbfc;
+      color: var(--text-dark);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Montserrat', 'Inter', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1e1e1e;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 36px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p, li {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    ul {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    a {
+      color: var(--amber-dark);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      color: var(--amber-hover);
+    }
+
+    strong {
+      color: #1e1e1e;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--amber-dark);
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--amber);
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 2px;
+    }
+
+    .btn-back {
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--amber);
+      color: var(--text-dark);
+      border: 1.5px solid var(--amber);
+      box-shadow: 0 4px 12px rgba(243, 184, 91, 0.3);
+    }
+
+    .btn-back:hover {
+      background: var(--amber-hover);
+      border-color: var(--amber-hover);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: #1a1a1a;
+    }
+
+    /* Conteúdo */
+    .page-container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .page-header .icon-large {
+      font-size: 3rem;
+      color: var(--amber-dark);
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .page-header h1 {
+      font-size: 2.4rem;
+      margin-bottom: 8px;
+    }
+
+    .page-header .last-update {
+      font-size: 0.85rem;
+      color: #999;
+      font-style: italic;
+    }
+
+    .info-box {
+      background: var(--amber-light);
+      border-left: 4px solid var(--amber);
+      padding: 18px 22px;
+      border-radius: 0 10px 10px 0;
+      margin: 28px 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .info-box i {
+      color: var(--amber-dark);
+      margin-right: 6px;
+    }
+      /* Footer completo */
+    .footer {
+      background: #1a1a1a;
+      color: #d1d5db;
+      padding: 64px 0 0;
+    }
+
+    .footer-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1.4fr;
+      gap: 40px 24px;
+      margin-bottom: 48px;
+    }
+
+    .footer-col h4 {
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    .footer-col h4::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 32px;
+      height: 3px;
+      background: var(--amber-dark);
+      border-radius: 2px;
+    }
+
+    .footer-logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 14px;
+      letter-spacing: -0.5px;
+    }
+
+    .footer-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #9ca3af;
+      margin-bottom: 18px;
+      max-width: 380px;
+    }
+
+    .footer-badge-pap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(243, 184, 91, 0.08);
+      border: 1px solid rgba(243, 184, 91, 0.2);
+      color: var(--amber);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-links a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-links a::before {
+      content: '›';
+      color: var(--amber-dark);
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: transform var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--amber);
+      transform: translateX(4px);
+    }
+
+    .footer-contact {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-contact p {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .footer-contact i {
+      color: var(--amber-dark);
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .footer-social a {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 1.1rem;
+      text-decoration: none;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .footer-social a::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--amber-dark);
+      border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.3s ease;
+      z-index: 0;
+    }
+
+    .footer-social a i {
+      position: relative;
+      z-index: 1;
+      transition: color var(--transition);
+    }
+
+    .footer-social a:hover {
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(224, 158, 58, 0.3);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid #2a2a2a;
+      padding: 28px 0 24px;
+      text-align: center;
+    }
+
+    .footer-legal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .footer-legal a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color var(--transition);
+      position: relative;
+    }
+
+    .footer-legal a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--amber);
+      transition: width var(--transition);
+    }
+
+    .footer-legal a:hover {
+      color: var(--amber);
+    }
+
+    .footer-legal a:hover::after {
+      width: 100%;
+    }
+
+    .footer-legal span {
+      color: #404040;
+      font-size: 0.8rem;
+      user-select: none;
+    }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px 20px;
+      }
+      .footer-col-brand {
+        grid-column: span 2;
+      }
+      .footer-desc {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+      table th, table td {
+        padding: 8px 10px;
+      }
+      .footer {
+        padding: 48px 0 0;
+      }
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+      .footer-col-brand {
+        grid-column: span 1;
+        text-align: center;
+      }
+      .footer-desc {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .footer-badge-pap {
+        display: flex;
+        justify-content: center;
+        max-width: 300px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .footer-col h4 {
+        text-align: center;
+      }
+      .footer-col h4::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .footer-links {
+        align-items: center;
+      }
+      .footer-contact p {
+        justify-content: center;
+        text-align: center;
+      }
+      .footer-social {
+        justify-content: center;
+      }
+      .footer-legal {
+        gap: 8px;
+      }
+      .footer-logo {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .footer-legal {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .footer-legal span {
+        display: none;
+      }
+    }
+
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+      table th, table td {
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">
+      ACCU<span>SOFT</span><span class="logo-dot"></span>
+    </a>
+    <a href="index.html" class="btn-back">
+      <i class="las la-arrow-left"></i>
+    </a>
+  </nav>
+
+  <main class="page-container">
+    <header class="page-header">
+      <div class="icon-large">
+        <i class="las la-shield-alt"></i>
+      </div>
+      <h1>Política de Privacidade</h1>
+      <p class="last-update">Última atualização: Maio de 2026</p>
+    </header>
+
+    <div class="info-box">
+      <i class="las la-info-circle"></i>
+      <strong>Nota importante:</strong> Esta política de privacidade foi elaborada no âmbito da Prova de Aptidão Profissional (PAP) e descreve como os dados seriam tratados numa implementação real da plataforma CortexLog.
+    </div>
+
+    <h2>1. Introdução</h2>
+    <p>
+      A CortexLog compromete-se a proteger a privacidade dos seus utilizadores. Esta Política de Privacidade descreve como recolhemos, utilizamos, armazenamos e protegemos as informações pessoais fornecidas através da nossa plataforma de gestão de frotas.
+    </p>
+    <p>
+      Ao utilizar a plataforma CortexLog, está a concordar com as práticas descritas nesta política. Recomendamos a leitura atenta deste documento antes de fornecer quaisquer dados pessoais.
+    </p>
+
+    <h2>2. Responsável pelo Tratamento de Dados</h2>
+    <p><strong>Entidade:</strong> CortexLog (Projeto PAP)</p>
+    <p><strong>Estabelecimento de Ensino:</strong> Escola Secundária Padre Benjamim Salgado</p>
+    <p><strong>Morada:</strong> R. dos Estudantes, 4770-260 Joane, V.N.Famalicão</p>
+    <p><strong>E-mail de contacto:</strong> papanny412@gmail.com</p>
+
+    <h2>3. Dados Recolhidos</h2>
+    <p>A CortexLog pode recolher as seguintes categorias de dados pessoais:</p>
+    <ul>
+      <li><strong>Dados de identificação:</strong> nome completo, endereço de e-mail, número de telefone.</li>
+      <li><strong>Dados profissionais:</strong> nome da empresa, cargo, dimensão da frota.</li>
+      <li><strong>Dados de navegação:</strong> endereço IP, tipo de dispositivo, browser, páginas visitadas, tempo de sessão.</li>
+      <li><strong>Dados de faturação:</strong> informações necessárias para processamento de pagamentos (processadas por terceiros certificados).</li>
+      <li><strong>Dados de localização:</strong> dados de geolocalização dos veículos monitorizados pela plataforma.</li>
+    </ul>
+
+    <h2>4. Finalidade do Tratamento</h2>
+    <p>Os dados pessoais recolhidos são utilizados para as seguintes finalidades:</p>
+    <ul>
+      <li><strong>Prestação de serviços:</strong> fornecer as funcionalidades da plataforma, incluindo rastreamento, relatórios e gestão documental.</li>
+      <li><strong>Comunicação:</strong> enviar notificações relacionadas com o serviço, atualizações e suporte ao cliente.</li>
+      <li><strong>Faturação:</strong> processar pagamentos e gerir subscrições.</li>
+      <li><strong>Melhorias:</strong> analisar a utilização da plataforma para melhorar a experiência do utilizador.</li>
+      <li><strong>Obrigações legais:</strong> cumprir com obrigações fiscais e regulamentares aplicáveis.</li>
+    </ul>
+
+    <h2>5. Base Legal para o Tratamento</h2>
+    <p>O tratamento de dados pessoais é realizado com base nos seguintes fundamentos legais, em conformidade com o Regulamento Geral de Proteção de Dados (RGPD):</p>
+    <ul>
+      <li><strong>Execução de contrato:</strong> para fornecer os serviços contratados.</li>
+      <li><strong>Consentimento:</strong> quando o utilizador consente explicitamente, por exemplo, para cookies não essenciais.</li>
+      <li><strong>Interesse legítimo:</strong> para melhorar a segurança e o desempenho da plataforma.</li>
+      <li><strong>Obrigação legal:</strong> para cumprimento de requisitos fiscais e legais.</li>
+    </ul>
+
+    <h2>6. Partilha de Dados</h2>
+    <p>A CortexLog não vende nem aluga dados pessoais a terceiros. Os dados podem ser partilhados com:</p>
+    <ul>
+      <li><strong>Fornecedores de serviços:</strong> processadores de pagamento, serviços de alojamento na nuvem.</li>
+      <li><strong>Autoridades competentes:</strong> quando exigido por lei ou para proteger os nossos direitos legais.</li>
+    </ul>
+
+    <h2>7. Armazenamento e Segurança</h2>
+    <p>
+      Os dados pessoais são armazenados em servidores seguros localizados na União Europeia. 
+      Implementamos medidas técnicas e organizacionais adequadas para proteger os dados contra acesso não autorizado, 
+      alteração, divulgação ou destruição, incluindo encriptação SSL, firewalls e controlos de acesso restrito.
+    </p>
+
+    <h2>8. Período de Conservação</h2>
+    <p>
+      Os dados pessoais são conservados apenas durante o período necessário para as finalidades para as quais foram recolhidos, 
+      ou conforme exigido por lei. Os dados de faturação são conservados pelo período legal de 10 anos. 
+      Os dados de utilização são anonimizados após 24 meses de inatividade da conta.
+    </p>
+
+    <h2>9. Direitos dos Titulares dos Dados</h2>
+    <p>Nos termos do RGPD, o utilizador tem os seguintes direitos:</p>
+    <ul>
+      <li><strong>Direito de acesso:</strong> solicitar uma cópia dos seus dados pessoais.</li>
+      <li><strong>Direito de retificação:</strong> corrigir dados incompletos ou inexatos.</li>
+      <li><strong>Direito de apagamento:</strong> solicitar a eliminação dos seus dados («direito a ser esquecido»).</li>
+      <li><strong>Direito de limitação:</strong> restringir o tratamento em determinadas circunstâncias.</li>
+      <li><strong>Direito de portabilidade:</strong> receber os dados num formato estruturado.</li>
+      <li><strong>Direito de oposição:</strong> opor-se ao tratamento para fins de marketing direto.</li>
+    </ul>
+    <p>Para exercer qualquer um destes direitos, contacte-nos através do e-mail <strong>papanny412@gmail.com</strong>.</p>
+
+    <h2>10. Cookies</h2>
+    <p>
+      A plataforma CortexLog utiliza cookies para melhorar a experiência de navegação. 
+      Para informações detalhadas, consulte a nossa <a href="cookies.html">Política de Cookies</a>.
+    </p>
+
+    <h2>11. Alterações à Política de Privacidade</h2>
+    <p>
+      Reservamo-nos o direito de atualizar esta política periodicamente. Quaisquer alterações serão publicadas nesta página 
+      e, se forem significativas, notificaremos os utilizadores por e-mail ou através de um aviso na plataforma.
+    </p>
+
+    <h2>12. Contacto</h2>
+    <p>Para questões relacionadas com esta Política de Privacidade ou com o tratamento dos seus dados, contacte-nos:</p>
+    <p><strong>E-mail:</strong> papanny412@gmail.com</p>
+    <p><strong>Morada:</strong> Escola Secundária Padre Benjamim Salgado, R. dos Estudantes, 4770-260 Joane, V.N.Famalicão</p>
+    <p><strong>Telefone:</strong> +351 252 996 877</p>
+
+  </main>
+
+<footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col footer-col-brand">
+          <div class="footer-logo">CortexLog</div>
+          <p class="footer-desc">Plataforma desenvolvida no âmbito da Prova de Aptidão Profissional (PAP). Solução inteligente para gestão e logística de frotas.</p>
+          <div class="footer-badge-pap">
+            <i class="las la-graduation-cap"></i>
+            Projeto PAP 2026 | Curso Profissional de Técnico de Gestão de Sistemas Informáticos
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Sobre Nós</h4>
+          <ul class="footer-links">
+            <li><a href="historia.html">Sobre mim</a></li>
+            <li><a href="projeto.html">Projeto PAP</a></li>
+            <li><a href="tecnologias.html">Tecnologias utilizadas</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Escola</h4>
+          <div class="footer-contact">
+            <p><i class="las la-graduation-cap"></i> Escola Secundária Padre Benjamim Salgado</p>
+            <p><i class="las la-map-marker"></i> R. dos Estudantes, 4770-260 Joane, V.N.Famalicão</p>
+            <p><i class="las la-phone"></i> +351 252 996 877</p>
+          </div>
+          <div class="footer-social">
+            <a href="https://www.facebook.com/AEPBSJoane/" aria-label="Facebook"><i class="lab la-facebook"></i></a>
+            <a href="https://www.instagram.com/aepbsjoane/" aria-label="Instagram"><i class="lab la-instagram"></i></a>
+            <a href="https://w.aepbs.net/www/index.php/pt/" aria-label="Escola"><i class="las la-university"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <a href="privacidade.html">Política de Privacidade</a>
+          <span>|</span>
+          <a href="termos.html">Termos de Utilização</a>
+          <span>|</span>
+          <a href="cookies.html">Cookies</a>
+        </div>
+        <p class="footer-copy">© 2026 CortexLog — Projeto PAP. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

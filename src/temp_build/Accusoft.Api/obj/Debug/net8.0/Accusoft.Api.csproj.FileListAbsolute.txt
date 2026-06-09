@@ -1,0 +1,8 @@
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.csproj.AssemblyReference.cache
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.AssemblyInfoInputs.cache
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.AssemblyInfo.cs
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.csproj.CoreCompileInputs.cache
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\anny\Desktop\plataforma\src\temp_build\Accusoft.Api\obj\Debug\net8.0\Accusoft.Api.sourcelink.json

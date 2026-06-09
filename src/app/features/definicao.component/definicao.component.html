@@ -1,0 +1,213 @@
+<div class="definicao-container">
+  <div class="page-header">
+    <div class="header-title">
+      <h1><i class="las la-user-cog"></i> Definições</h1>
+      <p>Gestão do seu perfil, segurança e preferências.</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert-error">
+      <i class="las la-exclamation-circle"></i> {{ errorMsg() }}
+      <button class="alert-close" (click)="clearError()">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert-success">
+      <i class="las la-check-circle"></i> {{ successMsg() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="las la-spinner la-spin"></i>
+      <span>A carregar...</span>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="settings-grid">
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-user-circle"></i> Perfil</h3>
+          <button class="btn-edit" (click)="editarPerfil()">
+            <i class="las la-pen"></i> Editar
+          </button>
+        </div>
+        <div class="profile-info">
+          <div class="avatar-section">
+            <div class="avatar-large">
+              <img [src]="user()?.avatarUrl || getAvatarUrl()" alt="Avatar" 
+                onerror="this.src='https://ui-avatars.com/api/?background=f59e0b&color=fff&bold=true'">
+              @if (isSaving()) {
+                <div class="avatar-overlay">
+                  <i class="las la-spinner la-spin"></i>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <label><i class="las la-user"></i> Nome completo</label>
+              <p>{{ user()?.nome || 'Indefinido' }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-envelope"></i> Email</label>
+              <p>{{ user()?.email || 'Indefinido' }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-briefcase"></i> Departamento</label>
+              <p>{{ user()?.departamento || 'Não definido' }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-id-card"></i> Cargo</label>
+              <p>{{ user()?.cargo || 'Não definido' }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-phone"></i> Telefone</label>
+              <p>{{ user()?.telefone || 'Não definido' }}</p>
+            </div>
+            <div class="info-item">
+              <label><i class="las la-shield-alt"></i> Função</label>
+              <p><span class="badge" [class.badge-admin]="user()?.role === 'admin'">{{ user()?.role === 'admin' ? 'Administrador' : 'Utilizador' }}</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-chart-line"></i> Estatísticas</h3>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <i class="las la-file-alt"></i>
+            <div>
+              <span class="stat-value">{{ totalDocumentos() }}</span>
+              <span class="stat-label">Documentos</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-truck"></i>
+            <div>
+              <span class="stat-value">{{ totalEnvios() }}</span>
+              <span class="stat-label">Envios</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-bell"></i>
+            <div>
+              <span class="stat-value">{{ alertasNaoLidos() }}</span>
+              <span class="stat-label">Alertas não lidos</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="las la-calendar"></i>
+            <div>
+              <span class="stat-value">{{ diasRegistado() }}</span>
+              <span class="stat-label">Dias registado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-lock"></i> Segurança</h3>
+        </div>
+        <div class="security-options">
+          <button class="btn-outline" (click)="abrirModalAlterarSenha()">
+            <i class="las la-key"></i> Alterar palavra-passe
+          </button>
+          <button class="btn-outline danger" (click)="logout()">
+            <i class="las la-sign-out-alt"></i> Terminar sessão
+          </button>
+        </div>
+        <div class="session-info">
+          <p><i class="las la-clock"></i> Último acesso: {{ formatarData(user()?.ultimoLogin || '') }}</p>
+          <p><i class="las la-calendar-plus"></i> Membro desde: {{ formatarData(user()?.dataCriacao || '') }}</p>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="card-header">
+          <h3><i class="las la-sliders-h"></i> Preferências</h3>
+        </div>
+        <div class="preferences">
+          <div class="pref-item">
+            <label class="switch-label">
+              <span>Notificações por email</span>
+              <div class="switch">
+                <input type="checkbox" [(ngModel)]="prefEmailNotifications" (change)="salvarPreferencias()">
+                <span class="slider round"></span>
+              </div>
+            </label>
+          </div>  
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showEditProfileModal()) {
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome completo</label>
+          <input type="text" [(ngModel)]="editForm.nome" placeholder="Nome completo" />
+        </div>
+        <div class="form-group">
+          <label>Departamento</label>
+          <input type="text" [(ngModel)]="editForm.departamento" placeholder="Ex: Logística, TI, RH..." />
+        </div>
+        <div class="form-group">
+          <label>Cargo</label>
+          <input type="text" [(ngModel)]="editForm.cargo" placeholder="Ex: Gestor, Técnico, Analista..." />
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="tel" [(ngModel)]="editForm.telefone" placeholder="+351 912 345 678" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" (click)="salvarPerfil()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? 'A guardar...' : 'Guardar' }}
+        </button>
+      </div>
+}
+
+@if (showChangePasswordModal()) {
+  <div class="modal-overlay" (click)="fecharModalSenha()" role="dialog" aria-modal="true" aria-labelledby="modal-change-password-title">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-change-password-title"><i class="las la-key"></i> Alterar palavra-passe</h3>
+        <button type="button" class="modal-close" (click)="fecharModalSenha()" aria-label="Fechar modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Palavra-passe atual</label>
+          <input type="password" [(ngModel)]="passwordForm.currentPassword" [placeholder]="'••••••••' " />
+        </div>
+        <div class="form-group">
+          <label>Nova palavra-passe</label>
+          <input type="password" [(ngModel)]="passwordForm.newPassword" [placeholder]="'••••••••' " />
+        </div>
+        <div class="form-group">
+          <label>Confirmar palavra-passe</label>
+          <input type="password" [(ngModel)]="passwordForm.confirmPassword" [placeholder]="'••••••••'" />
+        </div>
+        @if (passwordError()) {
+          <div class="field-error">
+            <i class="las la-exclamation-circle"></i> {{ passwordError() }}
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" (click)="alterarSenha()" [disabled]="isSaving()">
+          <i class="las" [class.la-save]="!isSaving()" [class.la-spinner]="isSaving()"></i>
+          {{ isSaving() ? 'A alterar...' : 'Alterar palavra-passe' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

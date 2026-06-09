@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CortexLog - Novo Contacto</title>
+  <link rel="stylesheet" href="contact-style.css">
+</head>
+<body style="margin: 0; padding: 20px; background: #f5f5f5;">
+  <div class="email-container">
+    <div class="email-header">
+      <h1>CORTEXLOG</h1>
+      <p>Plataforma de Gestão de Frotas</p>
+      <div class="badge">NOVO CONTACTO</div>
+    </div>
+
+    <div class="email-content">
+      <div class="message-id">
+        ID: <span>{{MESSAGE_ID}}</span> | Data: {{DATA_COMPLETA}}
+      </div>
+
+      <div class="section">
+        <div class="section-title">INFORMAÇÃO DO CLIENTE</div>
+        <div class="section-content">
+          <div class="info-row"><span class="info-label">Nome completo:</span><span class="info-value">{{FULL_NAME}}</span></div>
+          <div class="info-row"><span class="info-label">Empresa:</span><span class="info-value">{{COMPANY}}</span></div>
+          <div class="info-row"><span class="info-label">E-mail:</span><span class="info-value">{{EMAIL}}</span></div>
+          <div class="info-row"><span class="info-label">Telefone:</span><span class="info-value">{{PHONE}}</span></div>
+          <div class="info-row"><span class="info-label">Tamanho da frota:</span><span class="info-value">{{FLEET_SIZE}}</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><strong> MENSAGEM DO CLIENTE </strong></div>
+        <div class="section-content">
+          <div class="message-box">{{MESSAGE}}</div>
+        </div>
+      </div>
+
+      <div class="system-info">
+        <strong>Informação do sistema:</strong><br>
+        Este contacto foi enviado através do formulário da CortexLog em {{DATA_COMPLETA}}.
+      </div>
+    </div>
+
+    <div class="email-footer">
+      <p>CortexLog - Projeto PAP 2026</p>
+      <p>Curso Profissional de Técnico de Gestão de Sistemas Informáticos<br>Escola Secundária Padre Benjamim Salgado</p>
+    </div>
+  </div>
+</body>
+</html>

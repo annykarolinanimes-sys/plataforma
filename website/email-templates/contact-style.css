@@ -1,0 +1,142 @@
+/* Estilos para o email - AccuSoft */
+.email-container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333333;
+}
+
+.email-header {
+  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+  color: #f3b85b;
+  padding: 25px;
+  text-align: center;
+}
+
+.email-header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 2px;
+}
+
+.email-header p {
+  margin: 5px 0 0;
+  color: #cccccc;
+  font-size: 12px;
+}
+
+.badge {
+  background: #f3b85b;
+  color: #2d2d2d;
+  padding: 5px 15px;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.email-content {
+  padding: 25px;
+}
+
+.message-id {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #888888;
+}
+
+.message-id span {
+  font-family: monospace;
+  background: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.section {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.section-title {
+  background: #f9f9f9;
+  padding: 10px 15px;
+  font-weight: bold;
+  color: #e09e3a;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.section-content {
+  padding: 15px;
+}
+
+.info-row {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-label {
+  font-weight: bold;
+  display: inline-block;
+  width: 140px;
+  color: #555555;
+}
+
+.info-value {
+  color: #333333;
+}
+
+.message-box {
+  background: #fef9ef;
+  padding: 15px;
+  border-left: 4px solid #f3b85b;
+  font-style: italic;
+  color: #555555;
+}
+
+.reply-box {
+  background: #e8f4fd;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.reply-box strong {
+  color: #0066cc;
+}
+
+.reply-email {
+  color: #0066cc;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.system-info {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666666;
+}
+
+.email-footer {
+  background: #2d2d2d;
+  color: #999999;
+  padding: 15px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.email-footer a {
+  color: #f3b85b;
+  text-decoration: none;
+}

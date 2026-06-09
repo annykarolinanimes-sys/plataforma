@@ -1,0 +1,355 @@
+/* You can add global styles to this file, and also import other style files */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background-color: #f4f7f6; 
+    
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('data:image/svg+xml,...'); 
+    background-repeat: repeat;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+:root {
+  color-scheme: light;
+  --surface: #ffffff;
+  --surface-strong: #f8fafc;
+  --surface-border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --brand: #f59e0b;
+  --brand-dark: #b45309;
+  --brand-soft: #fef3c7;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 24px;
+  margin-bottom: 22px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.page-header__left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.page-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--brand);
+  font-size: 1.35rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.subnav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.subnav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.subnav__link:hover {
+  background: #fff7e0;
+  color: var(--brand-dark);
+}
+
+.subnav__link--active {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 14px;
+  background: var(--brand);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-dark);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.filter-group,
+.filter-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+}
+
+.filter-group input,
+.filter-select-wrap select,
+.filter-select-wrap input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text-primary);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--surface-border);
+  text-align: left;
+}
+
+.data-table th {
+  background: var(--surface-strong);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+}
+
+.alert--error {
+  background: #fff1f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.alert--success {
+  background: #ecfdf5;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.alert__close {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--surface-strong);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.btn-icon:hover {
+  background: var(--surface-strong);
+}
+
+.btn-icon--download,
+.btn-icon--print,
+.btn-icon--edit,
+.btn-icon--danger,
+.btn-icon--success,
+.btn-icon--view {
+  color: var(--text-secondary);
+}
+
+.btn-icon--pdf:hover,
+.btn-icon--print:hover,
+.btn-icon--view:hover,
+.btn-icon--edit:hover,
+.btn-icon--danger:hover,
+.btn-icon--success:hover {
+  transform: translateY(-1px);
+}
+
+.btn-icon--edit:hover {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.btn-icon--danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-icon--success:hover {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.btn-icon--print:hover,
+.btn-icon--pdf:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.btn-icon--view:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-state i,
+.empty-state i {
+  font-size: 2rem;
+}
+
+@media (max-width: 900px) {
+  .page-header,
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subnav {
+    justify-content: flex-start;
+  }
+}
+

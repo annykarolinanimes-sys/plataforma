@@ -1,0 +1,1 @@
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"$":["'\\' is an invalid start of a property name. Expected a '\"'. Path: $ | LineNumber: 0 | BytePositionInLine: 1."],"req":["The req field is required."]},"traceId":"00-2615c44f335f2cc366e9973b3b77a31b-dac212c8117dd1d9-00"}

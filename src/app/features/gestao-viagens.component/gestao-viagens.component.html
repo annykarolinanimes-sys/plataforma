@@ -1,0 +1,649 @@
+<div class="gestao-viagens-container">
+
+  <ng-container *ngIf="currentState() === 'list'">
+
+    <div class="page-header">
+      <div class="page-header__left">
+        <div class="page-header__icon">
+          <i class="las la-map-marked-alt"></i>
+        </div>
+        <div>
+          <h1>Gestão de Viagens</h1>
+          <p>Centro de controlo operacional – planeamento, execução e monitorização</p>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Viagem
+      </button>
+    </div>
+
+    <ng-container *ngIf="errorMsg()">
+      <div class="alert alert--error">
+        <i class="las la-exclamation-circle"></i>
+        <span>{{ errorMsg() }}</span>
+        <button class="alert__close" (click)="clearError()">×</button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="successMsg()">
+      <div class="alert alert--success">
+        <i class="las la-check-circle"></i>
+        <span>{{ successMsg() }}</span>
+      </div>
+    </ng-container>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue"><i class="las la-calendar-check"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ viagensPlaneadas() }}</span>
+          <span class="stat-card__label">Planeadas</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--teal"><i class="las la-truck-moving"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ viagensEmCurso() }}</span>
+          <span class="stat-card__label">Em Curso</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green"><i class="las la-check-circle"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ viagensConcluidas() }}</span>
+          <span class="stat-card__label">Concluídas</span>
+        </div>
+      </div>
+      <div class="stat-card" [class.stat-card--alert]="viagensAtrasadas() > 0">
+        <div class="stat-card__icon"
+             [class.stat-card__icon--red]="viagensAtrasadas() > 0"
+             [class.stat-card__icon--slate]="viagensAtrasadas() === 0">
+          <i class="las la-exclamation-triangle"></i>
+        </div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ viagensAtrasadas() }}</span>
+          <span class="stat-card__label">Atrasadas</span>
+        </div>
+        <ng-container *ngIf="viagensAtrasadas() > 0">
+          <div class="stat-card__badge stat-card__badge--red">Atenção</div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="search" placeholder="Nº Viagem, Rota, Motorista…"
+                 [value]="filtroSearch()"
+                 (input)="onSearchChange($any($event.target).value)" />
+        </div>
+        <div class="filter-select-wrap">
+          <i class="las la-filter"></i>
+          <select [value]="filtroStatus()" (change)="onStatusChange($any($event.target).value)">
+            <option value="">Todos os status</option>
+            <ng-container *ngFor="let s of statusList">
+              <option [value]="s">{{ getStatusLabel(s) }}</option>
+            </ng-container>
+          </select>
+        </div>
+      </div>
+      <ng-container *ngIf="pagedResult()">
+        <span class="results-count">
+          {{ totalViagens() }} {{ totalViagens() === 1 ? 'viagem' : 'viagens' }}
+        </span>
+      </ng-container>
+    </div>
+
+    <ng-container *ngIf="isLoading()">
+      <div class="table-container" aria-busy="true">
+        <table class="data-table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th>Nº</th><th>Status</th><th>Prioridade</th>
+              <th>Rota</th><th>Motorista</th><th>Distância</th><th>Desempenho</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let i of [1,2,3,4,5]">
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton--sm"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--md"></span></td>
+                <td><span class="skeleton skeleton--progress"></span></td>
+                <td><span class="skeleton skeleton--badge"></span></td>
+                <td><span class="skeleton skeleton--actions"></span></td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!isLoading()">
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de viagens">
+          <thead>
+            <tr>
+              <th>Nº Viagem</th>
+              <th>Status</th>
+              <th>Prioridade</th>
+              <th>Rota</th>
+              <th>Motorista / Veículo</th>
+              <th>Progresso</th>
+              <th>Desempenho</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let v of viagens()">
+              <tr [class.row--cancelada]="v.status === 'Cancelada'"
+                  [class.row--concluida]="v.status === 'Concluida'"
+                  class="clickable-row" (click)="goToEdit(v)">
+                <td><code class="numero-tag">{{ v.numeroViagem }}</code></td>
+                <td>
+                  <span class="status-badge" [class]="getStatusClass(v.status)">
+                    <span class="badge-dot"></span>{{ getStatusLabel(v.status) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="prioridade-badge" [class]="getPrioridadeClass(v.prioridade)">
+                    @if (v.prioridade === 'Urgente') { <i class="las la-fire-alt"></i> }
+                    @else if (v.prioridade === 'Alta') { <i class="las la-arrow-up"></i> }
+                    @else if (v.prioridade === 'Baixa') { <i class="las la-arrow-down"></i> }
+                    {{ v.prioridade }}
+                  </span>
+                </td>
+                <td>
+                  <div class="rota-stack">
+                    <ng-container *ngIf="v.origem">
+                      <span class="rota-origem"><i class="las la-map-marker"></i> {{ v.origem }}</span>
+                    </ng-container>
+                    <ng-container *ngIf="v.destino">
+                      <span class="rota-destino"><i class="las la-flag-checkered"></i> {{ v.destino }}</span>
+                    </ng-container>
+                  </div>
+                </td>
+                <td>
+                  @if (v.motoristaNome) {
+                    <div class="motorista-stack">
+                      <span class="motorista-nome"><i class="las la-user-tie"></i> {{ v.motoristaNome }}</span>
+                      <ng-container *ngIf="v.veiculoMatricula">
+                        <span class="veiculo-tag"><i class="las la-car"></i> {{ v.veiculoMatricula }} {{ v.veiculoMarca }}</span>
+                      </ng-container>
+                    </div>
+                  } @else {
+                    <span class="text-muted">— Não atribuído —</span>
+                  }
+                </td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar">
+                      <div class="progress-fill"
+                           [class.progress-fill--done]="progressoViagem(v) === 100"
+                           [class.progress-fill--active]="v.status === 'EmCurso'"
+                           [style.width.%]="progressoViagem(v)">
+                      </div>
+                    </div>
+                    <span class="progress-label">{{ progressoViagem(v) }}%</span>
+                  </div>
+                  <ng-container *ngIf="v.distanciaTotalKm">
+                    <span class="progress-km">{{ formatarKm(v.distanciaTotalKm) }}</span>
+                  </ng-container>
+                </td>
+                <td class="performance-cell">
+                  <ng-container *ngIf="v.status === 'Concluida'">
+                    @if (v.atrasoHoras && v.atrasoHoras > 0) {
+                      <span class="performance-bad"><i class="las la-exclamation-triangle"></i> Atraso</span>
+                    } @else if (v.tempoRealHoras && v.tempoEstimadoHoras && v.tempoRealHoras < v.tempoEstimadoHoras * 0.9) {
+                      <span class="performance-good"><i class="las la-tachometer-alt"></i> Rápido</span>
+                    } @else {
+                      <span class="performance-normal"><i class="las la-clock"></i> Normal</span>
+                    }
+                  </ng-container>
+                  <ng-container *ngIf="v.status === 'EmCurso'">
+                    <span class="performance-active"><i class="las la-sync-alt"></i> Em curso</span>
+                  </ng-container>
+                  <ng-container *ngIf="v.status !== 'Concluida' && v.status !== 'EmCurso'">
+                    <span class="text-muted">—</span>
+                  </ng-container>
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <ng-container *ngIf="v.status === 'Planeada'">
+                    <button class="btn-icon btn-icon--start" (click)="iniciarViagem(v, $event)" title="Iniciar">
+                      <i class="las la-play-circle"></i>
+                    </button>
+                  </ng-container>
+                  <ng-container *ngIf="v.status === 'EmCurso'">
+                    <button class="btn-icon btn-icon--success" (click)="concluirViagem(v, $event)" title="Concluir">
+                      <i class="las la-check-circle"></i>
+                    </button>
+                  </ng-container>
+                  <button class="btn-icon btn-view" (click)="goToDetails(v, $event)" title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download" (click)="imprimirPdf(v, $event)" title="Imprimir PDF">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  <ng-container *ngIf="v.status !== 'Cancelada' && v.status !== 'Concluida'">
+                    <button class="btn-icon btn-icon--danger" (click)="confirmarDelete(v, $event)" title="Cancelar">
+                      <i class="las la-ban"></i>
+                    </button>
+                  </ng-container>
+                </td>
+              </tr>
+            </ng-container>
+
+            <ng-container *ngIf="viagens().length === 0">
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <div class="empty-state__icon"><i class="las la-map-marked-alt"></i></div>
+                    <p class="empty-state__title">Nenhuma viagem encontrada</p>
+                    <small class="empty-state__sub">Altere os filtros ou crie uma nova viagem.</small>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-container *ngIf="totalPages() > 1">
+        <nav class="pagination" aria-label="Paginação de viagens">
+          <button class="pagination__btn" [disabled]="currentPage() === 1"
+                  (click)="goToPage(currentPage() - 1)" aria-label="Anterior">
+            <i class="las la-angle-left"></i>
+          </button>
+          <ng-container *ngFor="let p of pages()">
+            <button class="pagination__btn"
+                    [class.pagination__btn--active]="p === currentPage()"
+                    [attr.aria-current]="p === currentPage() ? 'page' : null"
+                    (click)="goToPage(p)">{{ p }}</button>
+          </ng-container>
+          <button class="pagination__btn" [disabled]="currentPage() === totalPages()"
+                  (click)="goToPage(currentPage() + 1)" aria-label="Seguinte">
+            <i class="las la-angle-right"></i>
+          </button>
+          <span class="pagination__info">
+            Página {{ currentPage() }} de {{ totalPages() }} ({{ totalViagens() }} registos)
+          </span>
+        </nav>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FORMULÁRIO (criação / edição / detalhes)
+       ═══════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="currentState() !== 'list'">
+    <div class="form-page">
+
+      <!-- CORRIGIDO: Barra de ações no topo (igual à aba Atribuição) - sem botões no rodapé -->
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las"
+               [class.la-eye]="isViewing()"
+               [class.la-map-marked-alt]="isCreateView()"
+               [class.la-edit]="isEditView() && !isViewing()"></i>
+          </div>
+          <div>
+            <h2>
+              @if (isCreateView()) { Nova Viagem }
+              @else if (isViewing()) { Detalhes da Viagem }
+              @else { Editar Viagem }
+            </h2>
+            <p class="panel-subtitle">
+              @if (isCreateView()) { Registe uma nova operação logística }
+              @else if (isViewing()) { Consulta de dados da viagem }
+              @else { Atualizar dados da viagem }
+            </p>
+          </div>
+        </div>
+        <!-- Ações no topo -->
+        <div class="panel-header__actions">
+          <button class="btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+            @if (isViewing()) { <i class="las la-arrow-left"></i> Voltar } @else { Cancelar }
+          </button>
+          @if (isViewing()) {
+            <button class="btn-primary" (click)="goToEdit(viagemSelecionada()!)" [disabled]="isSaving()">
+              <i class="las la-edit"></i> Editar
+            </button>
+          }
+          @if (!isViewing()) {
+            <button class="btn-primary" (click)="salvarViagem()" [disabled]="isSaving()">
+              @if (isSaving()) { <span class="spinner spinner--sm"></span> A guardar… }
+              @else { <i class="las la-save"></i> Guardar Viagem }
+            </button>
+          }
+        </div>
+      </div>
+
+      <ng-container *ngIf="viagemSelecionada()?.status === 'EmCurso' && isViewing()">
+        <div class="emcurso-banner">
+          <i class="las la-sync-alt la-spin"></i>
+          <span>Viagem em curso — atualizações em tempo real disponíveis</span>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="errorMsg()">
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      </ng-container>
+
+      <div class="form-body" [formGroup]="form">
+        <fieldset [disabled]="isViewing() || viagemSelecionada()?.status === 'EmCurso'">
+
+          <!-- Dados da Viagem -->
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-map-marked-alt"></i> Dados da Viagem</h4>
+            <div class="form-grid-3">
+              <div class="form-group" [class.form-group--error]="hasError('prioridade')">
+                <label for="prioridade">Prioridade <span class="required">*</span></label>
+                <div class="select-icon-wrap">
+                  <i class="las la-flag"></i>
+                  <select id="prioridade" formControlName="prioridade">
+                    <ng-container *ngFor="let p of prioridades">
+                      <option [value]="p">{{ p }}</option>
+                    </ng-container>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="dataInicioPlaneada">Data/Hora Início Planeada</label>
+                <div class="input-icon">
+                  <i class="las la-clock"></i>
+                  <input id="dataInicioPlaneada" type="datetime-local" formControlName="dataInicioPlaneada" />
+                </div>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasFormError('dataFimAnterior')">
+                <label for="dataFimPlaneada">Data/Hora Fim Planeada</label>
+                <div class="input-icon">
+                  <i class="las la-hourglass-end"></i>
+                  <input id="dataFimPlaneada" type="datetime-local" formControlName="dataFimPlaneada" />
+                </div>
+                <ng-container *ngIf="hasFormError('dataFimAnterior')">
+                  <span class="field-error">
+                    <i class="las la-exclamation-circle"></i>
+                    A data de fim não pode ser anterior à data de início.
+                  </span>
+                </ng-container>
+              </div>
+
+              <div class="form-group">
+                <label for="origemNome">Origem</label>
+                <div class="input-icon">
+                  <i class="las la-map-marker"></i>
+                  <input id="origemNome" type="text" formControlName="origemNome" placeholder="Local de partida" />
+                </div>
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('destinoNome')">
+                <label for="destinoNome">Destino <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-flag-checkered"></i>
+                  <input id="destinoNome" type="text" formControlName="destinoNome" placeholder="Local de chegada" />
+                </div>
+                <ng-container *ngIf="hasError('destinoNome', 'required')">
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-users-cog"></i> Recursos Atribuídos</h4>
+            <div class="form-grid-3">
+
+              <!-- Veículo -->
+              <div class="form-group">
+                <label>Veículo</label>
+                <div class="search-container" [class.search-container--open]="showVeiculoDropdown()">
+                  <ng-container *ngIf="getVeiculoSelecionado() && !veiculoSearchTerm()">
+                    <div class="smart-selected">
+                      <i class="las la-car"></i>
+                      <span>{{ getVeiculoSelecionado()!.matricula }} — {{ getVeiculoSelecionado()!.marca }} {{ getVeiculoSelecionado()!.modelo }}</span>
+                      <button type="button" class="smart-clear" (click)="form.patchValue({ veiculoId: null }); veiculoSearchTerm.set('');">
+                        <i class="las la-times"></i>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="!getVeiculoSelecionado() || veiculoSearchTerm()">
+                    <div class="input-icon">
+                      <i class="las la-search"></i>
+                      <input type="text" placeholder="Pesquisar veículo…"
+                             autocomplete="off"
+                             [value]="veiculoSearchTerm()"
+                             (input)="onVeiculoSearch($any($event.target).value)"
+                             (focus)="onVeiculoFocus()"
+                             (blur)="closeVeiculoDropdown()" />
+                    </div>
+                    <ng-container *ngIf="showVeiculoDropdown()">
+                      <div class="search-dropdown">
+                        <ng-container *ngIf="filteredVeiculos().length > 0; else noVeiculos">
+                          <ng-container *ngFor="let v of filteredVeiculos()">
+                            <div class="search-option" (mousedown)="selecionarVeiculo(v)">
+                              <div class="search-option__name">{{ v.matricula }}</div>
+                              <div class="search-option__meta">
+                                <span><i class="las la-car"></i> {{ v.marca }} {{ v.modelo }}</span>
+                                @if (v.vin) { <span><i class="las la-barcode"></i> ...{{ v.vin.slice(-6) }}</span> }
+                              </div>
+                            </div>
+                          </ng-container>
+                        </ng-container>
+                        <ng-template #noVeiculos>
+                          <div class="search-empty">Nenhum veículo encontrado.</div>
+                        </ng-template>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Cliente -->
+              <div class="form-group">
+                <label>Cliente</label>
+                <div class="search-container" [class.search-container--open]="showClienteDropdown()">
+                  <ng-container *ngIf="form.get('clienteId')?.value && !clienteSearchTerm()">
+                    <div class="smart-selected">
+                      <i class="las la-user"></i>
+                      <span>{{ clientes().find(c => c.id == form.get('clienteId')?.value)?.nome }}</span>
+                      <button type="button" class="smart-clear" (click)="form.patchValue({ clienteId: null }); clienteSearchTerm.set('');">
+                        <i class="las la-times"></i>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="!form.get('clienteId')?.value || clienteSearchTerm()">
+                    <div class="input-icon">
+                      <i class="las la-search"></i>
+                      <input type="text" placeholder="Pesquisar cliente…"
+                             autocomplete="off"
+                             [value]="clienteSearchTerm()"
+                             (input)="onClienteSearch($any($event.target).value)"
+                             (focus)="onClienteFocus()"
+                             (blur)="closeClienteDropdown()" />
+                    </div>
+                    <ng-container *ngIf="showClienteDropdown()">
+                      <div class="search-dropdown">
+                        <ng-container *ngIf="filteredClientes().length > 0; else noClientes">
+                          <ng-container *ngFor="let c of filteredClientes()">
+                            <div class="search-option" (mousedown)="selecionarCliente(c)">
+                              <div class="search-option__name">{{ c.nome }}</div>
+                              <div class="search-option__meta">
+                                @if (c.telefone) { <span><i class="las la-phone"></i> {{ c.telefone }}</span> }
+                                @if (c.email) { <span><i class="las la-envelope"></i> {{ c.email }}</span> }
+                              </div>
+                            </div>
+                          </ng-container>
+                        </ng-container>
+                        <ng-template #noClientes>
+                          <div class="search-empty">Nenhum cliente encontrado.</div>
+                        </ng-template>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Transportadora -->
+              <div class="form-group">
+                <label>Transportadora</label>
+                <div class="search-container" [class.search-container--open]="showTransportadoraDropdown()">
+                  <ng-container *ngIf="getTransportadoraSelecionado() && !transportadoraSearchTerm()">
+                    <div class="smart-selected">
+                      <i class="las la-truck"></i>
+                      <span>{{ getTransportadoraSelecionado()!.nome }}</span>
+                      <button type="button" class="smart-clear" (click)="form.patchValue({ transportadoraId: null }); transportadoraSearchTerm.set('');">
+                        <i class="las la-times"></i>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="!getTransportadoraSelecionado() || transportadoraSearchTerm()">
+                    <div class="input-icon">
+                      <i class="las la-search"></i>
+                      <input type="text" placeholder="Pesquisar transportadora…"
+                             autocomplete="off"
+                             [value]="transportadoraSearchTerm()"
+                             (input)="onTransportadoraSearch($any($event.target).value)"
+                             (focus)="onTransportadoraFocus()"
+                             (blur)="closeTransportadoraDropdown()" />
+                    </div>
+                    <ng-container *ngIf="showTransportadoraDropdown()">
+                      <div class="search-dropdown">
+                        <ng-container *ngIf="filteredTransportadoras().length > 0; else noTransportadoras">
+                          <ng-container *ngFor="let t of filteredTransportadoras()">
+                            <div class="search-option" (mousedown)="selecionarTransportadora(t)">
+                              <div class="search-option__name">{{ t.nome }}</div>
+                              <div class="search-option__meta">
+                                @if (t.telefone) { <span><i class="las la-phone"></i> {{ t.telefone }}</span> }
+                                @if (t.email) { <span><i class="las la-envelope"></i> {{ t.email }}</span> }
+                              </div>
+                            </div>
+                          </ng-container>
+                        </ng-container>
+                        <ng-template #noTransportadoras>
+                          <div class="search-empty">Nenhuma transportadora encontrada.</div>
+                        </ng-template>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Dados da Carga -->
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-boxes"></i> Dados da Carga</h4>
+            <div class="form-group">
+              <label for="cargaDescricao">Descrição da Carga</label>
+              <div class="input-icon">
+                <i class="las la-clipboard-list"></i>
+                <input id="cargaDescricao" type="text" formControlName="cargaDescricao" placeholder="Ex: Produtos eletrónicos" />
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group" [class.form-group--error]="hasError('cargaPeso')">
+                <label for="cargaPeso">Peso (kg) <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-weight-hanging"></i>
+                  <input id="cargaPeso" type="number" step="0.1" formControlName="cargaPeso" min="0" />
+                </div>
+                <ng-container *ngIf="hasError('cargaPeso', 'required')">
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                </ng-container>
+              </div>
+              <div class="form-group" [class.form-group--error]="hasError('cargaVolume')">
+                <label for="cargaVolume">Volume (m³) <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-cube"></i>
+                  <input id="cargaVolume" type="number" step="0.1" formControlName="cargaVolume" min="0" />
+                </div>
+                <ng-container *ngIf="hasError('cargaVolume', 'required')">
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                </ng-container>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cargaObservacoes">Observações da Carga</label>
+              <textarea id="cargaObservacoes" rows="2" formControlName="cargaObservacoes"
+                        placeholder="Notas sobre a carga..."></textarea>
+            </div>
+          </div>
+
+          <!-- Dados Operacionais -->
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-tachometer-alt"></i> Dados Operacionais</h4>
+            <div class="form-grid-2">
+              <div class="form-group" [class.form-group--error]="hasError('distanciaTotalKm')">
+                <label for="distanciaTotalKm">Distância Total (km) <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-road"></i>
+                  <input id="distanciaTotalKm" type="number" step="0.1" formControlName="distanciaTotalKm" min="0" />
+                </div>
+                <ng-container *ngIf="hasError('distanciaTotalKm', 'required')">
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                </ng-container>
+              </div>
+              <div class="form-group">
+                <label for="tempoEstimadoHoras">Tempo Estimado (horas)</label>
+                <div class="input-icon">
+                  <i class="las la-hourglass-half"></i>
+                  <input id="tempoEstimadoHoras" type="number" step="0.5" formControlName="tempoEstimadoHoras" min="0" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="observacoes">Observações Gerais</label>
+              <textarea id="observacoes" rows="2" formControlName="observacoes"
+                        placeholder="Notas adicionais sobre a viagem..."></textarea>
+            </div>
+          </div>
+
+        </fieldset>
+      </div>
+      <!-- SEM rodapé com botões duplicados - ações ficam apenas no topo -->
+
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE CANCELAMENTO -->
+<ng-container *ngIf="showDeleteConfirm() && viagemParaDelete()">
+  <div class="modal-overlay" (click)="cancelarDelete()" role="alertdialog" aria-modal="true">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="las la-ban"></i> Cancelar Viagem</h3>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-icon confirm-icon--danger" aria-hidden="true">
+          <i class="las la-map-marked-alt"></i>
+        </div>
+        <p class="confirm-text">
+          Tem a certeza que pretende <strong>cancelar</strong> a viagem
+          <code>{{ viagemParaDelete()?.numeroViagem }}</code>?
+        </p>
+        <p class="confirm-sub">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelarDelete()">Fechar</button>
+        <button class="btn-danger" (click)="executarDelete()">
+          <i class="las la-ban"></i> Cancelar Viagem
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <meta name="description" content="CortexLog — A Nossa História. Conheça o percurso da estudante por detrás do projeto PAP.">
+  <meta name="robots" content="noindex, follow">
+  
+  <meta property="og:title" content="CortexLog | A Nossa História — Projeto PAP">
+  <meta property="og:description" content="Conheça o percurso da estudante que desenvolveu a plataforma CortexLog.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_PT">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>">
+  
+  <title>CortexLog | A Nossa História — Projeto PAP</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --amber: #f3b85b;
+      --amber-dark: #e09e3a;
+      --amber-hover: #c98a2a;
+      --amber-light: #fef9ef;
+      --amber-mid: #fdefc4;
+      --white: #ffffff;
+      --text-dark: #2d2d2d;
+      --gray-light: #f5f7fa;
+      --gray-text: #4a5568;
+      --shadow-card: 0 20px 30px -12px rgba(0, 0, 0, 0.06), 0 8px 14px -6px rgba(0, 0, 0, 0.02);
+      --transition: 0.3s ease;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fafbfc;
+      color: var(--text-dark);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Montserrat', 'Inter', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1e1e1e;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: var(--amber-dark);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      color: var(--amber-hover);
+    }
+
+    strong {
+      color: #1e1e1e;
+    }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--amber-dark);
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--amber);
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 2px;
+    }
+
+    .btn-back {
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--amber);
+      color: var(--text-dark);
+      border: 1.5px solid var(--amber);
+      box-shadow: 0 4px 12px rgba(243, 184, 91, 0.3);
+    }
+
+    .btn-back:hover {
+      background: var(--amber-hover);
+      border-color: var(--amber-hover);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: #1a1a1a;
+    }
+
+    .page-container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .page-header .icon-large {
+      font-size: 3.5rem;
+      color: var(--amber-dark);
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+
+    .page-header .subtitle {
+      font-size: 1.1rem;
+      color: var(--gray-text);
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 40px;
+      margin: 32px 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--amber-mid);
+      border-radius: 2px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 32px;
+      background: var(--white);
+      padding: 22px 26px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid #f0f0f0;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -34px;
+      top: 24px;
+      width: 14px;
+      height: 14px;
+      background: var(--amber);
+      border-radius: 50%;
+      border: 3px solid var(--white);
+      box-shadow: 0 0 0 3px var(--amber-mid);
+    }
+
+    .timeline-item .timeline-year {
+      display: inline-block;
+      background: var(--amber-light);
+      color: var(--amber-dark);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .timeline-item h3 {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+      margin-top: 4px;
+    }
+
+    .timeline-item p {
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    .quote-box {
+      background: linear-gradient(135deg, var(--amber-light) 0%, #fff7e6 100%);
+      padding: 28px 32px;
+      border-radius: 16px;
+      margin: 36px 0;
+      font-style: italic;
+      font-size: 1rem;
+      color: #555;
+      border-left: 4px solid var(--amber);
+    }
+
+    .quote-box i {
+      color: var(--amber-dark);
+      margin-right: 8px;
+    }
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .value-card {
+      background: var(--white);
+      padding: 22px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      border: 1px solid #f0f0f0;
+    }
+
+    .value-card i {
+      font-size: 2rem;
+      color: var(--amber-dark);
+      margin-bottom: 10px;
+    }
+
+    .value-card h4 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1e1e1e;
+    }
+      /* Footer completo */
+    .footer {
+      background: #1a1a1a;
+      color: #d1d5db;
+      padding: 64px 0 0;
+    }
+
+    .footer-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1.4fr;
+      gap: 40px 24px;
+      margin-bottom: 48px;
+    }
+
+    .footer-col h4 {
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    .footer-col h4::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 32px;
+      height: 3px;
+      background: var(--amber-dark);
+      border-radius: 2px;
+    }
+
+    .footer-logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 14px;
+      letter-spacing: -0.5px;
+    }
+
+    .footer-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #9ca3af;
+      margin-bottom: 18px;
+      max-width: 380px;
+    }
+
+    .footer-badge-pap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(243, 184, 91, 0.08);
+      border: 1px solid rgba(243, 184, 91, 0.2);
+      color: var(--amber);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-links a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-links a::before {
+      content: '›';
+      color: var(--amber-dark);
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: transform var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--amber);
+      transform: translateX(4px);
+    }
+
+    .footer-contact {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-contact p {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .footer-contact i {
+      color: var(--amber-dark);
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .footer-social a {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 1.1rem;
+      text-decoration: none;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .footer-social a::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--amber-dark);
+      border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.3s ease;
+      z-index: 0;
+    }
+
+    .footer-social a i {
+      position: relative;
+      z-index: 1;
+      transition: color var(--transition);
+    }
+
+    .footer-social a:hover {
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(224, 158, 58, 0.3);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid #2a2a2a;
+      padding: 28px 0 24px;
+      text-align: center;
+    }
+
+    .footer-legal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .footer-legal a {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color var(--transition);
+      position: relative;
+    }
+
+    .footer-legal a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--amber);
+      transition: width var(--transition);
+    }
+
+    .footer-legal a:hover {
+      color: var(--amber);
+    }
+
+    .footer-legal a:hover::after {
+      width: 100%;
+    }
+
+    .footer-legal span {
+      color: #404040;
+      font-size: 0.8rem;
+      user-select: none;
+    }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px 20px;
+      }
+      .footer-col-brand {
+        grid-column: span 2;
+      }
+      .footer-desc {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+      table th, table td {
+        padding: 8px 10px;
+      }
+      .footer {
+        padding: 48px 0 0;
+      }
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+      .footer-col-brand {
+        grid-column: span 1;
+        text-align: center;
+      }
+      .footer-desc {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .footer-badge-pap {
+        display: flex;
+        justify-content: center;
+        max-width: 300px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .footer-col h4 {
+        text-align: center;
+      }
+      .footer-col h4::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .footer-links {
+        align-items: center;
+      }
+      .footer-contact p {
+        justify-content: center;
+        text-align: center;
+      }
+      .footer-social {
+        justify-content: center;
+      }
+      .footer-legal {
+        gap: 8px;
+      }
+      .footer-logo {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .footer-legal {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .footer-legal span {
+        display: none;
+      }
+    }
+
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+      table th, table td {
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      .logo {
+        font-size: 1.3rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .btn-back {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+      .timeline {
+        padding-left: 30px;
+      }
+      .timeline-item::before {
+        left: -24px;
+        width: 12px;
+        height: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">
+      CORTEX<span>LOG</span><span class="logo-dot"></span>
+    </a>
+    <a href="index.html" class="btn-back">
+      <i class="las la-arrow-left"></i>
+    </a>
+  </nav>
+
+  <main class="page-container">
+    <header class="page-header">
+      <div class="icon-large">
+        <i class="las la-heart"></i>
+      </div>
+      <h1>A Nossa História</h1>
+      <p class="subtitle">O percurso que deu vida à plataforma CortexLog</p>
+    </header>
+
+    <h2>O Início de Tudo</h2>
+    <p>
+      A história da CortexLog começa com uma jovem estudante que, ao chegar ao 9.º ano de escolaridade, 
+      tomou uma decisão que mudaria o seu percurso académico e profissional. Apaixonada pela área da tecnologia 
+      e motivada pela curiosidade em compreender como funcionam os sistemas informáticos, escolheu ingressar 
+      num curso profissional na área da informática.
+    </p>
+    <p>
+      A vontade de aprender sobre programação, bases de dados, redes e sistemas era acompanhada por um sonho 
+      claro: <strong>trabalhar remotamente</strong>, com a liberdade geográfica que a tecnologia proporciona, 
+      podendo colaborar com empresas e pessoas de qualquer parte do mundo.
+    </p>
+
+    <div class="quote-box">
+      <i class="las la-quote-left"></i>
+      Escolhi este curso porque sempre gostei de tecnologia e queria perceber como as coisas funcionam. 
+      Também queria ter a possibilidade de, no futuro, trabalhar a partir de qualquer lugar.
+    </div>
+
+    <h2>O Percurso no Curso</h2>
+    <p>
+      Ao longo dos três anos do curso profissional, a estudante mergulhou em diversas áreas da informática: 
+      desde os fundamentos da programação com C#, passando pela gestão de bases de dados com Xampp, 
+      até ao desenvolvimento web com HTML, CSS e JavaScript. Cada módulo representou uma nova descoberta 
+      e uma oportunidade de consolidar conhecimentos práticos.
+    </p>
+    <p>
+      As experiências vividas ao longo do curso foram extremamente enriquecedoras. Os projetos práticos, 
+      os desafios técnicos e a aplicação de conhecimentos em situações reais fortaleceram não só as competências 
+      técnicas, mas também a capacidade de resolver problemas de forma autónoma e criativa.
+    </p>
+    <p>
+      O gosto pela tecnologia foi crescendo a cada novo conceito aprendido, e a certeza de ter feito a escolha 
+      certa no 9.º ano foi-se consolidando com cada projeto concluído com sucesso.
+    </p>
+
+    <h2>O Estágio e a Decisão do Projeto</h2>
+    <p>
+      No terceiro ano do curso, iniciou o estágio curricular na empresa <strong>Domoweb</strong>, 
+      onde teve o primeiro contacto profissional com o mundo do desenvolvimento de software. Foi durante este 
+      estágio que começou a aprender Angular, uma framework moderna para construção de aplicações web, 
+      experiência que se revelaria fundamental para o futuro da plataforma.
+    </p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <span class="timeline-year">Momento decisivo</span>
+        <h3>A reunião que mudou tudo</h3>
+        <p>
+          Inicialmente, a Prova de Aptidão Profissional (PAP) seria um assistente de voz que utilizaria 
+          a API do Gemini para executar comandos através de reconhecimento de voz. Contudo, após uma reunião 
+          para analisar os prós e contras do projeto original, surgiu um obstáculo 
+          significativo: a API do Gemini necessária para a funcionalidade de voz era paga, e o custo associado 
+          inviabilizava a implementação do assistente de voz no contexto académico.
+        </p>
+      </div>
+
+      <div class="timeline-item">
+        <span class="timeline-year">A nova direção</span>
+        <h3>O nascimento da CortexLog</h3>
+        <p>
+          Em conjunto, a empresa Domoweb e a estudante decidiram mudar o foco do projeto final. 
+          A nova proposta foi a criação de uma <strong>plataforma de gestão e logística de frotas (ERP)</strong>, 
+          um sistema completo que permitisse às empresas gerir veículos, rotas, manutenções e documentação 
+          de forma integrada e eficiente.
+        </p>
+      </div>
+    </div>
+
+    <p>
+      A mudança revelou-se acertada. O novo projeto permitia aplicar os conhecimentos adquiridos ao longo 
+      do curso — bases de dados, programação back-end com C# e Node.js, front-end com Angular — e, ao mesmo 
+      tempo, desenvolver uma solução com utilidade real para empresas que gerem frotas de veículos.
+    </p>
+
+    <h2>Os Valores que Nos Movem</h2>
+    <p>
+      A CortexLog é mais do que uma plataforma — é o reflexo de um percurso de aprendizagem, dedicação 
+      e vontade de criar algo com significado. Os valores que guiaram o desenvolvimento deste projeto são:
+    </p>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <i class="las la-lightbulb"></i>
+        <h4>Curiosidade</h4>
+      </div>
+      <div class="value-card">
+        <i class="las la-rocket"></i>
+        <h4>Determinação</h4>
+      </div>
+      <div class="value-card">
+        <i class="las la-hands-helping"></i>
+        <h4>Colaboração</h4>
+      </div>
+      <div class="value-card">
+        <i class="las la-laptop-code"></i>
+        <h4>Inovação</h4>
+      </div>
+    </div>
+
+    <h2>O Futuro</h2>
+    <p>
+      A conclusão deste projeto representa o culminar de três anos de aprendizagem intensa e o início 
+      de um novo capítulo. A experiência adquirida no desenvolvimento da CortexLog — desde a conceção 
+      da ideia até à implementação técnica — constitui uma base sólida para os desafios profissionais 
+      que se avizinham.
+    </p>
+    <p>
+      O sonho de trabalhar remotamente continua presente, e a CortexLog é a prova de que, com dedicação 
+      e as ferramentas certas, é possível construir soluções relevantes e ambiciosas, independentemente 
+      do ponto de partida.
+    </p>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col footer-col-brand">
+          <div class="footer-logo">CortexLog</div>
+          <p class="footer-desc">Plataforma desenvolvida no âmbito da Prova de Aptidão Profissional (PAP). Solução inteligente para gestão e logística de frotas.</p>
+          <div class="footer-badge-pap">
+            <i class="las la-graduation-cap"></i>
+            Projeto PAP 2026 | Curso Profissional de Técnico de Gestão de Sistemas Informáticos
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Sobre Nós</h4>
+          <ul class="footer-links">
+            <li><a href="historia.html">Sobre mim</a></li>
+            <li><a href="projeto.html">Projeto PAP</a></li>
+            <li><a href="tecnologias.html">Tecnologias utilizadas</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Escola</h4>
+          <div class="footer-contact">
+            <p><i class="las la-graduation-cap"></i> Escola Secundária Padre Benjamim Salgado</p>
+            <p><i class="las la-map-marker"></i> R. dos Estudantes, 4770-260 Joane, V.N.Famalicão</p>
+            <p><i class="las la-phone"></i> +351 252 996 877</p>
+          </div>
+          <div class="footer-social">
+            <a href="https://www.facebook.com/AEPBSJoane/" aria-label="Facebook"><i class="lab la-facebook"></i></a>
+            <a href="https://www.instagram.com/aepbsjoane/" aria-label="Instagram"><i class="lab la-instagram"></i></a>
+            <a href="https://w.aepbs.net/www/index.php/pt/" aria-label="Escola"><i class="las la-university"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <a href="privacidade.html">Política de Privacidade</a>
+          <span>|</span>
+          <a href="termos.html">Termos de Utilização</a>
+          <span>|</span>
+          <a href="cookies.html">Cookies</a>
+        </div>
+        <p class="footer-copy">© 2026 CortexLog — Projeto PAP. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

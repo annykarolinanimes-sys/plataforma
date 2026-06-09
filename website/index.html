@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <meta name="description" content="Cortex Log — Plataforma inteligente de gestão e logística de frotas. Projeto PAP desenvolvido por estudante. Otimização de rotas e redução de custos operacionais.">
+  <meta name="keywords" content="logística, gestão de frotas, rastreamento veicular, otimização de rotas, PAP, projeto final, Cortex Log, Portugal">
+  <meta name="author" content="Cortex Log - PAP">
+  <meta name="robots" content="index, follow">
+  
+  <meta property="og:title" content="Cortex Log | Plataforma de Gestão de Frotas — Projeto PAP">
+  <meta property="og:description" content="Projeto de Prova de Aptidão Profissional. Simplifique a logística da sua frota com uma gestão de manutenção e relatórios inteligentes.">
+  <meta property="og:image" content="https://www.CortexLog.pt/og-image.jpg">
+  <meta property="og:url" content="https://www.CortexLog.pt">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_PT">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>">
+  
+  <title>Cortex Log | PAP — Plataforma de Gestão de Frotas</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="privacy-overlay" id="privacyOverlay" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="privacy-modal">
+      <div class="privacy-header">
+        <div class="privacy-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s-8-4.5-8-11.8V5l8-3 8 3v5.2c0 7.3-8 11.8-8 11.8z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <h2 id="privacyTitle">Centro de preferências de privacidade</h2>
+      </div>
+      
+      <div class="privacy-body">
+        <p class="privacy-description">
+          Quando visita este site, este pode armazenar ou recolher informações no seu navegador, principalmente na forma de cookies. Estas informações podem ser sobre si, as suas preferências ou o seu dispositivo e são utilizadas principalmente para fazer o site funcionar como espera. Como respeitamos o seu direito à privacidade, pode optar por não permitir alguns tipos de cookies. No entanto, o bloqueio de alguns tipos de cookies pode afetar a sua experiência no website e os serviços que podemos oferecer.
+        </p>
+        
+        <a href="cookies.html" class="privacy-more-info">Mais informações</a>
+        
+        <h3 class="privacy-subtitle">Gerir preferências de consentimento</h3>
+        
+        <div class="cookie-categories">
+          <div class="cookie-category">
+            <div class="category-header">
+              <div class="category-info">
+                <span class="category-name">Cookies estritamente necessários</span>
+              </div>
+              <label class="toggle-switch" aria-label="Alternar cookies estritamente necessários">
+                <input type="checkbox" class="cookie-toggle" data-category="strictlyNecessary">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="category-desc">Estes cookies são essenciais para o funcionamento da plataforma. Se optar por desativá-los, algumas funcionalidades poderão ser afetadas.</p>
+          </div>
+          
+          <div class="cookie-category">
+            <div class="category-header">
+              <div class="category-info">
+                <span class="category-name">Cookies de desempenho</span>
+              </div>
+              <label class="toggle-switch" aria-label="Alternar cookies de desempenho">
+                <input type="checkbox" class="cookie-toggle" data-category="performance">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="category-desc">Estes cookies permitem-nos contar visitas e fontes de tráfego, para medir e melhorar o desempenho do website.</p>
+          </div>
+          
+          <div class="cookie-category">
+            <div class="category-header">
+              <div class="category-info">
+                <span class="category-name">Cookies de funcionalidade</span>
+              </div>
+              <label class="toggle-switch" aria-label="Alternar cookies de funcionalidade">
+                <input type="checkbox" class="cookie-toggle" data-category="functionality">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="category-desc">Estes cookies permitem que o site ofereça funcionalidades e personalização melhoradas.</p>
+          </div>
+          
+          <div class="cookie-category">
+            <div class="category-header">
+              <div class="category-info">
+                <span class="category-name">Cookies de publicidade</span>
+              </div>
+              <label class="toggle-switch" aria-label="Alternar cookies de publicidade">
+                <input type="checkbox" class="cookie-toggle" data-category="advertising">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="category-desc">Estes cookies podem ser definidos através do nosso site pelos nossos parceiros de publicidade.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="privacy-footer">
+        <button class="btn-reject-all" id="rejectAll">Rejeitar todos</button>
+        <button class="btn-confirm" id="confirmChoices">Confirmar as minhas escolhas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão Flutuante de Cookies -->
+  <button class="cookie-floating-btn hidden" id="cookieFloatingBtn" aria-label="Gerir preferências de cookies" title="Preferências de cookies">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>
+    <span class="cookie-btn-text">Cookies</span>
+  </button>
+
+  <!-- Navegação -->
+  <header class="container">
+    <nav class="navbar">
+      <div class="logo">
+        CORTEX<span>LOG</span><span class="logo-dot"></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#recursos">Recursos</a></li>
+        <li><a href="#solucoes">Soluções</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-text">
+          <h1>Simplifique a <span>logística</span> da sua frota</h1>
+          <p class="hero-subtitle">Gestão inteligente e redução de custos operacionais para empresas que exigem eficiência.</p>
+          <div class="hero-cta-wrapper">
+            <a href="http://localhost:4200" class="btn-platform" id="openPlatformBtn">
+              <i class="las la-external-link-alt"></i>
+              Aceder à Plataforma
+              <i class="las la-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="geometric-box">
+            <div class="geo-circle"></div>
+            <div class="geo-rect"></div>
+            <div class="geo-square"></div>
+            <div class="geo-chart-icon">
+              <i class="las la-chart-line"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recursos -->
+    <section class="container section" id="recursos">
+      <h2 class="section-title">Recursos principais</h2>
+      <p class="section-sub">Tudo o que precisa para uma operação logística mais ágil e conectada.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="icon-box">🔧</div>
+          <h3>Gestão de Manutenção</h3>
+          <p>Planos preventivos e alertas inteligentes para manter a frota sempre operacional.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-box">🗺️</div>
+          <h3>Otimização de Rotas</h3>
+          <p>Reduza quilómetros e combustível com algoritmos que se adaptam ao trânsito.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-box">📊</div>
+          <h3>Relatórios Inteligentes</h3>
+          <p>Análises detalhadas e dashboards com IA para decisões baseadas em dados.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Soluções -->
+    <section class="solutions-section" id="solucoes">
+      <div class="container">
+        <h2 class="section-title">Soluções para o seu negócio</h2>
+        <p class="section-sub">Adaptamos a plataforma às necessidades específicas de cada setor.</p>
+        <div class="solutions-grid">
+          <div class="solution-card">
+            <div class="solution-icon"><i class="las la-clipboard-check"></i></div>
+            <div class="solution-content">
+              <h3>Auditoria de Frotas</h3>
+              <p>Mantenha a sua frota sempre em conformidade com as normas legais e regulamentares. O nosso sistema automatiza o registo e a verificação de inspeções, seguros e licenças, garantindo que nada falha.</p>
+              <ul class="solution-features">
+                <li><i class="las la-check-circle"></i> Registo digital de inspeções periódicas</li>
+                <li><i class="las la-check-circle"></i> Alertas de renovação de seguros e licenças</li>
+                <li><i class="las la-check-circle"></i> Relatórios de conformidade prontos para auditoria</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="solution-card">
+            <div class="solution-icon"><i class="las la-route"></i></div>
+            <div class="solution-content">
+              <h3>Controlo de Rotas</h3>
+              <p>Planeie, visualize e ajuste as rotas da sua frota em tempo real. Otimize o consumo de combustível, reduza os quilómetros percorridos e melhore os prazos de entrega com um sistema inteligente de geolocalização.</p>
+              <ul class="solution-features">
+                <li><i class="las la-check-circle"></i> Planeamento dinâmico com base no tráfego</li>
+                <li><i class="las la-check-circle"></i> Visualização em mapa de todas as viaturas</li>
+                <li><i class="las la-check-circle"></i> Histórico detalhado de percursos e paragens</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="solution-card">
+            <div class="solution-icon"><i class="las la-file-alt"></i></div>
+            <div class="solution-content">
+              <h3>Gestão de Documentos</h3>
+              <p>Centralize e organize toda a documentação da sua frota num único local seguro. Digitalize, armazene e aceda facilmente a documentos de viaturas, condutores e operações logísticas a qualquer momento.</p>
+              <ul class="solution-features">
+                <li><i class="las la-check-circle"></i> Armazenamento digital seguro na nuvem</li>
+                <li><i class="las la-check-circle"></i> Acesso controlado por perfil de utilizador</li>
+                <li><i class="las la-check-circle"></i> Notificações de documentos a expirar</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Parceiros -->
+    <section class="partners">
+      <div class="container">
+        <p style="text-align:center; color:#6b7280; font-weight:500; letter-spacing:0.5px;">EMPRESA E ESCOLA</p>
+        <div class="partner-logos">
+          <span class="partner-item">DOMOWEB</span>
+          <span class="partner-item">AEPBS</span>
+          <span class="partner-item">ESTUDANTE</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact-section" id="contacto">
+      <div class="container">
+        <div class="contact-container">
+          <div class="contact-info">
+            <div class="contact-badge">
+              <i class="las la-headset"></i>
+              <span>Suporte 24/7</span>
+            </div>
+            <h2 class="contact-title">Vamos <span>conversar</span></h2>
+            <p class="contact-description">
+              Solicite uma demonstração gratuita da plataforma ou tire as suas dúvidas. 
+              A nossa equipa responderá num prazo máximo de 24 horas úteis.
+            </p>
+            
+            <div class="contact-methods">
+              <div class="contact-method">
+                <div class="method-icon">
+                  <i class="las la-envelope"></i>
+                </div>
+                <div>
+                  <h4>E-mail</h4>
+                  <p>papanny412@gmail.com</p>
+                </div>
+              </div>
+              
+              <div class="contact-method">
+                <div class="method-icon">
+                  <i class="las la-phone-alt"></i>
+                </div>
+                <div>
+                  <h4>Telefone</h4>
+                  <p>+351 252 996 877</p>
+                </div>
+              </div>
+              
+              <div class="contact-method">
+                <div class="method-icon">
+                  <i class="las la-clock"></i>
+                </div>
+                <div>
+                  <h4>Horário</h4>
+                  <p>Segunda a Sexta, 9h - 18h</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="contact-social">
+              <p>Siga-nos nas redes sociais:</p>
+              <div class="social-icons">
+                <a href="https://www.facebook.com/AEPBSJoane/" aria-label="Facebook">
+                  <i class="lab la-facebook-f"></i>
+                </a>
+                <a href="https://www.instagram.com/aepbsjoane/" aria-label="Instagram">
+                  <i class="lab la-instagram"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-form-wrapper">
+            <form id="contactForm" class="contact-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fullName">Nome completo *</label>
+                  <div class="input-icon">
+                    <i class="las la-user"></i>
+                    <input type="text" id="fullName" name="fullName" required 
+                           placeholder="Ex.: Ana Silva" class="contact-input">
+                  </div>
+                  <span class="error-message" id="nameError"></span>
+                </div>
+                
+                <div class="form-group">
+                  <label for="company">Empresa</label>
+                  <div class="input-icon">
+                    <i class="las la-building"></i>
+                    <input type="text" id="company" name="company" 
+                           placeholder="Nome da sua empresa" class="contact-input">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="email">E-mail profissional *</label>
+                  <div class="input-icon">
+                    <i class="las la-envelope"></i>
+                    <input type="email" id="email" name="email" required 
+                           placeholder="exemplo@empresa.com" class="contact-input">
+                  </div>
+                  <span class="error-message" id="emailError"></span>
+                </div>
+                
+                <div class="form-group">
+                  <label for="phone">Telefone</label>
+                  <div class="input-icon">
+                    <i class="las la-phone"></i>
+                    <input type="tel" id="phone" name="phone" 
+                           placeholder="+351 912 345 678" class="contact-input">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="fleetSize">Tamanho da frota</label>
+                <div class="input-icon">
+                  <i class="las la-truck"></i>
+                  <select id="fleetSize" name="fleetSize" class="contact-input contact-select">
+                    <option value="">Selecione o número de veículos</option>
+                    <option value="1-5">1 - 5 veículos</option>
+                    <option value="6-20">6 - 20 veículos</option>
+                    <option value="21-50">21 - 50 veículos</option>
+                    <option value="51-100">51 - 100 veículos</option>
+                    <option value="100+">Mais de 100 veículos</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="message">Mensagem *</label>
+                <div class="input-icon">
+                  <i class="las la-comment-dots"></i>
+                  <textarea id="message" name="message" rows="4" required 
+                            placeholder="Conte-nos sobre as suas necessidades ou dúvidas..." 
+                            class="contact-input contact-textarea"></textarea>
+                </div>
+                <span class="error-message" id="messageError"></span>
+              </div>
+              
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="privacyConsent" required>
+                  <span class="checkmark"></span>
+                  <span class="checkbox-text">
+                    Li e aceito a <a href="privacidade.html">Política de Privacidade</a> *
+                  </span>
+                </label>
+                <span class="error-message" id="consentError"></span>
+              </div>
+              
+              <button type="submit" class="btn-submit" id="submitBtn">
+                <span class="btn-text">Enviar mensagem</span>
+                <span class="btn-loader hidden">
+                  <i class="las la-spinner la-spin"></i> A enviar...
+                </span>
+                <span class="btn-success hidden">
+                  <i class="las la-check-circle"></i> Enviado!
+                </span>
+              </button>
+              
+              <p class="form-note">
+                <i class="las la-lock"></i>
+                Os seus dados estão seguros. Não partilhamos informações com terceiros.
+              </p>
+            </form>
+            
+            <div id="toastNotification" class="toast-notification hidden">
+              <div class="toast-content">
+                <i class="las la-check-circle"></i>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col footer-col-brand">
+        <div class="footer-logo">Cortex Log</div>
+        <p class="footer-desc">Plataforma desenvolvida no âmbito da Prova de Aptidão Profissional (PAP). Solução inteligente para gestão e logística de frotas.</p>
+        <div class="footer-badge-pap">
+          <i class="las la-graduation-cap"></i>
+          Projeto PAP 2026 | Curso Profissional de Técnico de Gestão de Sistemas Informáticos
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Sobre Nós</h4>
+        <ul class="footer-links">
+          <li><a href="historia.html">Sobre mim</a></li>
+          <li><a href="projeto.html">Projeto PAP</a></li>
+          <li><a href="tecnologias.html">Tecnologias utilizadas</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Escola</h4>
+        <div class="footer-contact">
+          <p><i class="las la-graduation-cap"></i> Escola Secundária Padre Benjamim Salgado</p>
+          <p><i class="las la-map-marker"></i> R. dos Estudantes, 4770-260 Joane, V.N.Famalicão</p>
+          <p><i class="las la-phone"></i> +351 252 996 877</p>
+        </div>
+        <div class="footer-social">
+          <a href="https://www.facebook.com/AEPBSJoane/" aria-label="Facebook"><i class="lab la-facebook"></i></a>
+          <a href="https://www.instagram.com/aepbsjoane/" aria-label="Instagram"><i class="lab la-instagram"></i></a>
+          <a href="https://w.aepbs.net/www/index.php/pt/" aria-label="Escola"><i class="las la-university"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <a href="privacidade.html">Política de Privacidade</a>
+          <span>|</span>
+          <a href="termos.html">Termos de Utilização</a>
+          <span>|</span>
+          <a href="cookies.html">Cookies</a>
+        </div>
+        <p class="footer-copy">© 2026 Cortex Log — Projeto PAP. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

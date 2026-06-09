@@ -1,0 +1,704 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     FICHEIRO: src/app/features/faturas.component/faturas.component.html
+     ALTERAÇÕES: Adicionada secção "Documentos Anexados" no formulário
+                 (criação, edição e visualização) com drag & drop, listagem
+                 e download/remoção de anexos.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="faturas-container">
+
+  <div class="page-header">
+    <div class="page-header__left">
+      <div class="page-header__icon">
+        <i class="las la-file-invoice-dollar"></i>
+      </div>
+      <div>
+        <h1>Faturas</h1>
+        <p>Gestão de faturação e documentos financeiros</p>
+      </div>
+    </div>
+    @if (currentState() === 'list') {
+      <button class="btn-primary" (click)="goToCreate()">
+        <i class="las la-plus"></i> Nova Fatura
+      </button>
+    }
+  </div>
+
+  @if (successMsg()) {
+    <div class="alert alert--success" role="status">
+      <i class="las la-check-circle"></i>
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg() && currentState() === 'list') {
+    <div class="alert alert--error" role="alert">
+      <i class="las la-exclamation-circle"></i>
+      <span>{{ errorMsg() }}</span>
+      <button class="alert__close" (click)="clearError()" aria-label="Fechar">×</button>
+    </div>
+  }
+
+  <!-- ── Stats (lista) ──────────────────────────────────────────────────── -->
+  @if (currentState() === 'list' && !isLoading()) {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--green"><i class="las la-euro-sign"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ formatarMoeda(totalFaturado()) }}</span>
+          <span class="stat-card__label">Total Faturado (Pagas)</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--amber"><i class="las la-clock"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ totalPendentes() }}</span>
+          <span class="stat-card__label">Pendentes</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon stat-card__icon--blue"><i class="las la-calendar-alt"></i></div>
+        <div class="stat-card__body">
+          <span class="stat-card__value">{{ faturasMes() }}</span>
+          <span class="stat-card__label">Faturas Este Mês</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       PAINEL DE FORMULÁRIO (criação / edição / visualização)
+       ══════════════════════════════════════════════════════════════════════ -->
+  @if (currentState() !== 'list') {
+    <section class="panel panel--form" [formGroup]="form">
+
+      <div class="panel-header">
+        <div class="panel-header__left">
+          <button class="btn-back" (click)="cancel()" aria-label="Voltar à lista">
+            <i class="las la-arrow-left"></i>
+          </button>
+          <div class="panel-header__icon">
+            <i class="las"
+               [class.la-eye]="isViewing()"
+               [class.la-file-invoice]="currentState() === 'create'"
+               [class.la-edit]="isEditing()"></i>
+          </div>
+          <div>
+            <h2>
+              @if (currentState() === 'create') { Nova Fatura }
+              @else if (isViewing())             { Detalhes da Fatura }
+              @else                              { Editar Fatura }
+            </h2>
+            <p class="panel-subtitle">
+              @if (currentState() === 'create') { Preencha os dados do novo documento }
+              @else if (isViewing())             { Consulta do documento de faturação }
+              @else                              { Atualizar dados da fatura }
+            </p>
+          </div>
+        </div>
+
+        <div class="panel-header__actions">
+          <button class="btn-secondary" type="button" (click)="cancel()" [disabled]="isSaving()">
+            @if (isViewing()) { <i class="las la-arrow-left"></i> Voltar }
+            @else { Cancelar }
+          </button>
+          @if (isViewing()) {
+            <button class="btn-primary" type="button"
+                    (click)="goToEdit(selectedFatura()!)" [disabled]="isSaving()">
+              <i class="las la-edit"></i> Editar
+            </button>
+          }
+          @if (!isViewing()) {
+            <button class="btn-primary" type="button"
+                    (click)="salvarFatura()" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner spinner--sm"></span> A guardar…
+              } @else {
+                <i class="las la-save"></i> Guardar Fatura
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (errorMsg() && currentState() !== 'list') {
+        <div class="alert alert--error alert--inline" role="alert">
+          <i class="las la-exclamation-circle"></i>
+          <span>{{ errorMsg() }}</span>
+          <button class="alert__close" (click)="clearError()">×</button>
+        </div>
+      }
+
+      <div class="form-card">
+        <fieldset [disabled]="isViewing() || null">
+
+          <!-- ── Cliente ───────────────────────────────────────────────── -->
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-user"></i> Cliente</h4>
+
+            <div class="form-row">
+              <div class="form-group" [class.form-group--error]="hasError('clienteNome')">
+                <label for="clienteNome">Nome do Cliente <span class="required">*</span></label>
+                <div class="search-container" [class.search-container--open]="showClienteDropdown()">
+                  <div class="input-icon">
+                    <i class="las la-user"></i>
+                    <input id="clienteNome" type="text" formControlName="clienteNome"
+                           placeholder="Código, nome ou NIF do cliente"
+                           autocomplete="off"
+                           (input)="onClienteNomeInput($event)"
+                           (focus)="onClienteNomeFocus()"
+                           (blur)="closeClienteDropdown()" />
+                  </div>
+                  @if (showClienteDropdown()) {
+                    <div class="search-dropdown">
+                      @if (filteredClientes().length > 0) {
+                        @for (cliente of filteredClientes(); track cliente.id) {
+                          <div class="search-option" (mousedown)="selecionarCliente(cliente)">
+                            <div class="search-option__name">{{ cliente.nome }}</div>
+                            <div class="search-option__meta">
+                              @if (cliente.codigo)      { <span>{{ cliente.codigo }}</span> }
+                              @if (cliente.contribuinte){ <span>{{ cliente.contribuinte }}</span> }
+                              @if (cliente.telefone)    { <span>{{ cliente.telefone }}</span> }
+                            </div>
+                          </div>
+                        }
+                      } @else {
+                        <div class="search-empty">Nenhum cliente encontrado.</div>
+                      }
+                    </div>
+                  }
+                </div>
+                <span class="field-hint">
+                  <i class="las la-info-circle"></i> Digite para procurar clientes e preencher automaticamente os campos.
+                </span>
+                @if (hasError('clienteNome', 'required')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row form-row--3">
+              <div class="form-group" [class.form-group--error]="hasError('clienteContacto')">
+                <label for="clienteContacto">Contacto <span class="required">*</span></label>
+                <div class="input-icon">
+                  <i class="las la-phone"></i>
+                  <input id="clienteContacto" type="tel" formControlName="clienteContacto"
+                         placeholder="+351 900 000 000" />
+                </div>
+                @if (hasError('clienteContacto', 'required')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('clienteEmail')">
+                <label for="clienteEmail">E-mail</label>
+                <div class="input-icon">
+                  <i class="las la-envelope"></i>
+                  <input id="clienteEmail" type="email" formControlName="clienteEmail"
+                         placeholder="cliente@exemplo.pt" />
+                </div>
+                @if (hasError('clienteEmail', 'email')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> E-mail inválido.</span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('clienteNif')">
+                <label for="clienteNif">NIF</label>
+                <input id="clienteNif" type="text" formControlName="clienteNif"
+                       placeholder="123456789" maxlength="9" />
+                @if (hasError('clienteNif', 'pattern')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> NIF deve ter exactamente 9 dígitos.</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="clienteMorada">Morada</label>
+                <div class="input-icon">
+                  <i class="las la-map-marker-alt"></i>
+                  <input id="clienteMorada" type="text" formControlName="clienteMorada"
+                         placeholder="Rua, Localidade, Código Postal" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Documento ─────────────────────────────────────────────── -->
+          <div class="form-section">
+            <h4 class="form-section__title"><i class="las la-file-alt"></i> Documento</h4>
+
+            <div class="form-row form-row--3">
+              <div class="form-group" [class.form-group--error]="hasError('dataDoc')">
+                <label for="dataDoc">Data do Documento <span class="required">*</span></label>
+                <input id="dataDoc" type="date" formControlName="dataDoc" />
+                @if (hasError('dataDoc', 'required')) {
+                  <span class="field-error"><i class="las la-exclamation-circle"></i> Campo obrigatório.</span>
+                }
+              </div>
+
+              <div class="form-group" [class.form-group--error]="hasError('estado')">
+                <label for="estado">Estado <span class="required">*</span></label>
+                <select id="estado" formControlName="estado">
+                  <option value="Pendente">Pendente</option>
+                  <option value="Paga">Paga</option>
+                  <option value="Cancelada">Cancelada</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="quemExecutou">Quem Executou</label>
+                <input id="quemExecutou" type="text" formControlName="quemExecutou"
+                       placeholder="Nome do técnico" />
+              </div>
+            </div>
+
+            <div class="form-row form-row--2">
+              <div class="form-group">
+                <label for="horasTrabalho">Horas de Trabalho</label>
+                <input id="horasTrabalho" type="number" formControlName="horasTrabalho"
+                       min="0" step="0.5" placeholder="Ex: 2.5" />
+              </div>
+              <div class="form-group">
+                <label for="materialUtilizado">Material Utilizado</label>
+                <input id="materialUtilizado" type="text" formControlName="materialUtilizado"
+                       placeholder="Descrição breve dos materiais" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="observacoes">Observações</label>
+                <textarea id="observacoes" formControlName="observacoes"
+                          placeholder="Notas internas ou informações adicionais…"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-car"></i> Equipamentos / Itens
+            </h4>
+
+            @if (hasSubmitted && itensArray.hasError('itensVazios')) {
+              <div class="alert alert--error alert--inline" style="margin-bottom:12px">
+                <i class="las la-exclamation-circle"></i>
+                <span>Adicione pelo menos um equipamento com marca, modelo, matrícula e quantidade &gt; 0.</span>
+              </div>
+            }
+
+            <div class="table-container">
+              <table class="data-table items-table" aria-label="Itens da fatura">
+                <thead>
+                  <tr>
+                    <th>Marca <span class="required">*</span></th>
+                    <th>Modelo <span class="required">*</span></th>
+                    <th>Cor</th>
+                    <th>Matrícula <span class="required">*</span></th>
+                    <th>Qtd <span class="required">*</span></th>
+                    <th>Preço Unit. <span class="required">*</span></th>
+                    <th>Subtotal</th>
+                    @if (!isViewing()) { <th class="col-actions"></th> }
+                  </tr>
+                </thead>
+                <tbody formArrayName="itens">
+                  @for (item of itensArray.controls; track $index; let i = $index) {
+                    <tr [formGroupName]="i">
+                      <td>
+                        <div class="form-group" [class.form-group--error]="hasItemError(i,'marca','required')">
+                          <input type="text" formControlName="marca" placeholder="Ex: BMW" />
+                          @if (hasItemError(i,'marca','required')) {
+                            <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group" [class.form-group--error]="hasItemError(i,'modelo','required')">
+                          <input type="text" formControlName="modelo" placeholder="Ex: Série 3" />
+                          @if (hasItemError(i,'modelo','required')) {
+                            <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group">
+                          <input type="text" formControlName="cor" placeholder="Ex: Preto" />
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group" [class.form-group--error]="hasItemError(i,'matricula','required')">
+                          <input type="text" formControlName="matricula" placeholder="AA-00-BB"
+                                 class="input--mono" style="text-transform:uppercase" />
+                          @if (hasItemError(i,'matricula','required')) {
+                            <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group" [class.form-group--error]="hasItemError(i,'quantidade','min')">
+                          <input type="number" formControlName="quantidade" min="1" style="width:70px" />
+                          @if (hasItemError(i,'quantidade','min')) {
+                            <span class="field-error"><i class="las la-exclamation-circle"></i> Mín 1</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group" [class.form-group--error]="hasItemError(i,'precoUnitario','required') || hasItemError(i,'precoUnitario','min')">
+                          <input type="number" formControlName="precoUnitario" min="0" step="0.01"
+                                 style="width:100px" placeholder="0.00" />
+                          @if (hasItemError(i,'precoUnitario','required') || hasItemError(i,'precoUnitario','min')) {
+                            <span class="field-error"><i class="las la-exclamation-circle"></i> Obrigatório (mín. 0)</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <span class="subtotal-value">
+                          {{ formatarMoeda(item.get('subtotal')?.value ?? 0) }}
+                        </span>
+                      </td>
+                      @if (!isViewing()) {
+                        <td class="actions-cell">
+                          <button type="button" class="btn-icon btn-icon--danger"
+                                  (click)="removerItem(i)" title="Remover item"
+                                  [disabled]="itensArray.length === 1">
+                            <i class="las la-times"></i>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="items-footer">
+              @if (!isViewing()) {
+                <button type="button" class="btn-secondary" (click)="adicionarItem()">
+                  <i class="las la-plus"></i> Adicionar Equipamento
+                </button>
+              }
+              <div class="total-badge">
+                <span class="total-badge__label">Total</span>
+                <span class="total-badge__value">{{ formatarMoeda(valorTotalForm()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════════════════════════════════════
+               NOVA SECÇÃO — Documentos Anexados
+               ══════════════════════════════════════════════════════════════ -->
+          <div class="form-section">
+            <h4 class="form-section__title">
+              <i class="las la-paperclip"></i> Documentos Anexados
+              @if (anexosExistentes().length > 0 || pendingFiles().length > 0) {
+                <span class="anexos-count-badge">
+                  {{ anexosExistentes().length + pendingFiles().length }}
+                </span>
+              }
+            </h4>
+
+            <!-- Zona de Drop (apenas em criação e edição) -->
+            @if (!isViewing()) {
+              <div class="dropzone"
+                   [class.dropzone--active]="isDragOver()"
+                   (dragover)="onDragOver($event)"
+                   (dragleave)="onDragLeave($event)"
+                   (drop)="onFileDrop($event)"
+                   (click)="fileInput.click()"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Zona de upload de ficheiros"
+                   (keydown.enter)="fileInput.click()"
+                   (keydown.space)="fileInput.click()">
+                <input #fileInput
+                       type="file"
+                       class="dropzone__input"
+                       multiple
+                       accept=".pdf,.jpg,.jpeg,.png"
+                       (change)="onFileSelect($event)" />
+                <div class="dropzone__content">
+                  <div class="dropzone__icon">
+                    <i class="las" [class.la-cloud-upload-alt]="!isDragOver()"
+                                   [class.la-arrow-down]="isDragOver()"></i>
+                  </div>
+                  <p class="dropzone__text">
+                    @if (isDragOver()) {
+                      <strong>Largue os ficheiros aqui</strong>
+                    } @else {
+                      <strong>Arraste ficheiros</strong> ou <span class="dropzone__link">clique para selecionar</span>
+                    }
+                  </p>
+                  <p class="dropzone__hint">PDF, JPG, PNG · Máx. 5 MB por ficheiro</p>
+                </div>
+              </div>
+            }
+
+            <!-- Lista de ficheiros PENDENTES (ainda não enviados) -->
+            @if (pendingFiles().length > 0) {
+              <div class="anexos-list">
+                <p class="anexos-list__label">
+                  <i class="las la-clock"></i>
+                  Ficheiros a anexar ao guardar ({{ pendingFiles().length }})
+                </p>
+                @for (pf of pendingFiles(); track pf.id) {
+                  <div class="anexo-item anexo-item--pending">
+                    <div class="anexo-item__icon">
+                      @if (pf.previewUrl) {
+                        <img [src]="pf.previewUrl" alt="Preview" class="anexo-item__preview" />
+                      } @else {
+                        <i class="las la-file-pdf"></i>
+                      }
+                    </div>
+                    <div class="anexo-item__info">
+                      <span class="anexo-item__name" [title]="pf.file.name">{{ pf.file.name }}</span>
+                      <span class="anexo-item__meta">{{ formatarTamanho(pf.file.size) }}</span>
+                    </div>
+                    <div class="anexo-item__actions">
+                      <span class="anexo-pending-badge">
+                        <i class="las la-clock"></i> Pendente
+                      </span>
+                      <button type="button"
+                              class="btn-icon btn-icon--danger"
+                              (click)="removerFicheiroPendente(pf.id)"
+                              title="Remover ficheiro">
+                        <i class="las la-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Lista de anexos JÁ EXISTENTES no servidor -->
+            @if (anexosExistentes().length > 0) {
+              <div class="anexos-list" [class.mt-8]="pendingFiles().length > 0">
+                @if (pendingFiles().length > 0) {
+                  <p class="anexos-list__label">
+                    <i class="las la-check-circle"></i> Já guardados ({{ anexosExistentes().length }})
+                  </p>
+                }
+                @for (anexo of anexosExistentes(); track anexo.id) {
+                  <div class="anexo-item" [class.anexo-item--removing]="removingAnexoId() === anexo.id">
+                    <div class="anexo-item__icon">
+                      <i class="las" [ngClass]="getFileIcon(anexo.mimeType)"></i>
+                    </div>
+                    <div class="anexo-item__info">
+                      <span class="anexo-item__name" [title]="anexo.nomeOriginal">
+                        {{ anexo.nomeOriginal }}
+                      </span>
+                      <span class="anexo-item__meta">
+                        {{ anexo.tamanhoFormatado }} · {{ formatarData(anexo.criadoEm) }}
+                      </span>
+                    </div>
+                    <div class="anexo-item__actions">
+                      <!-- Download -->
+                      <button type="button"
+                              class="btn-icon btn-icon--download"
+                              (click)="downloadAnexo(anexo)"
+                              title="Descarregar {{ anexo.nomeOriginal }}">
+                        @if (false) {
+                          <span class="spinner spinner--sm"></span>
+                        } @else {
+                          <i class="las la-download"></i>
+                        }
+                      </button>
+                      <!-- Remover (apenas em modo edição) -->
+                      @if (!isViewing()) {
+                        <button type="button"
+                                class="btn-icon btn-icon--danger"
+                                (click)="removerAnexoExistente(anexo)"
+                                [disabled]="removingAnexoId() === anexo.id"
+                                title="Remover anexo">
+                          @if (removingAnexoId() === anexo.id) {
+                            <span class="spinner spinner--sm"></span>
+                          } @else {
+                            <i class="las la-trash-alt"></i>
+                          }
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Estado vazio (apenas em visualização sem anexos) -->
+            @if (isViewing() && anexosExistentes().length === 0) {
+              <div class="anexos-empty">
+                <i class="las la-paperclip"></i>
+                <span>Nenhum documento anexado a esta fatura.</span>
+              </div>
+            }
+          </div>
+          <!-- ── fim da secção de anexos ─────────────────────────────────── -->
+
+          <!-- ── Informações de Sistema ─────────────────────────────────── -->
+          @if (isViewing() || isEditing()) {
+            @if (selectedFatura() || editingId()) {
+              <div class="form-section form-section--system">
+                <h4 class="form-section__title form-section__title--system">
+                  <i class="las la-server"></i> Informações de Sistema
+                </h4>
+                <div class="form-row form-row--2">
+                  <div class="form-group">
+                    <label>Número de Fatura</label>
+                    <input type="text" class="input--system"
+                           [value]="selectedFatura()?.numeroFatura ?? ''" readonly />
+                    <span class="field-hint"><i class="las la-lock"></i> Gerado automaticamente.</span>
+                  </div>
+                  <div class="form-group">
+                    <label>Criado Em</label>
+                    <input type="text" class="input--system"
+                           [value]="formatarData(selectedFatura()?.criadoEm ?? '')" readonly />
+                    <span class="field-hint"><i class="las la-lock"></i> Apenas leitura.</span>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+
+        </fieldset>
+      </div>
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       LISTA DE FATURAS
+       ══════════════════════════════════════════════════════════════════════ -->
+  @if (currentState() === 'list') {
+    <div class="toolbar">
+      <div class="filters">
+        <div class="filter-group">
+          <i class="las la-search"></i>
+          <input type="text" placeholder="Pesquisar por cliente ou número…"
+                 [value]="filtroSearch"
+                 (input)="filtroSearch = $any($event.target).value; carregarFaturas()" />
+        </div>
+        <div class="filter-group">
+          <i class="las la-filter"></i>
+          <select [(ngModel)]="filtroEstado" (change)="carregarFaturas()"
+                  style="border:none;outline:none;font-size:0.875rem;color:var(--slate-700);background:transparent">
+            <option value="">Todos os estados</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Paga">Paga</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <span class="results-count">
+        {{ faturas().length }} fatura{{ faturas().length !== 1 ? 's' : '' }}
+      </span>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>A carregar faturas…</span>
+      </div>
+    }
+
+    @if (!isLoading()) {
+      <div class="table-container">
+        <table class="data-table" aria-label="Lista de faturas">
+          <thead>
+            <tr>
+              <th>Nº Fatura</th>
+              <th>Cliente</th>
+              <th>Data</th>
+              <th>Estado</th>
+              <th>Total</th>
+              <th>Anexos</th>
+              <th class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of faturas(); track f.id) {
+              <tr (click)="onRowClick(f)" style="cursor:pointer">
+                <td>
+                  <code class="codigo-tag">{{ f.numeroFatura }}</code>
+                </td>
+                <td>
+                  <strong class="cliente-nome">{{ f.clienteNome }}</strong>
+                  @if (f.clienteContacto) {
+                    <span class="text-muted">
+                      <i class="las la-phone"></i> {{ f.clienteContacto }}
+                    </span>
+                  }
+                </td>
+                <td>{{ formatarData(f.dataDoc) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getEstadoClass(f.estado)">
+                    <span class="badge__dot"></span>
+                    {{ f.estado }}
+                  </span>
+                </td>
+                <td><strong>{{ formatarMoeda(f.valorTotal) }}</strong></td>
+                <td>
+                  @if (f.anexos.length > 0) {
+                    <span class="anexos-list-badge" title="{{ f.anexos.length }} documento(s) anexado(s)">
+                      <i class="las la-paperclip"></i> {{ f.anexos.length }}
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-icon btn-icon--view"
+                          (click)="goToDetails(f, $event)" title="Detalhes">
+                    <i class="las la-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--download"
+                          (click)="imprimirPdf(f, $event)" title="Gerar PDF">
+                    <i class="las la-file-pdf"></i>
+                  </button>
+                  <button class="btn-icon btn-icon--danger"
+                          (click)="confirmarDelete(f, $event)" title="Eliminar">
+                    <i class="las la-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+
+            @if (faturas().length === 0) {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <i class="las la-file-invoice"></i>
+                    <p>Nenhuma fatura encontrada</p>
+                    <small>Altere os filtros ou crie uma nova fatura.</small>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- ── Modal de Confirmação de Eliminação ─────────────────────────────── -->
+  @if (showDeleteConfirm()) {
+    <div class="modal-backdrop" (click)="fecharConfirmacao()">
+      <div class="modal-card" (click)="$event.stopPropagation()" role="dialog"
+           aria-modal="true" aria-labelledby="dlg-title">
+        <div class="modal-card__header">
+          <span class="modal-card__icon"><i class="las la-exclamation-triangle"></i></span>
+          <h3 id="dlg-title">Confirmar Eliminação</h3>
+        </div>
+        <div class="modal-card__body">
+          <p>Tem a certeza que deseja eliminar a fatura
+            <strong>{{ faturaParaDelete()?.numeroFatura }}</strong>
+            do cliente <strong>{{ faturaParaDelete()?.clienteNome }}</strong>?
+          </p>
+          <p class="modal-card__warning">Esta acção é irreversível e removerá todos os anexos associados.</p>
+        </div>
+        <div class="modal-card__footer">
+          <button class="btn-secondary" (click)="fecharConfirmacao()">Cancelar</button>
+          <button class="btn-danger" (click)="eliminarFatura()">
+            <i class="las la-trash-alt"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

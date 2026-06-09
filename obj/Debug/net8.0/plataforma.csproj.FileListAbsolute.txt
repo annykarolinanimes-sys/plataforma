@@ -1,0 +1,7 @@
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.csproj.AssemblyReference.cache
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.AssemblyInfoInputs.cache
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.AssemblyInfo.cs
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.csproj.CoreCompileInputs.cache
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\anny\Desktop\plataforma\obj\Debug\net8.0\plataforma.MvcApplicationPartsAssemblyInfo.cs
